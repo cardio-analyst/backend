@@ -5,17 +5,18 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cardio-analyst/backend/internal/ports/service"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/cardio-analyst/backend/internal/ports/service"
 )
 
 type Server struct {
 	server      *echo.Echo
-	userService service.UserService
+	authService service.AuthService
 }
 
-func NewServer(userService service.UserService) *Server {
+func NewServer(authService service.AuthService) *Server {
 	srv := new(Server)
 
 	e := echo.New()
@@ -27,7 +28,7 @@ func NewServer(userService service.UserService) *Server {
 	e.Use(middleware.Recover())
 
 	srv.server = e
-	srv.userService = userService
+	srv.authService = authService
 
 	srv.initRoutes()
 

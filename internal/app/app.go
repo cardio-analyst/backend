@@ -12,7 +12,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/adapters/postgres"
 	"github.com/cardio-analyst/backend/internal/adapters/postgres_migrator"
 	"github.com/cardio-analyst/backend/internal/config"
-	"github.com/cardio-analyst/backend/internal/domain/users"
+	"github.com/cardio-analyst/backend/internal/domain/auth"
 )
 
 type app struct {
@@ -44,9 +44,9 @@ func NewApp(appCtx context.Context, configPath string) *app {
 		log.Fatalf("failed to establish database connection: %v", err)
 	}
 
-	userService := users.NewUserService(database)
+	authService := auth.NewAuthService(database)
 
-	srv := http.NewServer(userService)
+	srv := http.NewServer(authService)
 
 	return &app{
 		server:  srv,
