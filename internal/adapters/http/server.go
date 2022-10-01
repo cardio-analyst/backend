@@ -20,6 +20,9 @@ func NewServer(userService service.UserService) *Server {
 
 	e := echo.New()
 
+	// hide echo startup banner
+	e.HideBanner = true
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 

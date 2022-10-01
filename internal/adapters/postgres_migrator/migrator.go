@@ -1,0 +1,55 @@
+package postgres_migrator
+
+import (
+	"embed"
+	"fmt"
+
+	"github.com/Boostport/migration"
+	"github.com/Boostport/migration/driver/postgres"
+	"github.com/labstack/gommon/log"
+
+	"github.com/cardio-analyst/backend/internal/ports/migrator"
+)
+
+const migrationsDir = "migrations"
+
+// migrations source
+//go:embed migrations
+var embedFS embed.FS
+
+var _ migrator.Migrator = (*PostgresMigrator)(nil)
+
+type PostgresMigrator struct {
+	driver migration.Driver
+}
+
+func NewPostgresMigrator(dsn string) (*PostgresMigrator, error) {
+	dbDriver, err := postgres.New(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("migrator driver initialization failed: %w", err)
+	}
+
+	return &PostgresMigrator{
+		driver: dbDriver,
+	}, nil
+}
+
+func (m *PostgresMigrator) Migrate() error {
+	embedSource := &migration.EmbedMigrationSource{
+		EmbedFS: embedFS,
+		Dir:     migrationsDir,
+	}
+
+	// run all up migrations
+	applied, err := migration.Migrate(m.driver, embedSource, migration.Up, 0)
+	if err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	log.Infof("migrations applied: %v", applied)
+	return nil
+}
+
+func (m *PostgresMigrator) Close() error {
+	return m.driver.Close()
+}

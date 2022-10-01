@@ -7,6 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const dsnEnvKey = "DSN"
+
 type Config struct {
 	HTTP     HTTPConfig     `yaml:"http"`
 	Postgres PostgresConfig `yaml:"postgres"`
@@ -34,6 +36,12 @@ func Load(configPath string) (*Config, error) {
 	var cfg Config
 	if err = yaml.Unmarshal(bytes, &cfg); err != nil {
 		return nil, err
+	}
+
+	// if dsn was set at the environment
+	dsnFromEnv, exists := os.LookupEnv(dsnEnvKey)
+	if exists {
+		cfg.Postgres.DSN = dsnFromEnv
 	}
 
 	return &cfg, nil
