@@ -7,5 +7,5 @@ type AuthService interface {
 	// RegisterUser TODO
 	RegisterUser(user models.User) (err error)
 	// GetToken TODO
-	GetToken(credentials models.Credentials) (token string, err error)
+	GetToken(credentials models.UserCredentials) (token string, err error)
 }

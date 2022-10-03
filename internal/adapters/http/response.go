@@ -12,6 +12,7 @@ const (
 	errorAlreadyRegisteredWithLogin = "AlreadyRegisteredWithLogin"
 	errorAlreadyRegisteredWithEmail = "AlreadyRegisteredWithEmail"
 	errorInternal                   = "InternalError"
+	errorForbidden                  = "Forbidden"
 )
 
 // ErrorResponse TODO
@@ -56,6 +57,14 @@ func NewAlreadyRegisteredWithEmailResponse(email string) (int, *ErrorResponse) {
 func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
 	return http.StatusInternalServerError, &ErrorResponse{
 		Error:       errorInternal,
+		Description: err.Error(),
+	}
+}
+
+// NewForbiddenResponse TODO
+func NewForbiddenResponse(err error) (int, *ErrorResponse) {
+	return http.StatusForbidden, &ErrorResponse{
+		Error:       errorForbidden,
 		Description: err.Error(),
 	}
 }

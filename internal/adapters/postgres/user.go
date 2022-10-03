@@ -71,7 +71,8 @@ func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User,
 			   region,
 			   birth_date,
 			   login,
-			   email
+			   email,
+			   password_hash
 		FROM %v WHERE %v`,
 		userTable, whereStmt,
 	)
@@ -89,6 +90,7 @@ func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User,
 		&user.BirthDate.Time,
 		&user.Login,
 		&user.Email,
+		&user.Password,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -111,7 +113,8 @@ func (d *Database) FindOneByCriteria(criteria models.UserCriteria) (*models.User
 			   region,
 			   birth_date,
 			   login,
-			   email
+			   email,
+			   password_hash
 		FROM %v WHERE %v`,
 		userTable, whereStmt,
 	)
@@ -129,6 +132,7 @@ func (d *Database) FindOneByCriteria(criteria models.UserCriteria) (*models.User
 		&user.BirthDate.Time,
 		&user.Login,
 		&user.Email,
+		&user.Password,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

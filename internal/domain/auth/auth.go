@@ -1,11 +1,16 @@
 package auth
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/cardio-analyst/backend/internal/domain/errors"
+	"github.com/cardio-analyst/backend/internal/config"
+	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
 	"github.com/cardio-analyst/backend/internal/ports/storage"
@@ -14,16 +19,20 @@ import (
 var _ service.AuthService = (*authService)(nil)
 
 type authService struct {
-	db storage.UserStorage
+	cfg config.AuthConfig
+	db  storage.UserStorage
 }
 
-func NewAuthService(db storage.UserStorage) *authService {
-	return &authService{db: db}
+func NewAuthService(cfg config.AuthConfig, db storage.UserStorage) *authService {
+	return &authService{
+		cfg: cfg,
+		db:  db,
+	}
 }
 
 func (s *authService) RegisterUser(user models.User) error {
 	if err := user.Validate(); err != nil {
-		return fmt.Errorf("%w: %v", errors.ErrInvalidUserData, err)
+		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
 	}
 
 	found, err := s.db.FindOneByCriteria(models.UserCriteria{
@@ -36,13 +45,13 @@ func (s *authService) RegisterUser(user models.User) error {
 	}
 	if found != nil {
 		if found.Login == user.Login {
-			return errors.ErrUserLoginAlreadyOccupied
+			return serviceErrors.ErrUserLoginAlreadyOccupied
 		} else {
-			return errors.ErrUserEmailAlreadyOccupied
+			return serviceErrors.ErrUserEmailAlreadyOccupied
 		}
 	}
 
-	passwordHash, err := s.generatePasswordHash(user.Password)
+	passwordHash, err := s.generateHash(user.Password)
 	if err != nil {
 		return err
 	}
@@ -52,11 +61,58 @@ func (s *authService) RegisterUser(user models.User) error {
 	return s.db.Create(user)
 }
 
-func (s *authService) GetToken(credentials models.Credentials) (string, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *authService) GetToken(credentials models.UserCredentials) (string, error) {
+	if err := credentials.Validate(); err != nil {
+		return "", fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
+	}
+
+	var criteria models.UserCriteria
+	if credentials.Login != "" {
+		criteria.Login = &credentials.Login
+	} else {
+		criteria.Email = &credentials.Email
+	}
+
+	user, err := s.db.GetOneByCriteria(criteria)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", serviceErrors.ErrWrongCredentials
+		}
+		return "", err
+	}
+
+	match, err := s.comparePasswordAndHash(credentials.Password, user.Password)
+	if err != nil {
+		return "", err
+	}
+	if !match {
+		return "", serviceErrors.ErrWrongCredentials
+	}
+
+	return s.generateJWTToken(user.Login)
 }
 
-func (s *authService) generatePasswordHash(password string) (string, error) {
+type tokenClaims struct {
+	Login string `json:"login"`
+	jwt.RegisteredClaims
+}
+
+func (s *authService) generateJWTToken(login string) (string, error) {
+	claims := tokenClaims{
+		login,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.cfg.TokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.cfg.SigningKey)
+}
+
+func (s *authService) generateHash(password string) (string, error) {
 	return argon2id.CreateHash(password, argon2id.DefaultParams)
+}
+
+func (s *authService) comparePasswordAndHash(password, hash string) (bool, error) {
+	return argon2id.ComparePasswordAndHash(password, hash)
 }

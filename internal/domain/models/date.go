@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const DateLayout = "02.01.2006"

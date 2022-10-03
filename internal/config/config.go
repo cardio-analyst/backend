@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -10,6 +11,11 @@ import (
 const dsnEnvKey = "DSN"
 
 type Config struct {
+	Adapters AdaptersConfig `yaml:"adapters"`
+	Services ServicesConfig `yaml:"services"`
+}
+
+type AdaptersConfig struct {
 	HTTP     HTTPConfig     `yaml:"http"`
 	Postgres PostgresConfig `yaml:"postgres"`
 }
@@ -20,6 +26,18 @@ type HTTPConfig struct {
 
 type PostgresConfig struct {
 	DSN string `yaml:"dsn"`
+}
+
+type ServicesConfig struct {
+	Auth AuthConfig `yaml:"auth"`
+}
+
+type AuthConfig struct {
+	SigningKey []byte        // created from signingKey
+	TokenTTL   time.Duration // created from tokenTTLMinutes
+
+	signingKey      string `yaml:"signing_key"`
+	tokenTTLMinutes int    `yaml:"token_ttl_minutes"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -41,8 +59,11 @@ func Load(configPath string) (*Config, error) {
 	// if dsn was set at the environment
 	dsnFromEnv, exists := os.LookupEnv(dsnEnvKey)
 	if exists {
-		cfg.Postgres.DSN = dsnFromEnv
+		cfg.Adapters.Postgres.DSN = dsnFromEnv
 	}
+
+	cfg.Services.Auth.SigningKey = []byte(cfg.Services.Auth.signingKey)
+	cfg.Services.Auth.TokenTTL = time.Duration(cfg.Services.Auth.tokenTTLMinutes) * time.Minute
 
 	return &cfg, nil
 }

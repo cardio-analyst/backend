@@ -1,5 +1,10 @@
-http:
-  port: 8080
+adapters:
+  http:
+    port: 8080
+  postgres:
+    dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
 
-postgres:
-  dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+services:
+  auth:
+    signing_key: "UNyi3vWZeY0QHUJgI4Qv5qVcew9JnBwJ"
+    token_ttl_minutes: 60 * 24 * 2  # 2 days

@@ -28,7 +28,7 @@ func NewApp(appCtx context.Context, configPath string) *app {
 	}
 
 	var migrator *postgres_migrator.PostgresMigrator
-	migrator, err = postgres_migrator.NewPostgresMigrator(cfg.Postgres.DSN)
+	migrator, err = postgres_migrator.NewPostgresMigrator(cfg.Adapters.Postgres.DSN)
 	if err != nil {
 		log.Fatalf("failed to initialize postgres migrator: %v", err)
 	}
@@ -39,12 +39,12 @@ func NewApp(appCtx context.Context, configPath string) *app {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
-	database, err := postgres.NewDatabase(appCtx, cfg.Postgres.DSN)
+	database, err := postgres.NewDatabase(appCtx, cfg.Adapters.Postgres.DSN)
 	if err != nil {
 		log.Fatalf("failed to establish database connection: %v", err)
 	}
 
-	authService := auth.NewAuthService(database)
+	authService := auth.NewAuthService(cfg.Services.Auth, database)
 
 	srv := http.NewServer(authService)
 
@@ -60,7 +60,7 @@ func (a *app) Start() {
 
 	var group errgroup.Group
 	group.Go(func() error {
-		listenAddress := fmt.Sprintf(":%d", a.config.HTTP.Port)
+		listenAddress := fmt.Sprintf(":%v", a.config.Adapters.HTTP.Port)
 		return a.server.Start(listenAddress)
 	})
 

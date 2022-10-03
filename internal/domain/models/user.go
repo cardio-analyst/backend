@@ -1,11 +1,14 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+
+	"github.com/cardio-analyst/backend/internal/domain/common"
 )
 
 // criteria separators are used in WHERE statement between arguments
@@ -35,7 +38,7 @@ func (u User) Validate() error {
 		validation.Field(&u.BirthDate, validation.By(u.BirthDate.Validate)),
 		validation.Field(&u.Login, validation.Required),
 		validation.Field(&u.Email, validation.Required, is.Email),
-		validation.Field(&u.Password, validation.Required, validation.Length(7, 255)),
+		validation.Field(&u.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
 	)
 }
 
@@ -44,7 +47,7 @@ type UserCriteria struct {
 	Login             *string
 	Email             *string
 	PasswordHash      *string
-	CriteriaSeparator string // required, "AND" or "OR"
+	CriteriaSeparator string // required, takes value of CriteriaSeparatorAND or CriteriaSeparatorOR
 }
 
 // GetWhereStmtAndArgs TODO
@@ -74,9 +77,21 @@ func (c UserCriteria) GetWhereStmtAndArgs() (string, []interface{}) {
 	return whereStmt, whereStmtArgs
 }
 
-// Credentials TODO
-type Credentials struct {
-	Login    *string
-	Email    *string
+type UserCredentials struct {
+	Login    string
+	Email    string
 	Password string
+}
+
+func (r UserCredentials) Validate() error {
+	if r.Login == "" && r.Email == "" {
+		return errors.New("at least one of the following fields must not be blank: login, email")
+	}
+	if r.Login != "" {
+		return validation.Validate(r.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength))
+	}
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Email, is.Email),
+		validation.Field(&r.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
+	)
 }
