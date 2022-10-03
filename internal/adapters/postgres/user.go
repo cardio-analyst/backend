@@ -21,14 +21,13 @@ func (d *Database) Create(userData models.User) error {
 	createUserQuery := fmt.Sprintf(
 		`
 		INSERT INTO %v (first_name,
-						   last_name,
-						   middle_name,
-						   region,
-						   birth_date,
-						   gender,
-						   login,
-						   email,
-						   password_hash)
+						last_name,
+						middle_name,
+						region,
+						birth_date,
+						login,
+						email,
+						password_hash)
 		VALUES ($1,
 				$2,
 				$3,
@@ -36,8 +35,7 @@ func (d *Database) Create(userData models.User) error {
 				$5,
 				$6,
 				$7,
-				$8,
-				$9)`,
+				$8)`,
 		userTable,
 	)
 	queryCtx := context.Background()
@@ -54,7 +52,6 @@ func (d *Database) Create(userData models.User) error {
 		userData.MiddleName,
 		userData.Region,
 		birthDateCasted,
-		userData.Gender,
 		userData.Login,
 		userData.Email,
 		userData.Password,
@@ -73,7 +70,6 @@ func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User,
 			   middle_name,
 			   region,
 			   birth_date,
-			   gender,
 			   login,
 			   email
 		FROM %v WHERE %v`,
@@ -91,7 +87,6 @@ func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User,
 		&user.MiddleName,
 		&user.Region,
 		&user.BirthDate.Time,
-		&user.Gender,
 		&user.Login,
 		&user.Email,
 	); err != nil {
@@ -115,7 +110,6 @@ func (d *Database) FindOneByCriteria(criteria models.UserCriteria) (*models.User
 			   middle_name,
 			   region,
 			   birth_date,
-			   gender,
 			   login,
 			   email
 		FROM %v WHERE %v`,
@@ -133,7 +127,6 @@ func (d *Database) FindOneByCriteria(criteria models.UserCriteria) (*models.User
 		&user.MiddleName,
 		&user.Region,
 		&user.BirthDate.Time,
-		&user.Gender,
 		&user.Login,
 		&user.Email,
 	); err != nil {

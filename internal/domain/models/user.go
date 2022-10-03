@@ -6,8 +6,6 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-
-	"github.com/cardio-analyst/backend/internal/domain/common"
 )
 
 // criteria separators are used in WHERE statement between arguments
@@ -24,7 +22,6 @@ type User struct {
 	MiddleName string `json:"middleName" db:"middle_name"`
 	Region     string `json:"region" db:"region"`
 	BirthDate  Date   `json:"birthDate" db:"birth_date"`
-	Gender     string `json:"gender" db:"gender"`
 	Login      string `json:"login" db:"login"`
 	Email      string `json:"email" db:"email"`
 	Password   string `json:"password" db:"password_hash"`
@@ -36,7 +33,6 @@ func (u User) Validate() error {
 		validation.Field(&u.LastName, validation.Required),
 		validation.Field(&u.Region, validation.Required),
 		validation.Field(&u.BirthDate, validation.By(u.BirthDate.Validate)),
-		validation.Field(&u.Gender, validation.Required, validation.In(common.UserGenderMale, common.UserGenderFemale)),
 		validation.Field(&u.Login, validation.Required),
 		validation.Field(&u.Email, validation.Required, is.Email),
 		validation.Field(&u.Password, validation.Required, validation.Length(7, 255)),
