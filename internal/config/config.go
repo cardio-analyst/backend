@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const dsnEnvKey = "DSN"
+const dsnEnvKey = "DATABASE_URL"
 
 type Config struct {
 	Adapters AdaptersConfig `yaml:"adapters"`
