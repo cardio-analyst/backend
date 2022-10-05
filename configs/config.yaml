@@ -1,6 +1,6 @@
 adapters:
   http:
-    port: 8000
+    port: 8080
   postgres:
     dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
 
