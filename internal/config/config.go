@@ -3,12 +3,16 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
-const dsnEnvKey = "DATABASE_URL"
+const (
+	dsnEnvKey  = "DATABASE_URL"
+	portEnvKey = "PORT"
+)
 
 type Config struct {
 	Adapters AdaptersConfig `yaml:"adapters"`
@@ -57,9 +61,17 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	// if dsn was set at the environment
-	dsnFromEnv, exists := os.LookupEnv(dsnEnvKey)
-	if exists {
+	if dsnFromEnv, exists := os.LookupEnv(dsnEnvKey); exists {
 		cfg.Adapters.Postgres.DSN = dsnFromEnv
+	}
+
+	// if port was set at the environment
+	if portFromEnv, exists := os.LookupEnv(portEnvKey); exists {
+		var port int
+		port, err = strconv.Atoi(portFromEnv)
+		if err == nil {
+			cfg.Adapters.HTTP.Port = port
+		}
 	}
 
 	cfg.Services.Auth.SigningKey = []byte(cfg.Services.Auth.signingKey)
