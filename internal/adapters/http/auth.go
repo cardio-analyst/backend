@@ -12,8 +12,8 @@ import (
 
 func (s *Server) initAuthRoutes() {
 	auth := s.server.Group("/api/v1/auth")
-	auth.POST("/sign-up", s.signUp)
-	auth.POST("/sign-in", s.signIn)
+	auth.POST("/signUp", s.signUp)
+	auth.POST("/signIn", s.signIn)
 }
 
 // signUp TODO
@@ -36,13 +36,7 @@ func (s *Server) signUp(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, nil)
-}
-
-type signInRequest struct {
-	Login    string `json:"login"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	return c.JSON(NewOKResponse())
 }
 
 type signInResponse struct {
@@ -51,18 +45,12 @@ type signInResponse struct {
 
 // signIn TODO
 func (s *Server) signIn(c echo.Context) error {
-	var req signInRequest
-	if err := c.Bind(&req); err != nil {
+	var reqData models.UserCredentials
+	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(NewParseRequestDataErrorResponse(err))
 	}
 
-	credentials := models.UserCredentials{
-		Login:    req.Login,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-
-	token, err := s.authService.GetToken(credentials)
+	token, err := s.authService.GetToken(reqData)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserCredentials):
@@ -74,9 +62,7 @@ func (s *Server) signIn(c echo.Context) error {
 		}
 	}
 
-	res := &signInResponse{
+	return c.JSON(http.StatusOK, &signInResponse{
 		Token: token,
-	}
-
-	return c.JSON(http.StatusOK, res)
+	})
 }

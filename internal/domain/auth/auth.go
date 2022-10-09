@@ -66,11 +66,10 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 		return "", fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
 	}
 
-	var criteria models.UserCriteria
-	if credentials.Login != "" {
-		criteria.Login = &credentials.Login
-	} else {
-		criteria.Email = &credentials.Email
+	// since we do not know what exactly we are dealing with, we are looking for two fields
+	criteria := models.UserCriteria{
+		Login: &credentials.LoginOrEmail,
+		Email: &credentials.LoginOrEmail,
 	}
 
 	user, err := s.db.GetOneByCriteria(criteria)
