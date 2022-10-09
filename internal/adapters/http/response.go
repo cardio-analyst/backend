@@ -26,8 +26,9 @@ const (
 	errorInvalidRequestData         = "InvalidRequestData"
 	errorAlreadyRegisteredWithLogin = "AlreadyRegisteredWithLogin"
 	errorAlreadyRegisteredWithEmail = "AlreadyRegisteredWithEmail"
-	errorInternal                   = "InternalError"
+	errorUnauthorized               = "Unauthorized"
 	errorForbidden                  = "Forbidden"
+	errorInternal                   = "InternalError"
 )
 
 type ErrorResponse struct {
@@ -63,9 +64,9 @@ func NewAlreadyRegisteredWithEmailResponse(email string) (int, *ErrorResponse) {
 	}
 }
 
-func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
-	return http.StatusInternalServerError, &ErrorResponse{
-		Error:       errorInternal,
+func NewUnauthorizedResponse(err error) (int, *ErrorResponse) {
+	return http.StatusUnauthorized, &ErrorResponse{
+		Error:       errorUnauthorized,
 		Description: err.Error(),
 	}
 }
@@ -73,6 +74,13 @@ func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
 func NewForbiddenResponse(err error) (int, *ErrorResponse) {
 	return http.StatusForbidden, &ErrorResponse{
 		Error:       errorForbidden,
+		Description: err.Error(),
+	}
+}
+
+func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
+	return http.StatusInternalServerError, &ErrorResponse{
+		Error:       errorInternal,
 		Description: err.Error(),
 	}
 }
