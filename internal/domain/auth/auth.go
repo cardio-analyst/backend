@@ -35,11 +35,13 @@ func (s *authService) RegisterUser(user models.User) error {
 		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
 	}
 
-	found, err := s.db.FindOneByCriteria(models.UserCriteria{
+	criteria := models.UserCriteria{
 		Login:             &user.Login,
 		Email:             &user.Email,
 		CriteriaSeparator: models.CriteriaSeparatorOR,
-	})
+	}
+
+	found, err := s.db.FindOneByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -68,8 +70,9 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 
 	// since we do not know what exactly we are dealing with, we are looking for two fields
 	criteria := models.UserCriteria{
-		Login: &credentials.LoginOrEmail,
-		Email: &credentials.LoginOrEmail,
+		Login:             &credentials.LoginOrEmail,
+		Email:             &credentials.LoginOrEmail,
+		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
 	user, err := s.db.GetOneByCriteria(criteria)
