@@ -4,14 +4,14 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	dsnEnvKey  = "DATABASE_URL"
-	portEnvKey = "PORT"
+	dsnEnvKey        = "DATABASE_URL"
+	portEnvKey       = "PORT"
+	signingKeyEnvKey = "SIGNING_KEY"
 )
 
 type Config struct {
@@ -37,11 +37,8 @@ type ServicesConfig struct {
 }
 
 type AuthConfig struct {
-	SigningKey []byte        // created from signingKey
-	TokenTTL   time.Duration // created from tokenTTLMinutes
-
-	signingKey      string `yaml:"signing_key"`
-	tokenTTLMinutes int    `yaml:"token_ttl_minutes"`
+	SigningKey      string `yaml:"signing_key"`
+	TokenTTLMinutes int    `yaml:"token_ttl_minutes"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -74,8 +71,10 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	cfg.Services.Auth.SigningKey = []byte(cfg.Services.Auth.signingKey)
-	cfg.Services.Auth.TokenTTL = time.Duration(cfg.Services.Auth.tokenTTLMinutes) * time.Minute
+	// if signing key was set at the environment
+	if signingKey, exists := os.LookupEnv(signingKeyEnvKey); exists {
+		cfg.Services.Auth.SigningKey = signingKey
+	}
 
 	return &cfg, nil
 }

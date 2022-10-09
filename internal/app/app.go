@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cardio-analyst/backend/internal/adapters/http"
@@ -22,6 +23,8 @@ type app struct {
 }
 
 func NewApp(appCtx context.Context, configPath string) *app {
+	initializeLogger()
+
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config data: %v", err)
@@ -53,6 +56,13 @@ func NewApp(appCtx context.Context, configPath string) *app {
 		config:  cfg,
 		closers: []io.Closer{srv, database},
 	}
+}
+
+func initializeLogger() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.JSONFormatter{})
 }
 
 func (a *app) Start() {

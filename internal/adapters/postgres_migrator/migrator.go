@@ -6,7 +6,7 @@ import (
 
 	"github.com/Boostport/migration"
 	"github.com/Boostport/migration/driver/postgres"
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/cardio-analyst/backend/internal/ports/migrator"
 )
