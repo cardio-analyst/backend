@@ -14,6 +14,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/adapters/postgres_migrator"
 	"github.com/cardio-analyst/backend/internal/config"
 	"github.com/cardio-analyst/backend/internal/domain/auth"
+	"github.com/cardio-analyst/backend/internal/domain/user"
 )
 
 type app struct {
@@ -48,8 +49,9 @@ func NewApp(appCtx context.Context, configPath string) *app {
 	}
 
 	authService := auth.NewAuthService(cfg.Services.Auth, database)
+	userService := user.NewUserService(database)
 
-	srv := http.NewServer(authService)
+	srv := http.NewServer(authService, userService)
 
 	return &app{
 		server:  srv,

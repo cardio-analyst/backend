@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+// Database implements the storage.UserStorage interface using Postgres.
 type Database struct {
 	db *pgxpool.Pool
 }

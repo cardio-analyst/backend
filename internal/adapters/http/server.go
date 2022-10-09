@@ -14,9 +14,10 @@ import (
 type Server struct {
 	server      *echo.Echo
 	authService service.AuthService
+	userService service.UserService
 }
 
-func NewServer(authService service.AuthService) *Server {
+func NewServer(authService service.AuthService, userService service.UserService) *Server {
 	srv := new(Server)
 
 	e := echo.New()
@@ -30,7 +31,9 @@ func NewServer(authService service.AuthService) *Server {
 	e.Use(middleware.Recover())
 
 	srv.server = e
+
 	srv.authService = authService
+	srv.userService = userService
 
 	srv.initRoutes()
 

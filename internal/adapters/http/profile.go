@@ -1,10 +1,13 @@
 package http
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
+	"github.com/cardio-analyst/backend/internal/domain/models"
 )
 
 func (s *Server) initProfileRoutes() {
@@ -14,11 +17,40 @@ func (s *Server) initProfileRoutes() {
 }
 
 func (s *Server) getProfileInfo(c echo.Context) error {
-	userLogin := c.Get(ctxKeyUserLogin).(string)
-	return c.String(http.StatusOK, fmt.Sprintf("getProfileInfo: %v", userLogin))
+	userID := c.Get(ctxKeyUserID).(uint64)
+
+	criteria := models.UserCriteria{
+		ID: &userID,
+	}
+
+	user, err := s.userService.Get(criteria)
+	if err != nil {
+		return c.JSON(NewInternalErrorResponse(err))
+	}
+
+	return c.JSON(http.StatusOK, user)
 }
 
 func (s *Server) editProfileInfo(c echo.Context) error {
-	userLogin := c.Get(ctxKeyUserLogin).(string)
-	return c.String(http.StatusOK, fmt.Sprintf("editProfileInfo: %v", userLogin))
+	var reqData models.User
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(NewParseRequestDataErrorResponse(err))
+	}
+
+	reqData.ID = c.Get(ctxKeyUserID).(uint64)
+
+	if err := s.userService.Update(reqData); err != nil {
+		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidUserData):
+			return c.JSON(NewInvalidRequestDataResponse(err))
+		case errors.Is(err, serviceErrors.ErrUserLoginAlreadyOccupied):
+			return c.JSON(NewAlreadyRegisteredWithLoginResponse(reqData.Login))
+		case errors.Is(err, serviceErrors.ErrUserEmailAlreadyOccupied):
+			return c.JSON(NewAlreadyRegisteredWithEmailResponse(reqData.Email))
+		default:
+			return c.JSON(NewInternalErrorResponse(err))
+		}
+	}
+
+	return c.JSON(NewOKResponse())
 }

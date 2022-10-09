@@ -6,6 +6,7 @@ require (
 	github.com/Boostport/migration v1.1.1
 	github.com/Boostport/migration/driver/postgres v1.1.1
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
+	github.com/georgysavva/scany v1.2.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/jackc/pgtype v1.12.0

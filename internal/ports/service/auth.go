@@ -9,5 +9,5 @@ type AuthService interface {
 	// GetToken TODO
 	GetToken(credentials models.UserCredentials) (token string, err error)
 	// ValidateToken TODO
-	ValidateToken(token string) (userLogin string, err error)
+	ValidateToken(token string) (userID uint64, err error)
 }
