@@ -11,7 +11,7 @@ import (
 
 const (
 	headerAuthorization = "Authorization"
-	ctxKeyUserLogin     = "userLogin"
+	ctxKeyUserID        = "userID"
 )
 
 var (
@@ -38,7 +38,7 @@ func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(NewUnauthorizedResponse(ErrTokenIsEmpty))
 		}
 
-		userLogin, err := s.authService.ValidateToken(token)
+		userID, err := s.authService.ValidateToken(token)
 		if err != nil {
 			switch {
 			case errors.Is(err, serviceErrors.ErrWrongToken):
@@ -50,7 +50,7 @@ func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		c.Set(ctxKeyUserLogin, userLogin)
+		c.Set(ctxKeyUserID, userID)
 
 		return next(c)
 	}

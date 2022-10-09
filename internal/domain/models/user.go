@@ -26,10 +26,10 @@ type User struct {
 	BirthDate  Date   `json:"birthDate" db:"birth_date"`
 	Login      string `json:"login" db:"login"`
 	Email      string `json:"email" db:"email"`
-	Password   string `json:"password" db:"password_hash"`
+	Password   string `json:"password,omitempty" db:"password_hash"`
 }
 
-func (u User) Validate() error {
+func (u User) Validate(validatePassword bool) error {
 	return validation.ValidateStruct(&u,
 		validation.Field(&u.FirstName, validation.Required),
 		validation.Field(&u.LastName, validation.Required),
@@ -37,12 +37,16 @@ func (u User) Validate() error {
 		validation.Field(&u.BirthDate, validation.By(u.BirthDate.Validate)),
 		validation.Field(&u.Login, validation.Required),
 		validation.Field(&u.Email, validation.Required, is.Email),
-		validation.Field(&u.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
+		validation.Field(&u.Password, validation.When(
+			validatePassword,
+			validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
+		),
 	)
 }
 
 // UserCriteria TODO
 type UserCriteria struct {
+	ID                *uint64
 	Login             *string
 	Email             *string
 	PasswordHash      *string
@@ -51,10 +55,15 @@ type UserCriteria struct {
 
 // GetWhereStmtAndArgs TODO
 func (c UserCriteria) GetWhereStmtAndArgs() (string, []interface{}) {
-	whereStmtParts := make([]string, 0, 3)
-	whereStmtArgs := make([]interface{}, 0, 3)
+	whereStmtParts := make([]string, 0, 4)
+	whereStmtArgs := make([]interface{}, 0, 4)
 	currArgNum := 1
 
+	if c.ID != nil {
+		whereStmtParts = append(whereStmtParts, fmt.Sprintf("id=$%v", currArgNum))
+		whereStmtArgs = append(whereStmtArgs, *c.ID)
+		currArgNum++
+	}
 	if c.Login != nil {
 		whereStmtParts = append(whereStmtParts, fmt.Sprintf("login=$%v", currArgNum))
 		whereStmtArgs = append(whereStmtArgs, *c.Login)

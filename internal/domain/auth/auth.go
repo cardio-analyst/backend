@@ -32,7 +32,7 @@ func NewAuthService(cfg config.AuthConfig, db storage.UserStorage) *authService 
 }
 
 func (s *authService) RegisterUser(user models.User) error {
-	if err := user.Validate(); err != nil {
+	if err := user.Validate(true); err != nil {
 		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
 	}
 
@@ -42,15 +42,19 @@ func (s *authService) RegisterUser(user models.User) error {
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	found, err := s.db.FindOneByCriteria(criteria)
+	users, err := s.db.FindByCriteria(criteria)
 	if err != nil {
 		return err
 	}
-	if found != nil {
-		if found.Login == user.Login {
-			return serviceErrors.ErrUserLoginAlreadyOccupied
-		} else {
-			return serviceErrors.ErrUserEmailAlreadyOccupied
+
+	// check if there are no users with a username or email that the actor wants to occupy
+	if len(users) > 0 {
+		for _, u := range users {
+			if u.Login == user.Login {
+				return serviceErrors.ErrUserLoginAlreadyOccupied
+			} else {
+				return serviceErrors.ErrUserEmailAlreadyOccupied
+			}
 		}
 	}
 
@@ -61,7 +65,7 @@ func (s *authService) RegisterUser(user models.User) error {
 
 	user.Password = passwordHash
 
-	return s.db.Create(user)
+	return s.db.Save(user)
 }
 
 func (s *authService) GetToken(credentials models.UserCredentials) (string, error) {
@@ -69,7 +73,7 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 		return "", fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
 	}
 
-	// since we do not know what exactly we are dealing with, we are looking for two fields
+	// since we do not know what exactly we are dealing with (login or email), we are looking for two fields
 	criteria := models.UserCriteria{
 		Login:             &credentials.LoginOrEmail,
 		Email:             &credentials.LoginOrEmail,
@@ -92,10 +96,10 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 		return "", serviceErrors.ErrWrongCredentials
 	}
 
-	return s.generateJWTToken(user.Login)
+	return s.generateJWTToken(user.ID)
 }
 
-func (s *authService) ValidateToken(token string) (string, error) {
+func (s *authService) ValidateToken(token string) (uint64, error) {
 	parsed, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("%w: %v", serviceErrors.ErrWrongToken, token.Header["alg"])
@@ -104,34 +108,34 @@ func (s *authService) ValidateToken(token string) (string, error) {
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return "", serviceErrors.ErrWrongToken
+			return 0, serviceErrors.ErrWrongToken
 		}
 		if strings.Contains(err.Error(), "token is expired by") {
-			return "", serviceErrors.ErrTokenIsExpired
+			return 0, serviceErrors.ErrTokenIsExpired
 		}
-		return "", err
+		return 0, err
 	}
 
 	claims, ok := parsed.Claims.(*tokenClaims)
 	if !(parsed.Valid && ok) {
-		return "", serviceErrors.ErrWrongToken
+		return 0, serviceErrors.ErrWrongToken
 	}
 
 	if time.Now().After(time.Unix(claims.ExpiresAt.Unix(), 0)) {
-		return "", serviceErrors.ErrTokenIsExpired
+		return 0, serviceErrors.ErrTokenIsExpired
 	}
 
-	return claims.Login, nil
+	return claims.UserID, nil
 }
 
 type tokenClaims struct {
-	Login string `json:"login"`
+	UserID uint64 `json:"userID"`
 	jwt.RegisteredClaims
 }
 
-func (s *authService) generateJWTToken(login string) (string, error) {
+func (s *authService) generateJWTToken(userID uint64) (string, error) {
 	claims := tokenClaims{
-		login,
+		userID,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.cfg.TokenTTLMinutes) * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
