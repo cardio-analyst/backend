@@ -7,4 +7,5 @@ adapters:
 services:
   auth:
     signing_key: "UNyi3vWZeY0QHUJgI4Qv5qVcew9JnBwJ"
-    token_ttl_minutes: 60 * 24 * 2  # 2 days
+    token_ttl_minutes: 720  # 12 hours
+

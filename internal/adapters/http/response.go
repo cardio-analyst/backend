@@ -5,23 +5,37 @@ import (
 	"net/http"
 )
 
+// possible response designations
+const (
+	resultOK = "Ok"
+)
+
+type Response struct {
+	Result string `json:"result"`
+}
+
+func NewOKResponse() (int, *Response) {
+	return http.StatusOK, &Response{
+		Result: resultOK,
+	}
+}
+
 // possible errors designations
 const (
 	errorParseRequestData           = "ParseRequestDataError"
 	errorInvalidRequestData         = "InvalidRequestData"
 	errorAlreadyRegisteredWithLogin = "AlreadyRegisteredWithLogin"
 	errorAlreadyRegisteredWithEmail = "AlreadyRegisteredWithEmail"
-	errorInternal                   = "InternalError"
+	errorUnauthorized               = "Unauthorized"
 	errorForbidden                  = "Forbidden"
+	errorInternal                   = "InternalError"
 )
 
-// ErrorResponse TODO
 type ErrorResponse struct {
 	Error       string `json:"error"`
 	Description string `json:"description"`
 }
 
-// NewParseRequestDataErrorResponse TODO
 func NewParseRequestDataErrorResponse(err error) (int, *ErrorResponse) {
 	return http.StatusBadRequest, &ErrorResponse{
 		Error:       errorParseRequestData,
@@ -29,7 +43,6 @@ func NewParseRequestDataErrorResponse(err error) (int, *ErrorResponse) {
 	}
 }
 
-// NewInvalidRequestDataResponse TODO
 func NewInvalidRequestDataResponse(err error) (int, *ErrorResponse) {
 	return http.StatusBadRequest, &ErrorResponse{
 		Error:       errorInvalidRequestData,
@@ -37,7 +50,6 @@ func NewInvalidRequestDataResponse(err error) (int, *ErrorResponse) {
 	}
 }
 
-// NewAlreadyRegisteredWithLoginResponse TODO
 func NewAlreadyRegisteredWithLoginResponse(login string) (int, *ErrorResponse) {
 	return http.StatusBadRequest, &ErrorResponse{
 		Error:       errorAlreadyRegisteredWithLogin,
@@ -45,7 +57,6 @@ func NewAlreadyRegisteredWithLoginResponse(login string) (int, *ErrorResponse) {
 	}
 }
 
-// NewAlreadyRegisteredWithEmailResponse TODO
 func NewAlreadyRegisteredWithEmailResponse(email string) (int, *ErrorResponse) {
 	return http.StatusBadRequest, &ErrorResponse{
 		Error:       errorAlreadyRegisteredWithEmail,
@@ -53,18 +64,23 @@ func NewAlreadyRegisteredWithEmailResponse(email string) (int, *ErrorResponse) {
 	}
 }
 
-// NewInternalErrorResponse TODO
-func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
-	return http.StatusInternalServerError, &ErrorResponse{
-		Error:       errorInternal,
+func NewUnauthorizedResponse(err error) (int, *ErrorResponse) {
+	return http.StatusUnauthorized, &ErrorResponse{
+		Error:       errorUnauthorized,
 		Description: err.Error(),
 	}
 }
 
-// NewForbiddenResponse TODO
 func NewForbiddenResponse(err error) (int, *ErrorResponse) {
 	return http.StatusForbidden, &ErrorResponse{
 		Error:       errorForbidden,
+		Description: err.Error(),
+	}
+}
+
+func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
+	return http.StatusInternalServerError, &ErrorResponse{
+		Error:       errorInternal,
 		Description: err.Error(),
 	}
 }

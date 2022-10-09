@@ -8,4 +8,6 @@ var (
 	ErrUserEmailAlreadyOccupied = errors.New("user with such email is already registered")
 	ErrInvalidUserCredentials   = errors.New("invalid user credentials")
 	ErrWrongCredentials         = errors.New("wrong user credentials")
+	ErrTokenIsExpired           = errors.New("token is expired")
+	ErrWrongToken               = errors.New("wrong token")
 )

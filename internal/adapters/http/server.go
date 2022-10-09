@@ -24,7 +24,9 @@ func NewServer(authService service.AuthService) *Server {
 	// hide echo startup banner
 	e.HideBanner = true
 
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestID())
+	e.Use(RequestsBodiesLogger())
+	e.Use(RequestsLogger())
 	e.Use(middleware.Recover())
 
 	srv.server = e

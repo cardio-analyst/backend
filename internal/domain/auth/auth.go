@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/alexedwards/argon2id"
@@ -35,11 +36,13 @@ func (s *authService) RegisterUser(user models.User) error {
 		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
 	}
 
-	found, err := s.db.FindOneByCriteria(models.UserCriteria{
+	criteria := models.UserCriteria{
 		Login:             &user.Login,
 		Email:             &user.Email,
 		CriteriaSeparator: models.CriteriaSeparatorOR,
-	})
+	}
+
+	found, err := s.db.FindOneByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -66,11 +69,11 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 		return "", fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
 	}
 
-	var criteria models.UserCriteria
-	if credentials.Login != "" {
-		criteria.Login = &credentials.Login
-	} else {
-		criteria.Email = &credentials.Email
+	// since we do not know what exactly we are dealing with, we are looking for two fields
+	criteria := models.UserCriteria{
+		Login:             &credentials.LoginOrEmail,
+		Email:             &credentials.LoginOrEmail,
+		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
 	user, err := s.db.GetOneByCriteria(criteria)
@@ -92,6 +95,35 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 	return s.generateJWTToken(user.Login)
 }
 
+func (s *authService) ValidateToken(token string) (string, error) {
+	parsed, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("%w: %v", serviceErrors.ErrWrongToken, token.Header["alg"])
+		}
+		return []byte(s.cfg.SigningKey), nil
+	})
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			return "", serviceErrors.ErrWrongToken
+		}
+		if strings.Contains(err.Error(), "token is expired by") {
+			return "", serviceErrors.ErrTokenIsExpired
+		}
+		return "", err
+	}
+
+	claims, ok := parsed.Claims.(*tokenClaims)
+	if !(parsed.Valid && ok) {
+		return "", serviceErrors.ErrWrongToken
+	}
+
+	if time.Now().After(time.Unix(claims.ExpiresAt.Unix(), 0)) {
+		return "", serviceErrors.ErrTokenIsExpired
+	}
+
+	return claims.Login, nil
+}
+
 type tokenClaims struct {
 	Login string `json:"login"`
 	jwt.RegisteredClaims
@@ -101,12 +133,12 @@ func (s *authService) generateJWTToken(login string) (string, error) {
 	claims := tokenClaims{
 		login,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.cfg.TokenTTL)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.cfg.TokenTTLMinutes) * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.cfg.SigningKey)
+	return token.SignedString([]byte(s.cfg.SigningKey))
 }
 
 func (s *authService) generateHash(password string) (string, error) {

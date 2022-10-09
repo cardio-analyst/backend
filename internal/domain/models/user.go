@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -78,20 +77,13 @@ func (c UserCriteria) GetWhereStmtAndArgs() (string, []interface{}) {
 }
 
 type UserCredentials struct {
-	Login    string
-	Email    string
-	Password string
+	LoginOrEmail string `json:"loginOrEmail"`
+	Password     string `json:"password"`
 }
 
 func (r UserCredentials) Validate() error {
-	if r.Login == "" && r.Email == "" {
-		return errors.New("at least one of the following fields must not be blank: login, email")
-	}
-	if r.Login != "" {
-		return validation.Validate(r.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength))
-	}
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Email, is.Email),
+		validation.Field(&r.LoginOrEmail, validation.Required),
 		validation.Field(&r.Password, validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
 	)
 }
