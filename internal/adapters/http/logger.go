@@ -38,6 +38,7 @@ func logRequest(c echo.Context, next echo.HandlerFunc) error {
 		"user_agent": req.UserAgent(),
 		"status":     res.Status,
 		"latency":    latency,
+		"request_id": res.Header().Get(echo.HeaderXRequestID),
 	}).Debug("request processed")
 
 	return nil
@@ -48,6 +49,7 @@ func RequestsBodiesLogger() echo.MiddlewareFunc {
 		log.WithFields(log.Fields{
 			"request_body":  string(reqBody),
 			"response_body": string(resBody),
+			"request_id":    c.Response().Header().Get(echo.HeaderXRequestID),
 		}).Debug("request bodies processed")
 	})
 }
