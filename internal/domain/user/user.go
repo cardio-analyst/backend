@@ -76,12 +76,17 @@ func (s *userService) Update(user models.User) error {
 		}
 	}
 
-	passwordHash, err := s.generateHash(user.Password)
-	if err != nil {
-		return err
-	}
+	if user.Password != "" {
+		var passwordHash string
+		passwordHash, err = s.generateHash(user.Password)
+		if err != nil {
+			return err
+		}
 
-	user.Password = passwordHash
+		user.Password = passwordHash
+	} else {
+		user.Password = users[0].Password
+	}
 
 	return s.db.Save(user)
 }
