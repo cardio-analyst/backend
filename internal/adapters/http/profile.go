@@ -13,7 +13,7 @@ import (
 func (s *Server) initProfileRoutes() {
 	profile := s.server.Group("/api/v1/profile", s.identifyUser)
 	profile.GET("/info", s.getProfileInfo)
-	profile.POST("/edit", s.editProfileInfo)
+	profile.PUT("/edit", s.editProfileInfo)
 }
 
 func (s *Server) getProfileInfo(c echo.Context) error {
