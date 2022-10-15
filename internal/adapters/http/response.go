@@ -11,11 +11,6 @@ const (
 	resultUpdated    = "Updated"
 )
 
-var resultDescriptions = map[string]string{
-	resultRegistered: "Регистрация прошла успешно",
-	resultUpdated:    "Данные успешно сохранены",
-}
-
 // possible errors designations
 const (
 	errorParseRequestData     = "ParseRequestError"
@@ -24,8 +19,10 @@ const (
 	errorEmailAlreadyOccupied = "EmailAlreadyOccupied"
 	errorInternal             = "InternalError"
 	errorWrongCredentials     = "WrongCredentials"
-	errorWrongToken           = "WrongToken"
-	errorTokenExpired         = "TokenExpired"
+	errorWrongAccessToken     = "WrongAccessToken"
+	errorWrongRefreshToken    = "WrongRefreshToken"
+	errorAccessTokenExpired   = "AccessTokenExpired"
+	errorRefreshTokenExpired  = "RefreshTokenExpired"
 	errorIPNotAllowed         = "IPNotAllowed"
 	errorWrongAuthHeader      = "WrongAuthHeader"
 )
@@ -37,8 +34,10 @@ var errorDescriptions = map[string]string{
 	errorEmailAlreadyOccupied: "Выбранный E-mail уже занят",
 	errorInternal:             "Внутренняя ошибка сервера",
 	errorWrongCredentials:     "Некорректные данные для входа",
-	errorWrongToken:           "Некорректный токен",
-	errorTokenExpired:         "Срок действия токена истёк",
+	errorWrongAccessToken:     "Некорректный access-токен",
+	errorWrongRefreshToken:    "Некорректный refresh-токен",
+	errorAccessTokenExpired:   "Время жизни access-токена истекло",
+	errorRefreshTokenExpired:  "Время жизни refresh-токена истекло",
 	errorIPNotAllowed:         "Неизвестное устройство",
 	errorWrongAuthHeader:      "Некорректный заголовок авторизации",
 }
@@ -46,13 +45,12 @@ var errorDescriptions = map[string]string{
 type Response struct {
 	Result      string `json:"result,omitempty"`
 	Error       string `json:"error,omitempty"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 }
 
 func NewResult(result string) *Response {
 	return &Response{
-		Result:      result,
-		Description: resultDescriptions[result],
+		Result: result,
 	}
 }
 

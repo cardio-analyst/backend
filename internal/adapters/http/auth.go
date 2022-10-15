@@ -74,11 +74,11 @@ func (s *Server) refreshTokens(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrWrongToken):
-			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongRefreshToken))
 		case errors.Is(err, serviceErrors.ErrTokenIsExpired):
-			return c.JSON(http.StatusBadRequest, NewError(c, err, errorTokenExpired))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorRefreshTokenExpired))
 		case errors.Is(err, serviceErrors.ErrSessionNotFound):
-			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongRefreshToken))
 		case errors.Is(err, serviceErrors.ErrIPIsNotInWhitelist):
 			return c.JSON(http.StatusForbidden, NewError(c, err, errorIPNotAllowed))
 		default:
