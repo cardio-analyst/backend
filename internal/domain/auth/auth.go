@@ -20,14 +20,16 @@ import (
 var _ service.AuthService = (*authService)(nil)
 
 type authService struct {
-	cfg config.AuthConfig
-	db  storage.UserStorage
+	cfg      config.AuthConfig
+	users    storage.UserStorage
+	sessions storage.SessionStorage
 }
 
-func NewAuthService(cfg config.AuthConfig, db storage.UserStorage) *authService {
+func NewAuthService(cfg config.AuthConfig, users storage.UserStorage, sessions storage.SessionStorage) *authService {
 	return &authService{
-		cfg: cfg,
-		db:  db,
+		cfg:      cfg,
+		users:    users,
+		sessions: sessions,
 	}
 }
 
@@ -42,7 +44,7 @@ func (s *authService) RegisterUser(user models.User) error {
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	users, err := s.db.FindByCriteria(criteria)
+	users, err := s.users.FindUserByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -65,12 +67,12 @@ func (s *authService) RegisterUser(user models.User) error {
 
 	user.Password = passwordHash
 
-	return s.db.Save(user)
+	return s.users.SaveUser(user)
 }
 
-func (s *authService) GetToken(credentials models.UserCredentials) (string, error) {
+func (s *authService) GetTokens(credentials models.UserCredentials, userIP string) (*models.Tokens, error) {
 	if err := credentials.Validate(); err != nil {
-		return "", fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
+		return nil, fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserCredentials, err)
 	}
 
 	// since we do not know what exactly we are dealing with (login or email), we are looking for two fields
@@ -80,34 +82,137 @@ func (s *authService) GetToken(credentials models.UserCredentials) (string, erro
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	user, err := s.db.GetOneByCriteria(criteria)
+	user, err := s.users.GetUserByCriteria(criteria)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", serviceErrors.ErrWrongCredentials
+			return nil, serviceErrors.ErrWrongCredentials
 		}
-		return "", err
+		return nil, err
 	}
 
 	match, err := s.comparePasswordAndHash(credentials.Password, user.Password)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if !match {
-		return "", serviceErrors.ErrWrongCredentials
+		return nil, serviceErrors.ErrWrongCredentials
 	}
 
-	return s.generateJWTToken(user.ID)
+	tokens, err := s.getTokens(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	dbSession, err := s.sessions.FindSession(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	session := models.Session{
+		UserID:       user.ID,
+		RefreshToken: tokens.RefreshToken,
+	}
+
+	if dbSession == nil {
+		session.Whitelist = []string{userIP}
+	} else {
+		if dbSession.IsIPAllowed(userIP) {
+			session.Whitelist = dbSession.Whitelist
+		} else {
+			session.Whitelist = append(dbSession.Whitelist, userIP)
+		}
+	}
+
+	if err = s.sessions.SaveSession(session); err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
 }
 
-func (s *authService) ValidateToken(token string) (uint64, error) {
+func (s *authService) RefreshTokens(refreshToken, userIP string) (*models.Tokens, error) {
+	userID, err := s.validateToken(refreshToken, s.cfg.RefreshToken.SigningKey)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := s.sessions.GetSession(userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, serviceErrors.ErrSessionNotFound
+		}
+		return nil, err
+	}
+
+	if !session.IsIPAllowed(userIP) {
+		return nil, serviceErrors.ErrIPIsNotInWhitelist
+	}
+
+	if refreshToken != session.RefreshToken {
+		return nil, serviceErrors.ErrWrongToken
+	}
+
+	newTokens, err := s.getTokens(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	session.RefreshToken = newTokens.RefreshToken
+
+	if err = s.sessions.SaveSession(*session); err != nil {
+		return nil, err
+	}
+
+	return newTokens, nil
+}
+
+func (s *authService) getTokens(userID uint64) (*models.Tokens, error) {
+	accessToken, err := s.generateJWTToken(userID, time.Duration(s.cfg.AccessToken.TokenTTLSec), s.cfg.AccessToken.SigningKey)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := s.generateJWTToken(userID, time.Duration(s.cfg.RefreshToken.TokenTTLSec), s.cfg.RefreshToken.SigningKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Tokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+type tokenClaims struct {
+	UserID uint64 `json:"userID"`
+	jwt.RegisteredClaims
+}
+
+func (s *authService) generateJWTToken(userID uint64, ttl time.Duration, signingKey string) (string, error) {
+	claims := tokenClaims{
+		userID,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl * time.Second)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(signingKey))
+}
+
+func (s *authService) ValidateAccessToken(token string) (uint64, error) {
+	return s.validateToken(token, s.cfg.AccessToken.SigningKey)
+}
+
+func (s *authService) validateToken(token, signingKey string) (uint64, error) {
 	parsed, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("%w: %v", serviceErrors.ErrWrongToken, token.Header["alg"])
 		}
-		return []byte(s.cfg.SigningKey), nil
+		return []byte(signingKey), nil
 	})
 	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
+		if strings.Contains(err.Error(), "signature is invalid") {
 			return 0, serviceErrors.ErrWrongToken
 		}
 		if strings.Contains(err.Error(), "token is expired by") {
@@ -126,23 +231,6 @@ func (s *authService) ValidateToken(token string) (uint64, error) {
 	}
 
 	return claims.UserID, nil
-}
-
-type tokenClaims struct {
-	UserID uint64 `json:"userID"`
-	jwt.RegisteredClaims
-}
-
-func (s *authService) generateJWTToken(userID uint64) (string, error) {
-	claims := tokenClaims{
-		userID,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.cfg.TokenTTLMinutes) * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.cfg.SigningKey))
 }
 
 func (s *authService) generateHash(password string) (string, error) {

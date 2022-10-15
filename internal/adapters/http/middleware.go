@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -20,33 +21,32 @@ var (
 	ErrTokenIsEmpty      = errors.New("token is empty")
 )
 
-// identifyUser TODO
 func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		header := c.Request().Header.Get(headerAuthorization)
 		if header == "" {
-			return c.JSON(NewUnauthorizedResponse(ErrEmptyAuthHeader))
+			return c.JSON(http.StatusUnauthorized, NewError(c, ErrEmptyAuthHeader, errorWrongAuthHeader))
 		}
 
 		headerParts := strings.Split(header, " ")
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			return c.JSON(NewUnauthorizedResponse(ErrInvalidAuthHeader))
+			return c.JSON(http.StatusUnauthorized, NewError(c, ErrInvalidAuthHeader, errorWrongAuthHeader))
 		}
 
 		token := headerParts[1]
 		if token == "" {
-			return c.JSON(NewUnauthorizedResponse(ErrTokenIsEmpty))
+			return c.JSON(http.StatusUnauthorized, NewError(c, ErrTokenIsEmpty, errorWrongAuthHeader))
 		}
 
-		userID, err := s.authService.ValidateToken(token)
+		userID, err := s.authService.ValidateAccessToken(token)
 		if err != nil {
 			switch {
 			case errors.Is(err, serviceErrors.ErrWrongToken):
-				return c.JSON(NewForbiddenResponse(err))
+				return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
 			case errors.Is(err, serviceErrors.ErrTokenIsExpired):
-				return c.JSON(NewUnauthorizedResponse(err))
+				return c.JSON(http.StatusUnauthorized, NewError(c, err, errorTokenExpired))
 			default:
-				return c.JSON(NewInternalErrorResponse(err))
+				return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 			}
 		}
 

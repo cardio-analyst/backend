@@ -9,9 +9,11 @@ import (
 )
 
 const (
-	dsnEnvKey        = "DATABASE_URL"
-	portEnvKey       = "PORT"
-	signingKeyEnvKey = "SIGNING_KEY"
+	dsnEnvKey  = "DATABASE_URL"
+	portEnvKey = "PORT"
+
+	accessTokenSigningKeyEnvKey  = "ACCESS_TOKEN_SIGNING_KEY"
+	refreshTokenSigningKeyEnvKey = "REFRESH_TOKEN_SIGNING_KEY"
 )
 
 type Config struct {
@@ -37,8 +39,13 @@ type ServicesConfig struct {
 }
 
 type AuthConfig struct {
-	SigningKey      string `yaml:"signing_key"`
-	TokenTTLMinutes int    `yaml:"token_ttl_minutes"`
+	AccessToken  TokenConfig `yaml:"access_token"`
+	RefreshToken TokenConfig `yaml:"refresh_token"`
+}
+
+type TokenConfig struct {
+	SigningKey  string `yaml:"signing_key"`
+	TokenTTLSec int    `yaml:"token_ttl_sec"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -71,9 +78,12 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	// if signing key was set at the environment
-	if signingKey, exists := os.LookupEnv(signingKeyEnvKey); exists {
-		cfg.Services.Auth.SigningKey = signingKey
+	// if signing keys were set at the environment
+	if signingKey, exists := os.LookupEnv(accessTokenSigningKeyEnvKey); exists {
+		cfg.Services.Auth.AccessToken.SigningKey = signingKey
+	}
+	if signingKey, exists := os.LookupEnv(refreshTokenSigningKeyEnvKey); exists {
+		cfg.Services.Auth.RefreshToken.SigningKey = signingKey
 	}
 
 	return &cfg, nil

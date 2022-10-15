@@ -1,86 +1,69 @@
 package http
 
 import (
-	"fmt"
-	"net/http"
+	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 // possible response designations
 const (
-	resultOK = "Ok"
+	resultRegistered = "Registered"
+	resultUpdated    = "Updated"
 )
 
-type Response struct {
-	Result string `json:"result"`
-}
-
-func NewOKResponse() (int, *Response) {
-	return http.StatusOK, &Response{
-		Result: resultOK,
-	}
+var resultDescriptions = map[string]string{
+	resultRegistered: "Регистрация прошла успешно",
+	resultUpdated:    "Данные успешно сохранены",
 }
 
 // possible errors designations
 const (
-	errorParseRequestData           = "ParseRequestDataError"
-	errorInvalidRequestData         = "InvalidRequestData"
-	errorAlreadyRegisteredWithLogin = "AlreadyRegisteredWithLogin"
-	errorAlreadyRegisteredWithEmail = "AlreadyRegisteredWithEmail"
-	errorUnauthorized               = "Unauthorized"
-	errorForbidden                  = "Forbidden"
-	errorInternal                   = "InternalError"
+	errorParseRequestData     = "ParseRequestError"
+	errorInvalidRequestData   = "InvalidRequestData"
+	errorLoginAlreadyOccupied = "LoginAlreadyOccupied"
+	errorEmailAlreadyOccupied = "EmailAlreadyOccupied"
+	errorInternal             = "InternalError"
+	errorWrongCredentials     = "WrongCredentials"
+	errorWrongToken           = "WrongToken"
+	errorTokenExpired         = "TokenExpired"
+	errorIPNotAllowed         = "IPNotAllowed"
+	errorWrongAuthHeader      = "WrongAuthHeader"
 )
 
-type ErrorResponse struct {
-	Error       string `json:"error"`
+var errorDescriptions = map[string]string{
+	errorParseRequestData:     "Запрос составлен некорректно",
+	errorInvalidRequestData:   "Ошибка валидации данных",
+	errorLoginAlreadyOccupied: "Выбранный логин уже занят",
+	errorEmailAlreadyOccupied: "Выбранный E-mail уже занят",
+	errorInternal:             "Внутренняя ошибка сервера",
+	errorWrongCredentials:     "Некорректные данные для входа",
+	errorWrongToken:           "Некорректный токен",
+	errorTokenExpired:         "Срок действия токена истёк",
+	errorIPNotAllowed:         "Неизвестное устройство",
+	errorWrongAuthHeader:      "Некорректный заголовок авторизации",
+}
+
+type Response struct {
+	Result      string `json:"result,omitempty"`
+	Error       string `json:"error,omitempty"`
 	Description string `json:"description"`
 }
 
-func NewParseRequestDataErrorResponse(err error) (int, *ErrorResponse) {
-	return http.StatusBadRequest, &ErrorResponse{
-		Error:       errorParseRequestData,
-		Description: fmt.Sprintf("failed to parse request data: %v", err),
+func NewResult(result string) *Response {
+	return &Response{
+		Result:      result,
+		Description: resultDescriptions[result],
 	}
 }
 
-func NewInvalidRequestDataResponse(err error) (int, *ErrorResponse) {
-	return http.StatusBadRequest, &ErrorResponse{
-		Error:       errorInvalidRequestData,
-		Description: fmt.Sprintf("validation failed: %v", err),
-	}
-}
+func NewError(c echo.Context, err error, error string) *Response {
+	log.WithFields(log.Fields{
+		"error":      err.Error(),
+		"request_id": c.Response().Header().Get(echo.HeaderXRequestID),
+	}).Error("error occurred")
 
-func NewAlreadyRegisteredWithLoginResponse(login string) (int, *ErrorResponse) {
-	return http.StatusBadRequest, &ErrorResponse{
-		Error:       errorAlreadyRegisteredWithLogin,
-		Description: fmt.Sprintf("user with login '%v' already registered", login),
-	}
-}
-
-func NewAlreadyRegisteredWithEmailResponse(email string) (int, *ErrorResponse) {
-	return http.StatusBadRequest, &ErrorResponse{
-		Error:       errorAlreadyRegisteredWithEmail,
-		Description: fmt.Sprintf("user with email '%v' already registered", email),
-	}
-}
-
-func NewUnauthorizedResponse(err error) (int, *ErrorResponse) {
-	return http.StatusUnauthorized, &ErrorResponse{
-		Error:       errorUnauthorized,
-		Description: err.Error(),
-	}
-}
-
-func NewForbiddenResponse(err error) (int, *ErrorResponse) {
-	return http.StatusForbidden, &ErrorResponse{
-		Error:       errorForbidden,
-		Description: err.Error(),
-	}
-}
-
-func NewInternalErrorResponse(err error) (int, *ErrorResponse) {
-	return http.StatusInternalServerError, &ErrorResponse{
-		Error:       errorInternal,
-		Description: err.Error(),
+	return &Response{
+		Error:       error,
+		Description: errorDescriptions[error],
 	}
 }

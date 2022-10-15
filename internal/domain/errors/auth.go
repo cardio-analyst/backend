@@ -3,11 +3,10 @@ package errors
 import "errors"
 
 var (
-	ErrInvalidUserData          = errors.New("invalid user data")
-	ErrUserLoginAlreadyOccupied = errors.New("user with such login is already registered")
-	ErrUserEmailAlreadyOccupied = errors.New("user with such email is already registered")
-	ErrInvalidUserCredentials   = errors.New("invalid user credentials")
-	ErrWrongCredentials         = errors.New("wrong user credentials")
-	ErrTokenIsExpired           = errors.New("token is expired")
-	ErrWrongToken               = errors.New("wrong token")
+	ErrInvalidUserCredentials = errors.New("invalid user credentials")
+	ErrWrongCredentials       = errors.New("wrong user credentials")
+	ErrTokenIsExpired         = errors.New("token is expired")
+	ErrWrongToken             = errors.New("wrong token")
+	ErrIPIsNotInWhitelist     = errors.New("user ip is not in the whitelist")
+	ErrSessionNotFound        = errors.New("session not found")
 )
