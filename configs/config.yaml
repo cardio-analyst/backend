@@ -8,8 +8,8 @@ services:
   auth:
     access_token:
       signing_key: "UNyi3vWZeY0QHUJgI4Qv5qVcew9JnBwJ"
-      token_ttl_sec: 30
+      token_ttl_sec: 25
     refresh_token:
       signing_key: "VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx"
-      token_ttl_sec: 120 # 2 minutes
+      token_ttl_sec: 50
 
