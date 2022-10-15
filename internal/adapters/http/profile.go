@@ -13,7 +13,7 @@ import (
 func (s *Server) initProfileRoutes() {
 	profile := s.server.Group("/api/v1/profile", s.identifyUser)
 	profile.GET("/info", s.getProfileInfo)
-	profile.POST("/edit", s.editProfileInfo)
+	profile.PUT("/edit", s.editProfileInfo)
 }
 
 func (s *Server) getProfileInfo(c echo.Context) error {
@@ -25,7 +25,7 @@ func (s *Server) getProfileInfo(c echo.Context) error {
 
 	user, err := s.userService.Get(criteria)
 	if err != nil {
-		return c.JSON(NewInternalErrorResponse(err))
+		return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 	}
 
 	return c.JSON(http.StatusOK, user)
@@ -34,7 +34,7 @@ func (s *Server) getProfileInfo(c echo.Context) error {
 func (s *Server) editProfileInfo(c echo.Context) error {
 	var reqData models.User
 	if err := c.Bind(&reqData); err != nil {
-		return c.JSON(NewParseRequestDataErrorResponse(err))
+		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
 	reqData.ID = c.Get(ctxKeyUserID).(uint64)
@@ -42,15 +42,15 @@ func (s *Server) editProfileInfo(c echo.Context) error {
 	if err := s.userService.Update(reqData); err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
-			return c.JSON(NewInvalidRequestDataResponse(err))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))
 		case errors.Is(err, serviceErrors.ErrUserLoginAlreadyOccupied):
-			return c.JSON(NewAlreadyRegisteredWithLoginResponse(reqData.Login))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorLoginAlreadyOccupied))
 		case errors.Is(err, serviceErrors.ErrUserEmailAlreadyOccupied):
-			return c.JSON(NewAlreadyRegisteredWithEmailResponse(reqData.Email))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorEmailAlreadyOccupied))
 		default:
-			return c.JSON(NewInternalErrorResponse(err))
+			return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 		}
 	}
 
-	return c.JSON(NewOKResponse())
+	return c.JSON(http.StatusOK, NewResult(resultUpdated))
 }

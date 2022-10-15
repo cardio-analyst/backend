@@ -14,55 +14,77 @@ func (s *Server) initAuthRoutes() {
 	auth := s.server.Group("/api/v1/auth")
 	auth.POST("/signUp", s.signUp)
 	auth.POST("/signIn", s.signIn)
+	auth.POST("/refreshTokens", s.refreshTokens)
 }
 
-// signUp TODO
 func (s *Server) signUp(c echo.Context) error {
 	var reqData models.User
 	if err := c.Bind(&reqData); err != nil {
-		return c.JSON(NewParseRequestDataErrorResponse(err))
+		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
 	if err := s.authService.RegisterUser(reqData); err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
-			return c.JSON(NewInvalidRequestDataResponse(err))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))
 		case errors.Is(err, serviceErrors.ErrUserLoginAlreadyOccupied):
-			return c.JSON(NewAlreadyRegisteredWithLoginResponse(reqData.Login))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorLoginAlreadyOccupied))
 		case errors.Is(err, serviceErrors.ErrUserEmailAlreadyOccupied):
-			return c.JSON(NewAlreadyRegisteredWithEmailResponse(reqData.Email))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorEmailAlreadyOccupied))
 		default:
-			return c.JSON(NewInternalErrorResponse(err))
+			return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 		}
 	}
 
-	return c.JSON(NewOKResponse())
+	return c.JSON(http.StatusOK, NewResult(resultRegistered))
 }
 
-type signInResponse struct {
-	Token string `json:"token"`
-}
-
-// signIn TODO
 func (s *Server) signIn(c echo.Context) error {
 	var reqData models.UserCredentials
 	if err := c.Bind(&reqData); err != nil {
-		return c.JSON(NewParseRequestDataErrorResponse(err))
+		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
-	token, err := s.authService.GetToken(reqData)
+	tokens, err := s.authService.GetTokens(reqData, c.RealIP())
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserCredentials):
-			return c.JSON(NewInvalidRequestDataResponse(err))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))
 		case errors.Is(err, serviceErrors.ErrWrongCredentials):
-			return c.JSON(NewForbiddenResponse(err))
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongCredentials))
 		default:
-			return c.JSON(NewInternalErrorResponse(err))
+			return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 		}
 	}
 
-	return c.JSON(http.StatusOK, &signInResponse{
-		Token: token,
-	})
+	return c.JSON(http.StatusOK, tokens)
+}
+
+type refreshTokensRequest struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+func (s *Server) refreshTokens(c echo.Context) error {
+	var reqData refreshTokensRequest
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
+	}
+
+	tokens, err := s.authService.RefreshTokens(reqData.RefreshToken, c.RealIP())
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceErrors.ErrWrongToken):
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
+		case errors.Is(err, serviceErrors.ErrTokenIsExpired):
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorTokenExpired))
+		case errors.Is(err, serviceErrors.ErrSessionNotFound):
+			return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
+		case errors.Is(err, serviceErrors.ErrIPIsNotInWhitelist):
+			return c.JSON(http.StatusForbidden, NewError(c, err, errorIPNotAllowed))
+		default:
+			return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
+		}
+	}
+
+	return c.JSON(http.StatusOK, tokens)
 }
