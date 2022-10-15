@@ -42,9 +42,9 @@ func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, serviceErrors.ErrWrongToken):
-				return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongToken))
+				return c.JSON(http.StatusBadRequest, NewError(c, err, errorWrongAccessToken))
 			case errors.Is(err, serviceErrors.ErrTokenIsExpired):
-				return c.JSON(http.StatusUnauthorized, NewError(c, err, errorTokenExpired))
+				return c.JSON(http.StatusUnauthorized, NewError(c, err, errorAccessTokenExpired))
 			default:
 				return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 			}
