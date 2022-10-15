@@ -48,7 +48,7 @@ func NewApp(appCtx context.Context, configPath string) *app {
 		log.Fatalf("failed to establish database connection: %v", err)
 	}
 
-	authService := auth.NewAuthService(cfg.Services.Auth, database)
+	authService := auth.NewAuthService(cfg.Services.Auth, database, database)
 	userService := user.NewUserService(database)
 
 	srv := http.NewServer(authService, userService)

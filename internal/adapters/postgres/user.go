@@ -18,7 +18,7 @@ const userTable = "users"
 // check whether Database structure implements the storage.UserStorage interface
 var _ storage.UserStorage = (*Database)(nil)
 
-func (d *Database) Save(userData models.User) error {
+func (d *Database) SaveUser(userData models.User) error {
 	userIDPlaceholder := "DEFAULT"
 	if userData.ID != 0 {
 		userIDPlaceholder = "$1"
@@ -76,7 +76,7 @@ func (d *Database) Save(userData models.User) error {
 	return err
 }
 
-func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User, error) {
+func (d *Database) GetUserByCriteria(criteria models.UserCriteria) (*models.User, error) {
 	whereStmt, whereStmtArgs := criteria.GetWhereStmtAndArgs()
 
 	query := fmt.Sprintf(
@@ -118,7 +118,7 @@ func (d *Database) GetOneByCriteria(criteria models.UserCriteria) (*models.User,
 	return &user, nil
 }
 
-func (d *Database) FindByCriteria(criteria models.UserCriteria) ([]*models.User, error) {
+func (d *Database) FindUserByCriteria(criteria models.UserCriteria) ([]*models.User, error) {
 	whereStmt, whereStmtArgs := criteria.GetWhereStmtAndArgs()
 
 	query := fmt.Sprintf(

@@ -16,17 +16,17 @@ import (
 var _ service.UserService = (*userService)(nil)
 
 type userService struct {
-	db storage.UserStorage
+	users storage.UserStorage
 }
 
-func NewUserService(db storage.UserStorage) *userService {
+func NewUserService(users storage.UserStorage) *userService {
 	return &userService{
-		db: db,
+		users: users,
 	}
 }
 
 func (s *userService) Get(criteria models.UserCriteria) (*models.User, error) {
-	user, err := s.db.GetOneByCriteria(criteria)
+	user, err := s.users.GetUserByCriteria(criteria)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, serviceErrors.ErrUserNotFound
@@ -56,7 +56,7 @@ func (s *userService) Update(user models.User) error {
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	users, err := s.db.FindByCriteria(criteria)
+	users, err := s.users.FindUserByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (s *userService) Update(user models.User) error {
 		user.Password = users[0].Password
 	}
 
-	return s.db.Save(user)
+	return s.users.SaveUser(user)
 }
 
 func (s *userService) generateHash(password string) (string, error) {
