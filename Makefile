@@ -1,10 +1,14 @@
 .PHONY: build
 build:
-	go build -o application.exe -v ./cmd/main.go
+	go build -o application -v ./cmd/main.go
 
 .PHONY: run
 run: build
-	./application.exe
+	./application
+
+.PHONY: compose-up
+compose-up:
+	docker-compose up
 
 .PHONY: tidy
 tidy:
