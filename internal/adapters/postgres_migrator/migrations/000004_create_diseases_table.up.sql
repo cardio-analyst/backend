@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS diseases
     infarction_or_stroke  VARCHAR(255)   NOT NULL,
     atherosclerosis       BOOLEAN        NOT NULL,
     other_cvds_diseases   VARCHAR(255),
-    CONSTRAINT fk_sessions_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_diseases_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
