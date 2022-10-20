@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -23,6 +24,9 @@ var (
 
 func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// TODO: remove
+		time.Sleep(2 * time.Second)
+
 		header := c.Request().Header.Get(headerAuthorization)
 		if header == "" {
 			return c.JSON(http.StatusUnauthorized, NewError(c, ErrEmptyAuthHeader, errorWrongAuthHeader))
