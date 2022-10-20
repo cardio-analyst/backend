@@ -3,7 +3,6 @@ package http
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -19,9 +18,6 @@ func (s *Server) initAuthRoutes() {
 }
 
 func (s *Server) signUp(c echo.Context) error {
-	// TODO: remove
-	time.Sleep(2 * time.Second)
-
 	var reqData models.User
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
@@ -44,9 +40,6 @@ func (s *Server) signUp(c echo.Context) error {
 }
 
 func (s *Server) signIn(c echo.Context) error {
-	// TODO: remove
-	time.Sleep(2 * time.Second)
-
 	var reqData models.UserCredentials
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
