@@ -3,7 +3,6 @@ package http
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -23,9 +22,6 @@ func (s *Server) getProfileInfo(c echo.Context) error {
 	criteria := models.UserCriteria{
 		ID: &userID,
 	}
-
-	// TODO: remove
-	time.Sleep(5 * time.Second)
 
 	user, err := s.userService.Get(criteria)
 	if err != nil {
