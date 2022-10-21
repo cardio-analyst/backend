@@ -2,14 +2,14 @@ CREATE TABLE IF NOT EXISTS diseases
 (
     id                    SERIAL PRIMARY KEY,
     user_id               INTEGER UNIQUE NOT NULL,
-    cvds_predisposition   VARCHAR(255)   NOT NULL,
-    take_statins          BOOLEAN        NOT NULL,
-    ckd                   BOOLEAN        NOT NULL,
-    arterial_hypertension BOOLEAN        NOT NULL,
-    cardiac_ischemia      BOOLEAN        NOT NULL,
-    type_two_diabets      BOOLEAN        NOT NULL,
-    infarction_or_stroke  VARCHAR(255)   NOT NULL,
-    atherosclerosis       BOOLEAN        NOT NULL,
-    other_cvds_diseases   VARCHAR(255),
+    cvds_predisposition   BOOLEAN        DEFAULT FALSE,
+    take_statins          BOOLEAN        DEFAULT FALSE,
+    ckd                   BOOLEAN        DEFAULT FALSE,
+    arterial_hypertension BOOLEAN        DEFAULT FALSE,
+    cardiac_ischemia      BOOLEAN        DEFAULT FALSE,
+    type_two_diabets      BOOLEAN        DEFAULT FALSE,
+    infarction_or_stroke  BOOLEAN        DEFAULT FALSE,
+    atherosclerosis       BOOLEAN        DEFAULT FALSE,
+    other_cvds_diseases   BOOLEAN        DEFAULT FALSE,
     CONSTRAINT fk_diseases_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

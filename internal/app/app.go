@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/cardio-analyst/backend/internal/domain/disease"
 	"io"
 	"os"
 
@@ -50,8 +51,9 @@ func NewApp(appCtx context.Context, configPath string) *app {
 
 	authService := auth.NewAuthService(cfg.Services.Auth, database, database)
 	userService := user.NewUserService(database)
+	diseaseService := disease.NewDiseaseService(database)
 
-	srv := http.NewServer(authService, userService)
+	srv := http.NewServer(authService, userService, diseaseService)
 
 	return &app{
 		server:  srv,

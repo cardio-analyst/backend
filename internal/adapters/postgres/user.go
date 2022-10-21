@@ -54,6 +54,7 @@ func (d *Database) SaveUser(userData models.User) error {
 		    WHERE %[1]v.id=$1`,
 		userTable, userIDPlaceholder, updateSetStmtArgs,
 	)
+
 	queryCtx := context.Background()
 
 	// cast birthDate to query format
@@ -73,6 +74,29 @@ func (d *Database) SaveUser(userData models.User) error {
 		userData.Email,
 		userData.Password,
 	)
+
+	if userIDPlaceholder == "DEFAULT" {
+		createDiseaseQuery := `
+        INSERT INTO diseases (
+           id,
+           user_id,
+		   cvds_predisposition,
+		   take_statins,
+		   ckd,
+		   arterial_hypertension,
+           cardiac_ischemia,
+		   type_two_diabets,
+           infarction_or_stroke,
+           atherosclerosis,
+           other_cvds_diseases
+        )
+        VALUES (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`
+
+		_, err = d.db.Exec(queryCtx, createDiseaseQuery)
+
+		return err
+	}
+
 	return err
 }
 

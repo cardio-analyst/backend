@@ -12,12 +12,13 @@ import (
 )
 
 type Server struct {
-	server      *echo.Echo
-	authService service.AuthService
-	userService service.UserService
+	server         *echo.Echo
+	authService    service.AuthService
+	userService    service.UserService
+	diseaseService service.DiseaseStorage
 }
 
-func NewServer(authService service.AuthService, userService service.UserService) *Server {
+func NewServer(authService service.AuthService, userService service.UserService, disease service.DiseaseStorage) *Server {
 	srv := new(Server)
 
 	e := echo.New()
@@ -34,6 +35,7 @@ func NewServer(authService service.AuthService, userService service.UserService)
 
 	srv.authService = authService
 	srv.userService = userService
+	srv.diseaseService = disease
 
 	srv.initRoutes()
 
