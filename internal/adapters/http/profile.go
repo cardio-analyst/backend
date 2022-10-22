@@ -23,7 +23,7 @@ func (s *Server) getProfileInfo(c echo.Context) error {
 		ID: &userID,
 	}
 
-	user, err := s.userService.Get(criteria)
+	user, err := s.services.User().Get(criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
 	}
@@ -39,7 +39,7 @@ func (s *Server) editProfileInfo(c echo.Context) error {
 
 	reqData.ID = c.Get(ctxKeyUserID).(uint64)
 
-	if err := s.userService.Update(reqData); err != nil {
+	if err := s.services.User().Update(reqData); err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))

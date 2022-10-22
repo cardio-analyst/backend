@@ -1,4 +1,4 @@
-package user
+package service
 
 import (
 	"database/sql"
@@ -13,20 +13,22 @@ import (
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
+// check whether userService structure implements the service.UserService interface
 var _ service.UserService = (*userService)(nil)
 
+// userService implements service.UserService interface.
 type userService struct {
-	users storage.UserStorage
+	users storage.UserRepository
 }
 
-func NewUserService(users storage.UserStorage) *userService {
+func NewUserService(users storage.UserRepository) *userService {
 	return &userService{
 		users: users,
 	}
 }
 
 func (s *userService) Get(criteria models.UserCriteria) (*models.User, error) {
-	user, err := s.users.GetUserByCriteria(criteria)
+	user, err := s.users.GetByCriteria(criteria)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, serviceErrors.ErrUserNotFound
@@ -56,7 +58,7 @@ func (s *userService) Update(user models.User) error {
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	users, err := s.users.FindUserByCriteria(criteria)
+	users, err := s.users.FindByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -88,7 +90,7 @@ func (s *userService) Update(user models.User) error {
 		user.Password = users[0].Password
 	}
 
-	return s.users.SaveUser(user)
+	return s.users.Save(user)
 }
 
 func (s *userService) generateHash(password string) (string, error) {

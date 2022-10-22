@@ -38,7 +38,7 @@ func (s *Server) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, NewError(c, ErrTokenIsEmpty, errorWrongAuthHeader))
 		}
 
-		userID, err := s.authService.ValidateAccessToken(token)
+		userID, err := s.services.Auth().ValidateAccessToken(token)
 		if err != nil {
 			switch {
 			case errors.Is(err, serviceErrors.ErrWrongToken):

@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	"database/sql"
@@ -17,15 +17,22 @@ import (
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
+// check whether authService structure implements the service.AuthService interface
 var _ service.AuthService = (*authService)(nil)
 
+// authService implements service.AuthService interface.
 type authService struct {
-	cfg      config.AuthConfig
-	users    storage.UserStorage
-	sessions storage.SessionStorage
+	cfg config.AuthConfig
+
+	users    storage.UserRepository
+	sessions storage.SessionRepository
 }
 
-func NewAuthService(cfg config.AuthConfig, users storage.UserStorage, sessions storage.SessionStorage) *authService {
+func NewAuthService(
+	cfg config.AuthConfig,
+	users storage.UserRepository,
+	sessions storage.SessionRepository,
+) *authService {
 	return &authService{
 		cfg:      cfg,
 		users:    users,
@@ -44,7 +51,7 @@ func (s *authService) RegisterUser(user models.User) error {
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	users, err := s.users.FindUserByCriteria(criteria)
+	users, err := s.users.FindByCriteria(criteria)
 	if err != nil {
 		return err
 	}
@@ -67,7 +74,7 @@ func (s *authService) RegisterUser(user models.User) error {
 
 	user.Password = passwordHash
 
-	return s.users.SaveUser(user)
+	return s.users.Save(user)
 }
 
 func (s *authService) GetTokens(credentials models.UserCredentials, userIP string) (*models.Tokens, error) {
@@ -82,7 +89,7 @@ func (s *authService) GetTokens(credentials models.UserCredentials, userIP strin
 		CriteriaSeparator: models.CriteriaSeparatorOR,
 	}
 
-	user, err := s.users.GetUserByCriteria(criteria)
+	user, err := s.users.GetByCriteria(criteria)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, serviceErrors.ErrWrongCredentials
@@ -103,7 +110,7 @@ func (s *authService) GetTokens(credentials models.UserCredentials, userIP strin
 		return nil, err
 	}
 
-	dbSession, err := s.sessions.FindSession(user.ID)
+	dbSession, err := s.sessions.Find(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +130,7 @@ func (s *authService) GetTokens(credentials models.UserCredentials, userIP strin
 		}
 	}
 
-	if err = s.sessions.SaveSession(session); err != nil {
+	if err = s.sessions.Save(session); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +143,7 @@ func (s *authService) RefreshTokens(refreshToken, userIP string) (*models.Tokens
 		return nil, err
 	}
 
-	session, err := s.sessions.GetSession(userID)
+	session, err := s.sessions.Get(userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, serviceErrors.ErrSessionNotFound
@@ -159,7 +166,7 @@ func (s *authService) RefreshTokens(refreshToken, userIP string) (*models.Tokens
 
 	session.RefreshToken = newTokens.RefreshToken
 
-	if err = s.sessions.SaveSession(*session); err != nil {
+	if err = s.sessions.Save(*session); err != nil {
 		return nil, err
 	}
 
