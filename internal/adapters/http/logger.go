@@ -47,8 +47,8 @@ func logRequest(c echo.Context, next echo.HandlerFunc) error {
 func RequestsBodiesLogger() echo.MiddlewareFunc {
 	return middleware.BodyDump(func(c echo.Context, reqBody, resBody []byte) {
 		log.WithFields(log.Fields{
-			"request_body":  string(reqBody),
-			"response_body": string(resBody),
+			"request_body":  hidePassword(string(reqBody)),
+			"response_body": hidePassword(string(resBody)),
 			"request_id":    c.Response().Header().Get(echo.HeaderXRequestID),
 		}).Debug("request bodies processed")
 	})
