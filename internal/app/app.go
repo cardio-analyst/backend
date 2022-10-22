@@ -16,6 +16,13 @@ import (
 	"github.com/cardio-analyst/backend/internal/domain/service"
 )
 
+func init() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.JSONFormatter{})
+}
+
 type app struct {
 	config  config.Config
 	server  *http.Server
@@ -23,8 +30,6 @@ type app struct {
 }
 
 func NewApp(_ context.Context, configPath string) *app {
-	initializeLogger()
-
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config data: %v", err)
@@ -56,13 +61,6 @@ func NewApp(_ context.Context, configPath string) *app {
 		server:  srv,
 		closers: []io.Closer{srv, storage},
 	}
-}
-
-func initializeLogger() {
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
-	log.SetReportCaller(true)
-	log.SetFormatter(&log.JSONFormatter{})
 }
 
 func (a *app) Start() {
