@@ -14,11 +14,22 @@ import (
 
 const sessionTable = "sessions"
 
-// check whether Database structure implements the storage.SessionStorage interface
-var _ storage.SessionStorage = (*Database)(nil)
+// check whether sessionRepository structure implements the storage.SessionRepository interface
+var _ storage.SessionRepository = (*sessionRepository)(nil)
 
-func (d *Database) SaveSession(sessionData models.Session) error {
-	createSessionQuery := fmt.Sprintf(`
+// sessionRepository implements storage.SessionRepository interface.
+type sessionRepository struct {
+	storage *postgresStorage
+}
+
+func NewSessionRepository(storage *postgresStorage) *sessionRepository {
+	return &sessionRepository{
+		storage: storage,
+	}
+}
+
+func (r *sessionRepository) Save(sessionData models.Session) error {
+	query := fmt.Sprintf(`
 		INSERT INTO %[1]v (user_id,
 						   refresh_token,
 						   whitelist)
@@ -32,7 +43,7 @@ func (d *Database) SaveSession(sessionData models.Session) error {
 	)
 	queryCtx := context.Background()
 
-	_, err := d.db.Exec(queryCtx, createSessionQuery,
+	_, err := r.storage.conn.Exec(queryCtx, query,
 		sessionData.UserID,
 		sessionData.RefreshToken,
 		sessionData.Whitelist,
@@ -40,7 +51,7 @@ func (d *Database) SaveSession(sessionData models.Session) error {
 	return err
 }
 
-func (d *Database) GetSession(userID uint64) (*models.Session, error) {
+func (r *sessionRepository) Get(userID uint64) (*models.Session, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT id,
@@ -53,7 +64,7 @@ func (d *Database) GetSession(userID uint64) (*models.Session, error) {
 	queryCtx := context.Background()
 
 	var session models.Session
-	if err := d.db.QueryRow(
+	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(
 		&session.ID,
@@ -70,7 +81,7 @@ func (d *Database) GetSession(userID uint64) (*models.Session, error) {
 	return &session, nil
 }
 
-func (d *Database) FindSession(userID uint64) (*models.Session, error) {
+func (r *sessionRepository) Find(userID uint64) (*models.Session, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT id,
@@ -83,7 +94,7 @@ func (d *Database) FindSession(userID uint64) (*models.Session, error) {
 	queryCtx := context.Background()
 
 	var session models.Session
-	if err := d.db.QueryRow(
+	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(
 		&session.ID,
