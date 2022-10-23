@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -14,6 +15,9 @@ const (
 
 	accessTokenSigningKeyEnvKey  = "ACCESS_TOKEN_SIGNING_KEY"
 	refreshTokenSigningKeyEnvKey = "REFRESH_TOKEN_SIGNING_KEY"
+
+	accessTokenTTLEnvKey  = "ACCESS_TOKEN_TTL_SEC"
+	refreshTokenTTLEnvKey = "REFRESH_TOKEN_TTL_SEC"
 )
 
 type Config struct {
@@ -64,27 +68,46 @@ func Load(configPath string) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.loadFromEnv()
+
+	return &cfg, nil
+}
+
+func (c *Config) loadFromEnv() {
 	// if dsn was set at the environment
 	if dsnFromEnv, exists := os.LookupEnv(dsnEnvKey); exists {
-		cfg.Adapters.Postgres.DSN = dsnFromEnv
+		c.Adapters.Postgres.DSN = dsnFromEnv
 	}
 
 	// if port was set at the environment
 	if portFromEnv, exists := os.LookupEnv(portEnvKey); exists {
-		var port int
-		port, err = strconv.Atoi(portFromEnv)
+		port, err := strconv.Atoi(portFromEnv)
 		if err == nil {
-			cfg.Adapters.HTTP.Port = port
+			c.Adapters.HTTP.Port = port
 		}
 	}
 
 	// if signing keys were set at the environment
 	if signingKey, exists := os.LookupEnv(accessTokenSigningKeyEnvKey); exists {
-		cfg.Services.Auth.AccessToken.SigningKey = signingKey
+		c.Services.Auth.AccessToken.SigningKey = signingKey
 	}
 	if signingKey, exists := os.LookupEnv(refreshTokenSigningKeyEnvKey); exists {
-		cfg.Services.Auth.RefreshToken.SigningKey = signingKey
+		c.Services.Auth.RefreshToken.SigningKey = signingKey
 	}
 
-	return &cfg, nil
+	// if tokens ttl were set at the environment
+	if tokenTTL, exists := os.LookupEnv(accessTokenTTLEnvKey); exists {
+		ttl, err := strconv.Atoi(tokenTTL)
+		if err == nil {
+			log.Debugf("access token TTL was set from environment: %v sec", ttl)
+			c.Services.Auth.AccessToken.TokenTTLSec = ttl
+		}
+	}
+	if tokenTTL, exists := os.LookupEnv(refreshTokenTTLEnvKey); exists {
+		ttl, err := strconv.Atoi(tokenTTL)
+		if err == nil {
+			log.Debugf("refresh token TTL was set from environment: %v sec", ttl)
+			c.Services.Auth.AccessToken.TokenTTLSec = ttl
+		}
+	}
 }
