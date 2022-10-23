@@ -12,9 +12,20 @@ import (
 
 const diseaseTable = "diseases"
 
-var _ storage.DiseaseStorage = (*Database)(nil)
+var _ storage.DiseaseRepository = (*diseaseRepository)(nil)
 
-func (d *Database) SaveDisease(diseaseData models.Disease) (err error) {
+// userRepository implements storage.UserRepository interface.
+type diseaseRepository struct {
+	storage *postgresStorage
+}
+
+func NewDiseaseRepository(storage *postgresStorage) *diseaseRepository {
+	return &diseaseRepository{
+		storage: storage,
+	}
+}
+
+func (r *diseaseRepository) Save(diseaseData models.Disease) (err error) {
 
 	updateSetStmtArgs := `
 		cvds_predisposition=$1,
@@ -33,7 +44,7 @@ func (d *Database) SaveDisease(diseaseData models.Disease) (err error) {
 	)
 	queryCtx := context.Background()
 
-	_, err = d.db.Exec(queryCtx, createDiseaseQuery,
+	_, err = r.storage.conn.Exec(queryCtx, createDiseaseQuery,
 		diseaseData.CvdsPredisposition,
 		diseaseData.TakeStatins,
 		diseaseData.Ckd,
@@ -47,7 +58,7 @@ func (d *Database) SaveDisease(diseaseData models.Disease) (err error) {
 	return err
 }
 
-func (d *Database) GetDiseaseByUserId(userId uint64) (*models.Disease, error) {
+func (r *diseaseRepository) GetByUserId(userId uint64) (*models.Disease, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT id,
@@ -67,7 +78,7 @@ func (d *Database) GetDiseaseByUserId(userId uint64) (*models.Disease, error) {
 	queryCtx := context.Background()
 
 	var disease models.Disease
-	if err := d.db.QueryRow(queryCtx, query).Scan(
+	if err := r.storage.conn.QueryRow(queryCtx, query).Scan(
 		&disease.ID,
 		&disease.UserID,
 		&disease.CvdsPredisposition,

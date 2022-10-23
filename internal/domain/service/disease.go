@@ -1,4 +1,4 @@
-package disease
+package service
 
 import (
 	"database/sql"
@@ -9,20 +9,20 @@ import (
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
-var _ service.DiseaseStorage = (*diseaseService)(nil)
+var _ service.DiseaseService = (*diseaseService)(nil)
 
 type diseaseService struct {
-	diseases storage.DiseaseStorage
+	diseases storage.DiseaseRepository
 }
 
-func NewDiseaseService(diseases storage.DiseaseStorage) *diseaseService {
+func NewDiseaseService(diseases storage.DiseaseRepository) *diseaseService {
 	return &diseaseService{
 		diseases: diseases,
 	}
 }
 
 func (d diseaseService) Get(userId uint64) (*models.Disease, error) {
-	disease, err := d.diseases.GetDiseaseByUserId(userId)
+	disease, err := d.diseases.GetByUserId(userId)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -36,5 +36,5 @@ func (d diseaseService) Get(userId uint64) (*models.Disease, error) {
 
 func (d diseaseService) Update(diseaseData models.Disease) error {
 
-	return d.diseases.SaveDisease(diseaseData)
+	return d.diseases.Save(diseaseData)
 }

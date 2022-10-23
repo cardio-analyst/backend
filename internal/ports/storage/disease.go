@@ -2,8 +2,8 @@ package storage
 
 import "github.com/cardio-analyst/backend/internal/domain/models"
 
-type DiseaseStorage interface {
-	SaveDisease(diseaseData models.Disease) (err error)
+type DiseaseRepository interface {
+	Save(diseaseData models.Disease) (err error)
 
-	GetDiseaseByUserId(userId uint64) (disease *models.Disease, err error)
+	GetByUserId(userId uint64) (disease *models.Disease, err error)
 }

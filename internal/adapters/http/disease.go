@@ -17,7 +17,7 @@ func (s *Server) initDiseaseRoutes() {
 func (s *Server) getDiseaseInfo(c echo.Context) error {
 	userID := c.Get(ctxKeyUserID).(uint64)
 
-	disease, err := s.diseaseService.Get(userID)
+	disease, err := s.services.Disease().Get(userID)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, NewError(c, err, errorInternal))
@@ -34,7 +34,7 @@ func (s *Server) editDiseaseInfo(c echo.Context) error {
 
 	reqData.UserID = c.Get(ctxKeyUserID).(uint64)
 
-	if err := s.diseaseService.Update(reqData); err != nil {
+	if err := s.services.Disease().Update(reqData); err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))

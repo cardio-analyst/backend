@@ -15,10 +15,21 @@ import (
 
 const userTable = "users"
 
-// check whether Database structure implements the storage.UserStorage interface
-var _ storage.UserStorage = (*Database)(nil)
+// check whether userRepository structure implements the storage.UserRepository interface
+var _ storage.UserRepository = (*userRepository)(nil)
 
-func (d *Database) SaveUser(userData models.User) error {
+// userRepository implements storage.UserRepository interface.
+type userRepository struct {
+	storage *postgresStorage
+}
+
+func NewUserRepository(storage *postgresStorage) *userRepository {
+	return &userRepository{
+		storage: storage,
+	}
+}
+
+func (r *userRepository) Save(userData models.User) error {
 	userIDPlaceholder := "DEFAULT"
 	if userData.ID != 0 {
 		userIDPlaceholder = "$1"
@@ -63,10 +74,9 @@ func (d *Database) SaveUser(userData models.User) error {
 	if err := birthDateCasted.Set(userData.BirthDate.Time); err != nil {
 		return err
 	}
-
 	var userID uint64
 
-	err := d.db.QueryRow(queryCtx, createUserQuery,
+	err := r.storage.conn.QueryRow(queryCtx, createUserQuery,
 		userData.ID,
 		userData.FirstName,
 		userData.LastName,
@@ -96,7 +106,7 @@ func (d *Database) SaveUser(userData models.User) error {
         )
         VALUES (DEFAULT, %v, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`, userID)
 
-		_, err = d.db.Exec(queryCtx, createDiseaseQuery)
+		_, err = r.storage.conn.Exec(queryCtx, createDiseaseQuery)
 
 		return err
 	}
@@ -104,7 +114,7 @@ func (d *Database) SaveUser(userData models.User) error {
 	return err
 }
 
-func (d *Database) GetUserByCriteria(criteria models.UserCriteria) (*models.User, error) {
+func (r *userRepository) GetByCriteria(criteria models.UserCriteria) (*models.User, error) {
 	whereStmt, whereStmtArgs := criteria.GetWhereStmtAndArgs()
 
 	query := fmt.Sprintf(
@@ -124,7 +134,7 @@ func (d *Database) GetUserByCriteria(criteria models.UserCriteria) (*models.User
 	queryCtx := context.Background()
 
 	var user models.User
-	if err := d.db.QueryRow(
+	if err := r.storage.conn.QueryRow(
 		queryCtx, query, whereStmtArgs...,
 	).Scan(
 		&user.ID,
@@ -146,7 +156,7 @@ func (d *Database) GetUserByCriteria(criteria models.UserCriteria) (*models.User
 	return &user, nil
 }
 
-func (d *Database) FindUserByCriteria(criteria models.UserCriteria) ([]*models.User, error) {
+func (r *userRepository) FindByCriteria(criteria models.UserCriteria) ([]*models.User, error) {
 	whereStmt, whereStmtArgs := criteria.GetWhereStmtAndArgs()
 
 	query := fmt.Sprintf(
@@ -165,7 +175,7 @@ func (d *Database) FindUserByCriteria(criteria models.UserCriteria) ([]*models.U
 	)
 	queryCtx := context.Background()
 
-	rows, err := d.db.Query(queryCtx, query, whereStmtArgs...)
+	rows, err := r.storage.conn.Query(queryCtx, query, whereStmtArgs...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

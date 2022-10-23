@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/domain/disease"
 	"io"
 	"os"
 
@@ -14,19 +13,23 @@ import (
 	"github.com/cardio-analyst/backend/internal/adapters/postgres"
 	"github.com/cardio-analyst/backend/internal/adapters/postgres_migrator"
 	"github.com/cardio-analyst/backend/internal/config"
-	"github.com/cardio-analyst/backend/internal/domain/auth"
-	"github.com/cardio-analyst/backend/internal/domain/user"
+	"github.com/cardio-analyst/backend/internal/domain/service"
 )
 
+func init() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.JSONFormatter{})
+}
+
 type app struct {
+	config  config.Config
 	server  *http.Server
-	config  *config.Config
 	closers []io.Closer
 }
 
-func NewApp(appCtx context.Context, configPath string) *app {
-	initializeLogger()
-
+func NewApp(_ context.Context, configPath string) *app {
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config data: %v", err)
@@ -44,29 +47,20 @@ func NewApp(appCtx context.Context, configPath string) *app {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
-	database, err := postgres.NewDatabase(appCtx, cfg.Adapters.Postgres.DSN)
+	storage, err := postgres.NewStorage(cfg.Adapters.Postgres)
 	if err != nil {
-		log.Fatalf("failed to establish database connection: %v", err)
+		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	authService := auth.NewAuthService(cfg.Services.Auth, database, database)
-	userService := user.NewUserService(database)
-	diseaseService := disease.NewDiseaseService(database)
+	services := service.NewServices(cfg.Services, storage)
 
-	srv := http.NewServer(authService, userService, diseaseService)
+	srv := http.NewServer(services)
 
 	return &app{
+		config:  *cfg,
 		server:  srv,
-		config:  cfg,
-		closers: []io.Closer{srv, database},
+		closers: []io.Closer{srv, storage},
 	}
-}
-
-func initializeLogger() {
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
-	log.SetReportCaller(true)
-	log.SetFormatter(&log.JSONFormatter{})
 }
 
 func (a *app) Start() {
@@ -86,7 +80,7 @@ func (a *app) Start() {
 func (a *app) Stop() {
 	for _, closer := range a.closers {
 		if err := closer.Close(); err != nil {
-			log.Errorf("failed to stop the closer: %T: %v", closer, err)
+			log.Warnf("failed to stop the closer: %T: %v", closer, err)
 		}
 	}
 

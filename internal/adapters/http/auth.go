@@ -23,7 +23,7 @@ func (s *Server) signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
-	if err := s.authService.RegisterUser(reqData); err != nil {
+	if err := s.services.Auth().RegisterUser(reqData); err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, NewError(c, err, errorInvalidRequestData))
@@ -45,7 +45,7 @@ func (s *Server) signIn(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := s.authService.GetTokens(reqData, c.RealIP())
+	tokens, err := s.services.Auth().GetTokens(reqData, c.RealIP())
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidUserCredentials):
@@ -70,7 +70,7 @@ func (s *Server) refreshTokens(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := s.authService.RefreshTokens(reqData.RefreshToken, c.RealIP())
+	tokens, err := s.services.Auth().RefreshTokens(reqData.RefreshToken, c.RealIP())
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrWrongToken):
