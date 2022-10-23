@@ -30,6 +30,14 @@ func NewUserRepository(storage *postgresStorage) *userRepository {
 }
 
 func (r *userRepository) Save(userData models.User) error {
+	queryCtx := context.Background()
+
+	dbTX, err := r.storage.conn.Begin(queryCtx)
+	if err != nil {
+		return err
+	}
+	defer dbTX.Rollback(queryCtx)
+
 	userIDPlaceholder := "DEFAULT"
 	if userData.ID != 0 {
 		userIDPlaceholder = "$1"
@@ -48,7 +56,7 @@ func (r *userRepository) Save(userData models.User) error {
 		password_hash=$9`
 	}
 
-	createUserQuery := fmt.Sprintf(`
+	query := fmt.Sprintf(`
 		INSERT INTO %[1]v (id,
 		                first_name,
 						last_name,
@@ -67,16 +75,14 @@ func (r *userRepository) Save(userData models.User) error {
 		userTable, userIDPlaceholder, updateSetStmtArgs,
 	)
 
-	queryCtx := context.Background()
-
 	// cast birthDate to query format
 	birthDateCasted := pgtype.Date{Status: pgtype.Null}
-	if err := birthDateCasted.Set(userData.BirthDate.Time); err != nil {
+	if err = birthDateCasted.Set(userData.BirthDate.Time); err != nil {
 		return err
 	}
-	var userID uint64
 
-	err := r.storage.conn.QueryRow(queryCtx, createUserQuery,
+	var userID uint64
+	if err = dbTX.QueryRow(queryCtx, query,
 		userData.ID,
 		userData.FirstName,
 		userData.LastName,
@@ -86,32 +92,19 @@ func (r *userRepository) Save(userData models.User) error {
 		userData.Login,
 		userData.Email,
 		userData.Password,
-	).Scan(&userID)
-
-	if userIDPlaceholder == "DEFAULT" {
-
-		createDiseaseQuery := fmt.Sprintf(`
-        INSERT INTO diseases (
-           id,
-           user_id,
-		   cvds_predisposition,
-		   take_statins,
-		   ckd,
-		   arterial_hypertension,
-           cardiac_ischemia,
-		   type_two_diabets,
-           infarction_or_stroke,
-           atherosclerosis,
-           other_cvds_diseases
-        )
-        VALUES (DEFAULT, %v, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`, userID)
-
-		_, err = r.storage.conn.Exec(queryCtx, createDiseaseQuery)
-
+	).Scan(&userID); err != nil {
 		return err
 	}
 
-	return err
+	if userIDPlaceholder == "DEFAULT" {
+		query = `INSERT INTO diseases (user_id) VALUES ($1)`
+		_, err = dbTX.Exec(queryCtx, query, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return dbTX.Commit(queryCtx)
 }
 
 func (r *userRepository) GetByCriteria(criteria models.UserCriteria) (*models.User, error) {

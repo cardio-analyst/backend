@@ -14,9 +14,9 @@ type services struct {
 	cfg     config.ServicesConfig
 	storage storage.Storage
 
-	userService    service.UserService
-	authService    service.AuthService
-	diseaseService service.DiseaseService
+	userService     service.UserService
+	authService     service.AuthService
+	diseasesService service.DiseasesService
 }
 
 func NewServices(cfg config.ServicesConfig, storage storage.Storage) *services {
@@ -46,12 +46,12 @@ func (s *services) Auth() service.AuthService {
 	return s.authService
 }
 
-func (s *services) Disease() service.DiseaseService {
-	if s.diseaseService != nil {
-		return s.diseaseService
+func (s *services) Diseases() service.DiseasesService {
+	if s.diseasesService != nil {
+		return s.diseasesService
 	}
 
-	s.diseaseService = NewDiseaseService(s.storage.Diseases())
+	s.diseasesService = NewDiseasesService(s.storage.Diseases())
 
-	return s.diseaseService
+	return s.diseasesService
 }

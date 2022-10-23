@@ -54,8 +54,7 @@ func (r *sessionRepository) Save(sessionData models.Session) error {
 func (r *sessionRepository) Get(userID uint64) (*models.Session, error) {
 	query := fmt.Sprintf(
 		`
-		SELECT id,
-			   user_id,
+		SELECT user_id,
 			   refresh_token,
 			   whitelist
 		FROM %v WHERE user_id=$1`,
@@ -67,7 +66,6 @@ func (r *sessionRepository) Get(userID uint64) (*models.Session, error) {
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(
-		&session.ID,
 		&session.UserID,
 		&session.RefreshToken,
 		&session.Whitelist,
@@ -84,8 +82,7 @@ func (r *sessionRepository) Get(userID uint64) (*models.Session, error) {
 func (r *sessionRepository) Find(userID uint64) (*models.Session, error) {
 	query := fmt.Sprintf(
 		`
-		SELECT id,
-			   user_id,
+		SELECT user_id,
 			   refresh_token,
 			   whitelist
 		FROM %v WHERE user_id=$1`,
@@ -97,7 +94,6 @@ func (r *sessionRepository) Find(userID uint64) (*models.Session, error) {
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(
-		&session.ID,
 		&session.UserID,
 		&session.RefreshToken,
 		&session.Whitelist,

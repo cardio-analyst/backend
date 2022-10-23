@@ -16,9 +16,9 @@ var _ storage.Storage = (*postgresStorage)(nil)
 type postgresStorage struct {
 	conn *pgxpool.Pool
 
-	userRepository    storage.UserRepository
-	sessionRepository storage.SessionRepository
-	diseaseRepository storage.DiseaseRepository
+	userRepository     storage.UserRepository
+	sessionRepository  storage.SessionRepository
+	diseasesRepository storage.DiseasesRepository
 }
 
 func NewStorage(cfg config.PostgresConfig) (*postgresStorage, error) {
@@ -50,14 +50,14 @@ func (s *postgresStorage) Sessions() storage.SessionRepository {
 	return s.sessionRepository
 }
 
-func (s *postgresStorage) Diseases() storage.DiseaseRepository {
-	if s.diseaseRepository != nil {
-		return s.diseaseRepository
+func (s *postgresStorage) Diseases() storage.DiseasesRepository {
+	if s.diseasesRepository != nil {
+		return s.diseasesRepository
 	}
 
-	s.diseaseRepository = NewDiseaseRepository(s)
+	s.diseasesRepository = NewDiseasesRepository(s)
 
-	return s.diseaseRepository
+	return s.diseasesRepository
 }
 
 func (s *postgresStorage) Close() error {

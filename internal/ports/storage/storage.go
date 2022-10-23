@@ -6,6 +6,6 @@ type Storage interface {
 	Users() UserRepository
 	// Sessions allows you to access information about sessions.
 	Sessions() SessionRepository
-
-	Diseases() DiseaseRepository
+	// Diseases allows you to access information about user diseases.
+	Diseases() DiseasesRepository
 }
