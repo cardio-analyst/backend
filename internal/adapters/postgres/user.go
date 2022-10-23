@@ -30,6 +30,14 @@ func NewUserRepository(storage *postgresStorage) *userRepository {
 }
 
 func (r *userRepository) Save(userData models.User) error {
+	queryCtx := context.Background()
+
+	dbTX, err := r.storage.conn.Begin(queryCtx)
+	if err != nil {
+		return err
+	}
+	defer dbTX.Rollback(queryCtx)
+
 	userIDPlaceholder := "DEFAULT"
 	if userData.ID != 0 {
 		userIDPlaceholder = "$1"
@@ -48,7 +56,7 @@ func (r *userRepository) Save(userData models.User) error {
 		password_hash=$9`
 	}
 
-	createUserQuery := fmt.Sprintf(`
+	query := fmt.Sprintf(`
 		INSERT INTO %[1]v (id,
 		                first_name,
 						last_name,
@@ -62,18 +70,19 @@ func (r *userRepository) Save(userData models.User) error {
 		ON CONFLICT (id) 
 		    DO UPDATE SET 
 		        %[3]v 
-		    WHERE %[1]v.id=$1`,
+		    WHERE %[1]v.id=$1
+        RETURNING id`,
 		userTable, userIDPlaceholder, updateSetStmtArgs,
 	)
-	queryCtx := context.Background()
 
 	// cast birthDate to query format
 	birthDateCasted := pgtype.Date{Status: pgtype.Null}
-	if err := birthDateCasted.Set(userData.BirthDate.Time); err != nil {
+	if err = birthDateCasted.Set(userData.BirthDate.Time); err != nil {
 		return err
 	}
 
-	_, err := r.storage.conn.Exec(queryCtx, createUserQuery,
+	var userID uint64
+	if err = dbTX.QueryRow(queryCtx, query,
 		userData.ID,
 		userData.FirstName,
 		userData.LastName,
@@ -83,8 +92,19 @@ func (r *userRepository) Save(userData models.User) error {
 		userData.Login,
 		userData.Email,
 		userData.Password,
-	)
-	return err
+	).Scan(&userID); err != nil {
+		return err
+	}
+
+	if userIDPlaceholder == "DEFAULT" {
+		query = `INSERT INTO diseases (user_id) VALUES ($1)`
+		_, err = dbTX.Exec(queryCtx, query, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return dbTX.Commit(queryCtx)
 }
 
 func (r *userRepository) GetByCriteria(criteria models.UserCriteria) (*models.User, error) {

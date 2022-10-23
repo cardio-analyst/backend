@@ -6,4 +6,6 @@ type Services interface {
 	User() UserService
 	// Auth contains the methods of business logic of working with authorization.
 	Auth() AuthService
+	// Diseases contains the methods of business logic of working with user diseases.
+	Diseases() DiseasesService
 }

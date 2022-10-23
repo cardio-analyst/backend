@@ -6,7 +6,6 @@ type Tokens struct {
 }
 
 type Session struct {
-	ID           uint64   `json:"-" db:"id"`
 	UserID       uint64   `json:"-" db:"user_id"`
 	RefreshToken string   `json:"-" db:"refresh_token"`
 	Whitelist    []string `json:"-" db:"whitelist"`
