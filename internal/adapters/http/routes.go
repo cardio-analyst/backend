@@ -14,6 +14,8 @@ func (s *Server) initRoutes() {
 
 	// /api/v1/profile/*
 	s.initProfileRoutes()
+
+	s.initDiseaseRoutes()
 }
 
 func (s *Server) health(c echo.Context) error {

@@ -21,7 +21,7 @@ func NewDiseaseService(diseases storage.DiseaseStorage) *diseaseService {
 	}
 }
 
-func (d diseaseService) Get(userId uint) (*models.Disease, error) {
+func (d diseaseService) Get(userId uint64) (*models.Disease, error) {
 	disease, err := d.diseases.GetDiseaseByUserId(userId)
 
 	if err != nil {

@@ -10,12 +10,12 @@ import (
 
 func (s *Server) initDiseaseRoutes() {
 	disease := s.server.Group("/api/v1/disease", s.identifyUser)
-	disease.GET("/info", s.getProfileInfo)
+	disease.GET("/info", s.getDiseaseInfo)
 	disease.PUT("/edit", s.editDiseaseInfo)
 }
 
 func (s *Server) getDiseaseInfo(c echo.Context) error {
-	userID := c.Get(ctxKeyUserID).(uint)
+	userID := c.Get(ctxKeyUserID).(uint64)
 
 	disease, err := s.diseaseService.Get(userID)
 
@@ -32,7 +32,7 @@ func (s *Server) editDiseaseInfo(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewError(c, err, errorParseRequestData))
 	}
 
-	reqData.ID = c.Get(ctxKeyUserID).(uint64)
+	reqData.UserID = c.Get(ctxKeyUserID).(uint64)
 
 	if err := s.diseaseService.Update(reqData); err != nil {
 		switch {

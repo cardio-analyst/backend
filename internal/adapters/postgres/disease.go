@@ -16,47 +16,24 @@ var _ storage.DiseaseStorage = (*Database)(nil)
 
 func (d *Database) SaveDisease(diseaseData models.Disease) (err error) {
 
-	diseaseIDPlaceholder := "DEFAULT"
-	if diseaseData.ID != 0 {
-		diseaseIDPlaceholder = "$1"
-	}
-
 	updateSetStmtArgs := `
-        user_id=$2,
-		cvds_predisposition=$3,
-		take_statins=$4,
-		ckd=$5,
-		arterial_hypertension=$6,
-        cardiac_ischemia=$7,
-		type_two_diabets=$8,
-        infarction_or_stroke=$9,
-        atherosclerosis=$10,
-        other_cvds_diseases=$11`
+		cvds_predisposition=$1,
+		take_statins=$2,
+		ckd=$3,
+		arterial_hypertension=$4,
+        cardiac_ischemia=$5,
+		type_two_diabets=$6,
+        infarction_or_stroke=$7,
+        atherosclerosis=$8,
+        other_cvds_diseases=$9`
 
 	createDiseaseQuery := fmt.Sprintf(`
-		INSERT INTO %[1]v (id,
-		                user_id,
-						cvds_predisposition,
-						take_statins,
-						ckd,
-						arterial_hypertension,
-                        cardiac_ischemia,
-						type_two_diabets,
-						infarction_or_stroke,
-						atherosclerosis,
-                        other_cvds_diseases)
-		VALUES (%[2]v, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		ON CONFLICT (id) 
-		    DO UPDATE SET 
-		        %[3]v 
-		    WHERE %[1]v.user_id=$2`,
-		userTable, diseaseIDPlaceholder, updateSetStmtArgs,
+		UPDATE %v SET %v WHERE user_id = %v`,
+		diseaseTable, updateSetStmtArgs, diseaseData.UserID,
 	)
 	queryCtx := context.Background()
 
 	_, err = d.db.Exec(queryCtx, createDiseaseQuery,
-		diseaseData.ID,
-		diseaseData.UserID,
 		diseaseData.CvdsPredisposition,
 		diseaseData.TakeStatins,
 		diseaseData.Ckd,
@@ -70,7 +47,7 @@ func (d *Database) SaveDisease(diseaseData models.Disease) (err error) {
 	return err
 }
 
-func (d *Database) GetDiseaseByUserId(userId uint) (*models.Disease, error) {
+func (d *Database) GetDiseaseByUserId(userId uint64) (*models.Disease, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT id,
@@ -84,13 +61,13 @@ func (d *Database) GetDiseaseByUserId(userId uint) (*models.Disease, error) {
 			   infarction_or_stroke,
                atherosclerosis,
                other_cvds_diseases
-		FROM %v WHERE %[1]v.user_id =%v`,
+		FROM %v WHERE user_id = %v`,
 		diseaseTable, userId,
 	)
 	queryCtx := context.Background()
 
 	var disease models.Disease
-	if err := d.db.QueryRow(queryCtx, query, userId).Scan(
+	if err := d.db.QueryRow(queryCtx, query).Scan(
 		&disease.ID,
 		&disease.UserID,
 		&disease.CvdsPredisposition,

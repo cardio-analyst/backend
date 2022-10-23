@@ -51,7 +51,8 @@ func (d *Database) SaveUser(userData models.User) error {
 		ON CONFLICT (id) 
 		    DO UPDATE SET 
 		        %[3]v 
-		    WHERE %[1]v.id=$1`,
+		    WHERE %[1]v.id=$1
+        RETURNING id`,
 		userTable, userIDPlaceholder, updateSetStmtArgs,
 	)
 
@@ -63,7 +64,9 @@ func (d *Database) SaveUser(userData models.User) error {
 		return err
 	}
 
-	_, err := d.db.Exec(queryCtx, createUserQuery,
+	var userID uint64
+
+	err := d.db.QueryRow(queryCtx, createUserQuery,
 		userData.ID,
 		userData.FirstName,
 		userData.LastName,
@@ -73,10 +76,11 @@ func (d *Database) SaveUser(userData models.User) error {
 		userData.Login,
 		userData.Email,
 		userData.Password,
-	)
+	).Scan(&userID)
 
 	if userIDPlaceholder == "DEFAULT" {
-		createDiseaseQuery := `
+
+		createDiseaseQuery := fmt.Sprintf(`
         INSERT INTO diseases (
            id,
            user_id,
@@ -90,7 +94,7 @@ func (d *Database) SaveUser(userData models.User) error {
            atherosclerosis,
            other_cvds_diseases
         )
-        VALUES (DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`
+        VALUES (DEFAULT, %v, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT)`, userID)
 
 		_, err = d.db.Exec(queryCtx, createDiseaseQuery)
 
