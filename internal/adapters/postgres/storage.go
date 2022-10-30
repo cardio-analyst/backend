@@ -19,6 +19,7 @@ type postgresStorage struct {
 	userRepository      storage.UserRepository
 	sessionRepository   storage.SessionRepository
 	diseasesRepository  storage.DiseasesRepository
+	analysisRepository  storage.AnalysisRepository
 	lifestyleRepository storage.LifestyleRepository
 }
 
@@ -59,6 +60,16 @@ func (s *postgresStorage) Diseases() storage.DiseasesRepository {
 	s.diseasesRepository = NewDiseasesRepository(s)
 
 	return s.diseasesRepository
+}
+
+func (s *postgresStorage) Analyses() storage.AnalysisRepository {
+	if s.analysisRepository != nil {
+		return s.analysisRepository
+	}
+
+	s.analysisRepository = NewAnalysisRepository(s)
+
+	return s.analysisRepository
 }
 
 func (s *postgresStorage) Lifestyles() storage.LifestyleRepository {

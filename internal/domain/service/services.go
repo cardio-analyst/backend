@@ -17,6 +17,7 @@ type services struct {
 	userService      service.UserService
 	authService      service.AuthService
 	diseasesService  service.DiseasesService
+	analysisService  service.AnalysisService
 	lifestyleService service.LifestyleService
 }
 
@@ -55,6 +56,16 @@ func (s *services) Diseases() service.DiseasesService {
 	s.diseasesService = NewDiseasesService(s.storage.Diseases())
 
 	return s.diseasesService
+}
+
+func (s *services) Analysis() service.AnalysisService {
+	if s.analysisService != nil {
+		return s.analysisService
+	}
+
+	s.analysisService = NewAnalysisService(s.storage.Analyses())
+
+	return s.analysisService
 }
 
 func (s *services) Lifestyle() service.LifestyleService {
