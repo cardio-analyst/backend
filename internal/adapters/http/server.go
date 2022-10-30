@@ -8,17 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	v1 "github.com/cardio-analyst/backend/internal/adapters/http/v1"
 	"github.com/cardio-analyst/backend/internal/ports/service"
 )
 
 type Server struct {
-	server   *echo.Echo
-	services service.Services
+	server *echo.Echo
 }
 
 func NewServer(services service.Services) *Server {
-	srv := new(Server)
-
 	e := echo.New()
 
 	// hide echo startup banner
@@ -29,13 +27,17 @@ func NewServer(services service.Services) *Server {
 	e.Use(RequestsLogger())
 	e.Use(middleware.Recover())
 
-	srv.server = e
+	e.GET("health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "healthy")
+	})
 
-	srv.services = services
+	api := e.Group("/api/v1")
+	r := v1.NewRouter(api, services)
+	r.InitRoutes()
 
-	srv.initRoutes()
-
-	return srv
+	return &Server{
+		server: e,
+	}
 }
 
 func (s *Server) Start(listenAddress string) error {
