@@ -14,10 +14,11 @@ type services struct {
 	cfg     config.ServicesConfig
 	storage storage.Storage
 
-	userService     service.UserService
-	authService     service.AuthService
-	diseasesService service.DiseasesService
-	analysisService service.AnalysisService
+	userService      service.UserService
+	authService      service.AuthService
+	diseasesService  service.DiseasesService
+	analysisService  service.AnalysisService
+	lifestyleService service.LifestyleService
 }
 
 func NewServices(cfg config.ServicesConfig, storage storage.Storage) *services {
@@ -65,4 +66,14 @@ func (s *services) Analysis() service.AnalysisService {
 	s.analysisService = NewAnalysisService(s.storage.Analyses())
 
 	return s.analysisService
+}
+
+func (s *services) Lifestyle() service.LifestyleService {
+	if s.lifestyleService != nil {
+		return s.lifestyleService
+	}
+
+	s.lifestyleService = NewLifestyleService(s.storage.Lifestyles())
+
+	return s.lifestyleService
 }

@@ -30,4 +30,7 @@ func (r *Router) InitRoutes() {
 
 	// /analyses/*
 	r.initAnalysesRoutes()
+
+	// /lifestyles/*
+	r.initLifestylesRoutes()
 }

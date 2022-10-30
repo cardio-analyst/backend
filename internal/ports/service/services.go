@@ -10,4 +10,6 @@ type Services interface {
 	Diseases() DiseasesService
 	// Analysis contains the methods of business logic of working with user analyses.
 	Analysis() AnalysisService
+	// Lifestyle TODO
+	Lifestyle() LifestyleService
 }
