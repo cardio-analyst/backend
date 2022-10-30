@@ -17,6 +17,9 @@ func (s *Server) initRoutes() {
 
 	// /api/v1/diseases/*
 	s.initDiseasesRoutes()
+
+	// /api/v1/lifestyle/*
+	s.initLifestylesRoutes()
 }
 
 func (s *Server) health(c echo.Context) error {
