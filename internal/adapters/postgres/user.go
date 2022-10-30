@@ -97,12 +97,12 @@ func (r *userRepository) Save(userData models.User) error {
 	}
 
 	if userIDPlaceholder == "DEFAULT" {
-		err := insertDefaultData(diseasesTable, userID, dbTX, queryCtx)
+		err := insertDefaultData(queryCtx, diseasesTable, userID, dbTX)
 		if err != nil {
 			return err
 		}
 
-		err = insertDefaultData(lifestyleTable, userID, dbTX, queryCtx)
+		err = insertDefaultData(queryCtx, lifestyleTable, userID, dbTX)
 		if err != nil {
 			return err
 		}
@@ -209,13 +209,10 @@ func (r *userRepository) FindByCriteria(criteria models.UserCriteria) ([]*models
 	return users, nil
 }
 
-func insertDefaultData(tableName string, userID uint64, dbTX pgx.Tx, context context.Context) error {
+func insertDefaultData(ctx context.Context, tableName string, userID uint64, dbTX pgx.Tx) error {
 	query := fmt.Sprintf(`INSERT INTO %v (user_id) VALUES ($1)`, tableName)
 
-	_, err := dbTX.Exec(context, query, userID)
-	if err != nil {
-		return err
-	}
+	_, err := dbTX.Exec(ctx, query, userID)
 
-	return nil
+	return err
 }
