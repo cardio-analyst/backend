@@ -24,8 +24,8 @@ func NewDiseasesService(diseases storage.DiseasesRepository) *diseasesService {
 	}
 }
 
-func (d *diseasesService) Get(userId uint64) (*models.Diseases, error) {
-	diseases, err := d.diseases.Get(userId)
+func (s *diseasesService) Get(userID uint64) (*models.Diseases, error) {
+	diseases, err := s.diseases.Get(userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, serviceErrors.ErrUserDiseasesNotFound
@@ -36,6 +36,6 @@ func (d *diseasesService) Get(userId uint64) (*models.Diseases, error) {
 	return diseases, nil
 }
 
-func (d *diseasesService) Update(diseaseData models.Diseases) error {
-	return d.diseases.Update(diseaseData)
+func (s *diseasesService) Update(diseaseData models.Diseases) error {
+	return s.diseases.Update(diseaseData)
 }
