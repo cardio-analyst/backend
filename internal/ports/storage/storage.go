@@ -8,6 +8,6 @@ type Storage interface {
 	Sessions() SessionRepository
 	// Diseases allows you to access information about user diseases.
 	Diseases() DiseasesRepository
-
-	Lifestyle() LifestyleRepository
+	// Lifestyles TODO
+	Lifestyles() LifestyleRepository
 }

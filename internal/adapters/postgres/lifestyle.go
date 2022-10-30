@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v4"
+
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/storage"
-	"github.com/jackc/pgx/v4"
 )
 
 const lifestyleTable = "lifestyles"
@@ -24,7 +26,7 @@ func NewLifestyleRepository(storage *postgresStorage) *lifestyleRepository {
 	}
 }
 
-func (l lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
+func (r *lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
 	query := fmt.Sprintf(`
 		UPDATE %v
         SET 
@@ -40,7 +42,7 @@ func (l lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
 	)
 	queryCtx := context.Background()
 
-	_, err := l.storage.conn.Exec(queryCtx, query,
+	_, err := r.storage.conn.Exec(queryCtx, query,
 		lifestyleData.UserID,
 		lifestyleData.FamilyStatus,
 		lifestyleData.EventsParticipation,
@@ -53,7 +55,7 @@ func (l lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
 	return err
 }
 
-func (l lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
+func (r *lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT user_id,
@@ -70,7 +72,7 @@ func (l lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
 	queryCtx := context.Background()
 
 	var lifestyleData models.Lifestyle
-	if err := l.storage.conn.QueryRow(
+	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(
 		&lifestyleData.UserID,

@@ -1,9 +1,11 @@
 package http
 
 import (
-	"github.com/cardio-analyst/backend/internal/domain/models"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/internal/domain/models"
 )
 
 func (s *Server) initLifestylesRoutes() {

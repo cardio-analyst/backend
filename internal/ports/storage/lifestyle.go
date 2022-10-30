@@ -2,9 +2,10 @@ package storage
 
 import "github.com/cardio-analyst/backend/internal/domain/models"
 
+// LifestyleRepository TODO
 type LifestyleRepository interface {
+	// Update TODO
 	Update(lifestyleData models.Lifestyle) (err error)
-
+	// Get TODO
 	Get(userID uint64) (lifestyle *models.Lifestyle, err error)
 }
-

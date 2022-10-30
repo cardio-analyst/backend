@@ -62,7 +62,7 @@ func (s *services) Lifestyle() service.LifestyleService {
 		return s.lifestyleService
 	}
 
-	s.lifestyleService = NewLifestyleService(s.storage.Lifestyle())
+	s.lifestyleService = NewLifestyleService(s.storage.Lifestyles())
 
 	return s.lifestyleService
 }

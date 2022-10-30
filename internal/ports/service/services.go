@@ -8,6 +8,6 @@ type Services interface {
 	Auth() AuthService
 	// Diseases contains the methods of business logic of working with user diseases.
 	Diseases() DiseasesService
-
+	// Lifestyle TODO
 	Lifestyle() LifestyleService
 }

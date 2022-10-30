@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+
 	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
@@ -14,20 +15,20 @@ var _ service.LifestyleService = (*lifestyleService)(nil)
 
 // lifestyleService implements service.LifestyleService interface.
 type lifestyleService struct {
-	lifestyle storage.LifestyleRepository
+	lifestyles storage.LifestyleRepository
 }
 
 func NewLifestyleService(lifestyle storage.LifestyleRepository) *lifestyleService {
 	return &lifestyleService{
-		lifestyle: lifestyle,
+		lifestyles: lifestyle,
 	}
 }
 
-func (l lifestyleService) Get(userID uint64) (*models.Lifestyle, error) {
-	lifestyle, err := l.lifestyle.Get(userID)
+func (s *lifestyleService) Get(userID uint64) (*models.Lifestyle, error) {
+	lifestyle, err := s.lifestyles.Get(userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, serviceErrors.ErrUserDiseasesNotFound
+			return nil, serviceErrors.ErrLifestyleNotFound
 		}
 		return nil, err
 	}
@@ -35,6 +36,6 @@ func (l lifestyleService) Get(userID uint64) (*models.Lifestyle, error) {
 	return lifestyle, nil
 }
 
-func (l lifestyleService) Update(lifestyleData models.Lifestyle) (err error) {
-	return l.lifestyle.Update(lifestyleData)
+func (s *lifestyleService) Update(lifestyleData models.Lifestyle) error {
+	return s.lifestyles.Update(lifestyleData)
 }

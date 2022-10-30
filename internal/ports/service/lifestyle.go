@@ -2,6 +2,7 @@ package service
 
 import "github.com/cardio-analyst/backend/internal/domain/models"
 
+// LifestyleService TODO
 type LifestyleService interface {
 	// Update TODO
 	Update(lifestyleData models.Lifestyle) (err error)

@@ -97,18 +97,26 @@ func (r *userRepository) Save(userData models.User) error {
 	}
 
 	if userIDPlaceholder == "DEFAULT" {
-		err := insertDefaultData(queryCtx, diseasesTable, userID, dbTX)
-		if err != nil {
+		if err = insertDefaultData(queryCtx, dbTX, diseasesTable, userID); err != nil {
 			return err
 		}
 
-		err = insertDefaultData(queryCtx, lifestyleTable, userID, dbTX)
-		if err != nil {
+		if err = insertDefaultData(queryCtx, dbTX, lifestyleTable, userID); err != nil {
 			return err
 		}
 	}
 
 	return dbTX.Commit(queryCtx)
+}
+
+func insertDefaultData(ctx context.Context, dbTX pgx.Tx, tableName string, userID uint64) error {
+	query := fmt.Sprintf(
+		`INSERT INTO %v (user_id) VALUES ($1)`,
+		tableName,
+	)
+
+	_, err := dbTX.Exec(ctx, query, userID)
+	return err
 }
 
 func (r *userRepository) GetByCriteria(criteria models.UserCriteria) (*models.User, error) {
@@ -207,12 +215,4 @@ func (r *userRepository) FindByCriteria(criteria models.UserCriteria) ([]*models
 	}
 
 	return users, nil
-}
-
-func insertDefaultData(ctx context.Context, tableName string, userID uint64, dbTX pgx.Tx) error {
-	query := fmt.Sprintf(`INSERT INTO %v (user_id) VALUES ($1)`, tableName)
-
-	_, err := dbTX.Exec(ctx, query, userID)
-
-	return err
 }

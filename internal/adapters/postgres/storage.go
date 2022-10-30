@@ -61,7 +61,7 @@ func (s *postgresStorage) Diseases() storage.DiseasesRepository {
 	return s.diseasesRepository
 }
 
-func (s *postgresStorage) Lifestyle() storage.LifestyleRepository {
+func (s *postgresStorage) Lifestyles() storage.LifestyleRepository {
 	if s.lifestyleRepository != nil {
 		return s.lifestyleRepository
 	}
