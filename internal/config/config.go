@@ -107,7 +107,7 @@ func (c *Config) loadFromEnv() {
 		ttl, err := strconv.Atoi(tokenTTL)
 		if err == nil {
 			log.Debugf("refresh token TTL was set from environment: %v sec", ttl)
-			c.Services.Auth.AccessToken.TokenTTLSec = ttl
+			c.Services.Auth.RefreshToken.TokenTTLSec = ttl
 		}
 	}
 }
