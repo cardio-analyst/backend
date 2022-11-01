@@ -98,7 +98,8 @@ func (r *analysisRepository) Get(id, userID uint64) (*models.Analysis, error) {
 			atherosclerotic_plaques_presence,
 			created_at
 		FROM %v
-		WHERE id=$1 AND user_id=$2`,
+		WHERE id=$1 AND user_id=$2
+		ORDER BY id DESC`,
 		analysisTable,
 	)
 	queryCtx := context.Background()
