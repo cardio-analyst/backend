@@ -39,7 +39,7 @@ func (a Analysis) Validate(updating bool) error {
 		)),
 		validation.Field(&a.Lipoprotein, validation.When(
 			a.Lipoprotein != nil,
-			validation.Required, validation.Min(0.0), validation.Max(10.0),
+			validation.Min(0.0), validation.Max(10.0),
 		)),
 		validation.Field(&a.HighlySensitiveCReactiveProtein, validation.When(
 			a.HighlySensitiveCReactiveProtein != nil,
