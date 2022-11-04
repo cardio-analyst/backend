@@ -36,7 +36,11 @@ func (r *lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
             work_status=$5,
             significant_value_high=$6,
             significant_value_medium=$7,
-            significant_value_low=$8
+            significant_value_low=$8,
+            angina_score=$9,
+            adherence_drug_therapy=$10,
+            adherence_medical_support=$11,
+            adherence_lifestyle_mod=$12
         WHERE user_id=$1`,
 		lifestyleTable,
 	)
@@ -51,6 +55,10 @@ func (r *lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
 		lifestyleData.SignificantValueHigh,
 		lifestyleData.SignificantValueMedium,
 		lifestyleData.SignificantValueLow,
+		lifestyleData.AnginaScore,
+		lifestyleData.AdherenceDrugTherapy,
+		lifestyleData.AdherenceMedicalSupport,
+		lifestyleData.AdherenceLifestyleMod,
 	)
 	return err
 }
@@ -65,7 +73,11 @@ func (r *lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
 		       work_status,
 		       significant_value_high,
 		       significant_value_medium,
-		       significant_value_low
+		       significant_value_low,
+               angina_score,
+               adherence_drug_therapy,
+               adherence_medical_support,
+               adherence_lifestyle_mod
 		FROM %v WHERE user_id=$1`,
 		lifestyleTable,
 	)
@@ -83,6 +95,10 @@ func (r *lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
 		&lifestyleData.SignificantValueHigh,
 		&lifestyleData.SignificantValueMedium,
 		&lifestyleData.SignificantValueLow,
+		&lifestyleData.AnginaScore,
+		&lifestyleData.AdherenceDrugTherapy,
+		&lifestyleData.AdherenceMedicalSupport,
+		&lifestyleData.AdherenceLifestyleMod,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, sql.ErrNoRows
