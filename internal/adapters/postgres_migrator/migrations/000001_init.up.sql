@@ -38,13 +38,13 @@ CREATE TABLE IF NOT EXISTS analyses
 (
     id                                  SERIAL PRIMARY KEY,
     user_id                             INTEGER                 NOT NULL,
-    high_density_cholesterol            DECIMAL(10, 2),
-    low_density_cholesterol             DECIMAL(10, 2),
-    triglycerides                       DECIMAL(10, 2),
-    lipoprotein                         DECIMAL(10, 2),
-    highly_sensitive_c_reactive_protein DECIMAL(10, 2),
-    atherogenicity_coefficient          DECIMAL(10, 2),
-    creatinine                          DECIMAL(10, 2),
+    high_density_cholesterol            DECIMAL(2, 2),
+    low_density_cholesterol             DECIMAL(2, 2),
+    triglycerides                       DECIMAL(2, 2),
+    lipoprotein                         DECIMAL(2, 2),
+    highly_sensitive_c_reactive_protein DECIMAL(2, 2),
+    atherogenicity_coefficient          DECIMAL(2, 2),
+    creatinine                          DECIMAL(4, 2),
     atherosclerotic_plaques_presence    BOOLEAN,
     created_at                          TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_analysis_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -61,10 +61,28 @@ CREATE TABLE IF NOT EXISTS lifestyles
     significant_value_medium  VARCHAR(255)  NOT NULL DEFAULT '',
     significant_value_low     VARCHAR(255)  NOT NULL DEFAULT '',
     angina_score              INTEGER       NOT NULL DEFAULT -1,
-    adherence_drug_therapy    DECIMAL(8, 4) NOT NULL DEFAULT -1.0,
-    adherence_medical_support DECIMAL(8, 4) NOT NULL DEFAULT -1.0,
-    adherence_lifestyle_mod   DECIMAL(8, 4) NOT NULL DEFAULT -1.0,
+    adherence_drug_therapy    DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
+    adherence_medical_support DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
+    adherence_lifestyle_mod   DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
     CONSTRAINT fk_lifestyles_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS basic_indicators
+(
+    id                       SERIAL PRIMARY KEY,
+    user_id                  INTEGER                 NOT NULL,
+    weight                   DECIMAL(4, 1),
+    height                   DECIMAL(4, 1),
+    body_mass_index          DECIMAL(4, 1),
+    waist_size               DECIMAL(4, 1),
+    gender                   VARCHAR(255),
+    sbp_level                DECIMAL(4, 1),
+    smoking                  BOOLEAN,
+    total_cholesterol_level  DECIMAL(4, 1),
+    cv_events_risk_value     INTEGER,
+    ideal_cardiovascular_age INTEGER,
+    created_at               TIMESTAMP DEFAULT NOW() NOT NULL,
+    CONSTRAINT fk_basic_indicators_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS very_high_risk_female_not_smoking
