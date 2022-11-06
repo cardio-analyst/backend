@@ -61,7 +61,7 @@ func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicat
 						total_cholesterol_level,
 						cv_events_risk_value,
 						ideal_cardiovascular_age)
-		VALUES (%[2]v, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		VALUES (%[2]v, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (id) 
 		    DO UPDATE SET 
 		        %[3]v 
