@@ -12,9 +12,9 @@ type SessionRepository interface {
 	//
 	// By the time the method is used, it is assumed that the session definitely exists in the database, so if it is not found,
 	// then the method returns an error.
-	Get(userID uint64) (session *models.Session, err error)
+	Get(userID uint64) (sessionData *models.Session, err error)
 	// Find searches for session in the database according to the user id.
 	//
 	// If session is not found, the method returns nil.
-	Find(userID uint64) (session *models.Session, err error)
+	Find(userID uint64) (sessionData *models.Session, err error)
 }

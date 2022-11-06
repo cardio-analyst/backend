@@ -10,5 +10,5 @@ type DiseasesRepository interface {
 	//
 	// By the time the method is used, it is assumed that the user diseases information definitely exists in the database,
 	// so if it is not found, then the method returns an error.
-	Get(userID uint64) (diseases *models.Diseases, err error)
+	Get(userID uint64) (diseasesData *models.Diseases, err error)
 }

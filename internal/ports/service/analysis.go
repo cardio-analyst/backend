@@ -9,5 +9,5 @@ type AnalysisService interface {
 	// Update TODO
 	Update(analysisData models.Analysis) (err error)
 	// FindAll TODO
-	FindAll(userID uint64) (analysis []*models.Analysis, err error)
+	FindAll(userID uint64) (analysisDataList []*models.Analysis, err error)
 }

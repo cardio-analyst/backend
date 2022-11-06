@@ -10,6 +10,8 @@ type Storage interface {
 	Diseases() DiseasesRepository
 	// Analyses allows you to access information about user analyses.
 	Analyses() AnalysisRepository
-	// Lifestyles TODO
+	// Lifestyles allows you to access information about user lifestyle.
 	Lifestyles() LifestyleRepository
+	// BasicIndicators TODO
+	BasicIndicators() BasicIndicatorsRepository
 }

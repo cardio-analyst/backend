@@ -16,11 +16,12 @@ var _ storage.Storage = (*postgresStorage)(nil)
 type postgresStorage struct {
 	conn *pgxpool.Pool
 
-	userRepository      storage.UserRepository
-	sessionRepository   storage.SessionRepository
-	diseasesRepository  storage.DiseasesRepository
-	analysisRepository  storage.AnalysisRepository
-	lifestyleRepository storage.LifestyleRepository
+	userRepository            storage.UserRepository
+	sessionRepository         storage.SessionRepository
+	diseasesRepository        storage.DiseasesRepository
+	analysisRepository        storage.AnalysisRepository
+	lifestyleRepository       storage.LifestyleRepository
+	basicIndicatorsRepository storage.BasicIndicatorsRepository
 }
 
 func NewStorage(cfg config.PostgresConfig) (*postgresStorage, error) {
@@ -80,6 +81,16 @@ func (s *postgresStorage) Lifestyles() storage.LifestyleRepository {
 	s.lifestyleRepository = NewLifestyleRepository(s)
 
 	return s.lifestyleRepository
+}
+
+func (s *postgresStorage) BasicIndicators() storage.BasicIndicatorsRepository {
+	if s.basicIndicatorsRepository != nil {
+		return s.basicIndicatorsRepository
+	}
+
+	s.basicIndicatorsRepository = NewBasicIndicatorsRepository(s)
+
+	return s.basicIndicatorsRepository
 }
 
 func (s *postgresStorage) Close() error {

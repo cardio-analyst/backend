@@ -8,6 +8,8 @@ DROP TABLE IF EXISTS analyses;
 
 DROP TABLE IF EXISTS lifestyles;
 
+DROP TABLE IF EXISTS basic_indicators;
+
 DROP TABLE IF EXISTS very_high_risk_female_not_smoking;
 
 DROP TABLE IF EXISTS very_high_risk_male_not_smoking;
