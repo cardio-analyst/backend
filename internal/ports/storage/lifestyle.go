@@ -7,5 +7,5 @@ type LifestyleRepository interface {
 	// Update TODO
 	Update(lifestyleData models.Lifestyle) (err error)
 	// Get TODO
-	Get(userID uint64) (lifestyle *models.Lifestyle, err error)
+	Get(userID uint64) (lifestyleData *models.Lifestyle, err error)
 }
