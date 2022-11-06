@@ -33,4 +33,7 @@ func (r *Router) InitRoutes() {
 
 	// /lifestyles/*
 	r.initLifestylesRoutes()
+
+	// /basicIndicators/*
+	r.initBasicIndicatorsRoutes()
 }

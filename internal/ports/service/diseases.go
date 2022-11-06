@@ -7,5 +7,5 @@ type DiseasesService interface {
 	// Update TODO
 	Update(diseasesData models.Diseases) (err error)
 	// Get TODO
-	Get(userID uint64) (diseases *models.Diseases, err error)
+	Get(userID uint64) (diseasesData *models.Diseases, err error)
 }

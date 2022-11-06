@@ -14,35 +14,37 @@ const (
 
 // possible errors designations
 const (
-	errorParseRequestData       = "ParseRequestError"
-	errorInvalidRequestData     = "InvalidRequestData"
-	errorLoginAlreadyOccupied   = "LoginAlreadyOccupied"
-	errorEmailAlreadyOccupied   = "EmailAlreadyOccupied"
-	errorInternal               = "InternalError"
-	errorWrongCredentials       = "WrongCredentials"
-	errorWrongAccessToken       = "WrongAccessToken"
-	errorWrongRefreshToken      = "WrongRefreshToken"
-	errorAccessTokenExpired     = "AccessTokenExpired"
-	errorRefreshTokenExpired    = "RefreshTokenExpired"
-	errorIPNotAllowed           = "IPNotAllowed"
-	errorWrongAuthHeader        = "WrongAuthHeader"
-	errorAnalysisRecordNotFound = "AnalysisRecordNotFound"
+	errorParseRequestData              = "ParseRequestError"
+	errorInvalidRequestData            = "InvalidRequestData"
+	errorLoginAlreadyOccupied          = "LoginAlreadyOccupied"
+	errorEmailAlreadyOccupied          = "EmailAlreadyOccupied"
+	errorInternal                      = "InternalError"
+	errorWrongCredentials              = "WrongCredentials"
+	errorWrongAccessToken              = "WrongAccessToken"
+	errorWrongRefreshToken             = "WrongRefreshToken"
+	errorAccessTokenExpired            = "AccessTokenExpired"
+	errorRefreshTokenExpired           = "RefreshTokenExpired"
+	errorIPNotAllowed                  = "IPNotAllowed"
+	errorWrongAuthHeader               = "WrongAuthHeader"
+	errorAnalysisRecordNotFound        = "AnalysisRecordNotFound"
+	errorBasicIndicatorsRecordNotFound = "BasicIndicatorsRecordNotFound"
 )
 
 var errorDescriptions = map[string]string{
-	errorParseRequestData:       "Запрос составлен некорректно",
-	errorInvalidRequestData:     "Ошибка валидации данных",
-	errorLoginAlreadyOccupied:   "Выбранный логин уже занят",
-	errorEmailAlreadyOccupied:   "Выбранный E-mail уже занят",
-	errorInternal:               "Внутренняя ошибка сервера",
-	errorWrongCredentials:       "Некорректные данные для входа",
-	errorWrongAccessToken:       "Некорректный access-токен",
-	errorWrongRefreshToken:      "Некорректный refresh-токен",
-	errorAccessTokenExpired:     "Время жизни access-токена истекло",
-	errorRefreshTokenExpired:    "Время жизни refresh-токена истекло",
-	errorIPNotAllowed:           "Неизвестное устройство",
-	errorWrongAuthHeader:        "Некорректный заголовок авторизации",
-	errorAnalysisRecordNotFound: "Запись о лабораторных исследованиях не найдена",
+	errorParseRequestData:              "Запрос составлен некорректно",
+	errorInvalidRequestData:            "Ошибка валидации данных",
+	errorLoginAlreadyOccupied:          "Выбранный логин уже занят",
+	errorEmailAlreadyOccupied:          "Выбранный E-mail уже занят",
+	errorInternal:                      "Внутренняя ошибка сервера",
+	errorWrongCredentials:              "Некорректные данные для входа",
+	errorWrongAccessToken:              "Некорректный access-токен",
+	errorWrongRefreshToken:             "Некорректный refresh-токен",
+	errorAccessTokenExpired:            "Время жизни access-токена истекло",
+	errorRefreshTokenExpired:           "Время жизни refresh-токена истекло",
+	errorIPNotAllowed:                  "Неизвестное устройство",
+	errorWrongAuthHeader:               "Некорректный заголовок авторизации",
+	errorAnalysisRecordNotFound:        "Запись о лабораторных исследованиях не найдена",
+	errorBasicIndicatorsRecordNotFound: "Запись о базовых показателях не найдена",
 }
 
 type response struct {
