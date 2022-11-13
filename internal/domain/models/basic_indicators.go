@@ -59,7 +59,7 @@ func (a BasicIndicators) Validate(updating bool) error {
 		)),
 		validation.Field(&a.CVEventsRiskValue, validation.When(
 			a.CVEventsRiskValue != nil,
-			validation.Required, validation.Min(0), validation.Max(100),
+			validation.Min(0), validation.Max(100),
 		)),
 		validation.Field(&a.IdealCardiovascularAge, validation.When(
 			a.IdealCardiovascularAge != nil,
