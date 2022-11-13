@@ -47,7 +47,7 @@ func (a BasicIndicators) Validate(updating bool) error {
 		)),
 		validation.Field(&a.Gender, validation.When(
 			a.Gender != nil,
-			validation.Required, validation.In(common.UserGenderMale, common.UserGenderFemale),
+			validation.Required, validation.In(common.UserGenderMale, common.UserGenderFemale, common.UserGenderUnknown),
 		)),
 		validation.Field(&a.SBPLevel, validation.When(
 			a.SBPLevel != nil,
