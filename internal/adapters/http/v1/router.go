@@ -36,4 +36,6 @@ func (r *Router) InitRoutes() {
 
 	// /basicIndicators/*
 	r.initBasicIndicatorsRoutes()
+
+	r.initScoreRoutes()
 }
