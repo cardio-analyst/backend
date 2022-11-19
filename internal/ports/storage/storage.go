@@ -14,4 +14,6 @@ type Storage interface {
 	Lifestyles() LifestyleRepository
 	// BasicIndicators TODO
 	BasicIndicators() BasicIndicatorsRepository
+
+	Score() ScoreRepository
 }
