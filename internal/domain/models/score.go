@@ -6,7 +6,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/domain/common"
 )
 
-type CVERiskData struct {
+type ScoreData struct {
 	Age                   int     // receive from user data
 	Gender                string  `query:"gender"`
 	Smoking               bool    `query:"smoking"`
@@ -14,7 +14,7 @@ type CVERiskData struct {
 	TotalCholesterolLevel float64 `query:"totalCholesterolLevel"`
 }
 
-func (d CVERiskData) Validate() error {
+func (d ScoreData) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Age, validation.Min(40), validation.Max(89)),
 		validation.Field(&d.Gender, validation.In(common.UserGenderMale, common.UserGenderFemale)),

@@ -7,19 +7,19 @@ import (
 )
 
 type BasicIndicators struct {
-	ID                     uint64   `json:"id,omitempty" db:"id"`
-	UserID                 uint64   `json:"-" db:"user_id"`
-	Weight                 *float64 `json:"weight" db:"weight"`
-	Height                 *float64 `json:"height" db:"height"`
-	BodyMassIndex          *float64 `json:"bodyMassIndex" db:"body_mass_index"`
-	WaistSize              *float64 `json:"waistSize" db:"waist_size"`
-	Gender                 *string  `json:"gender" db:"gender"`
-	SBPLevel               *float64 `json:"sbpLevel" db:"sbp_level"`
-	Smoking                *bool    `json:"smoking" db:"smoking"`
-	TotalCholesterolLevel  *float64 `json:"totalCholesterolLevel" db:"total_cholesterol_level"`
-	CVEventsRiskValue      *int64   `json:"cvEventsRiskValue" db:"cv_events_risk_value"`
-	IdealCardiovascularAge *int64   `json:"idealCardiovascularAge" db:"ideal_cardiovascular_age"`
-	CreatedAt              Datetime `json:"createdAt" db:"created_at"`
+	ID                           uint64   `json:"id,omitempty" db:"id"`
+	UserID                       uint64   `json:"-" db:"user_id"`
+	Weight                       *float64 `json:"weight" db:"weight"`
+	Height                       *float64 `json:"height" db:"height"`
+	BodyMassIndex                *float64 `json:"bodyMassIndex" db:"body_mass_index"`
+	WaistSize                    *float64 `json:"waistSize" db:"waist_size"`
+	Gender                       *string  `json:"gender" db:"gender"`
+	SBPLevel                     *float64 `json:"sbpLevel" db:"sbp_level"`
+	Smoking                      *bool    `json:"smoking" db:"smoking"`
+	TotalCholesterolLevel        *float64 `json:"totalCholesterolLevel" db:"total_cholesterol_level"`
+	CVEventsRiskValue            *int64   `json:"cvEventsRiskValue" db:"cv_events_risk_value"`
+	IdealCardiovascularAgesRange *string  `json:"idealCardiovascularAgesRange" db:"ideal_cardiovascular_ages_range"`
+	CreatedAt                    Datetime `json:"createdAt" db:"created_at"`
 }
 
 func (a BasicIndicators) Validate(updating bool) error {
@@ -61,9 +61,9 @@ func (a BasicIndicators) Validate(updating bool) error {
 			a.CVEventsRiskValue != nil,
 			validation.Min(0), validation.Max(100),
 		)),
-		validation.Field(&a.IdealCardiovascularAge, validation.When(
-			a.IdealCardiovascularAge != nil,
-			validation.Required, validation.Min(40), validation.Max(100),
+		validation.Field(&a.IdealCardiovascularAgesRange, validation.When(
+			a.IdealCardiovascularAgesRange != nil,
+			validation.Required,
 		)),
 	)
 }

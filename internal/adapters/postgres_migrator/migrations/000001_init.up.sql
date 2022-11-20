@@ -69,19 +69,19 @@ CREATE TABLE IF NOT EXISTS lifestyles
 
 CREATE TABLE IF NOT EXISTS basic_indicators
 (
-    id                       SERIAL PRIMARY KEY,
-    user_id                  INTEGER                 NOT NULL,
-    weight                   DECIMAL(4, 1),
-    height                   DECIMAL(4, 1),
-    body_mass_index          DECIMAL(4, 1),
-    waist_size               DECIMAL(4, 1),
-    gender                   VARCHAR(255),
-    sbp_level                DECIMAL(4, 1),
-    smoking                  BOOLEAN,
-    total_cholesterol_level  DECIMAL(4, 1),
-    cv_events_risk_value     INTEGER,
-    ideal_cardiovascular_age INTEGER,
-    created_at               TIMESTAMP DEFAULT NOW() NOT NULL,
+    id                              SERIAL PRIMARY KEY,
+    user_id                         INTEGER                 NOT NULL,
+    weight                          DECIMAL(4, 1),
+    height                          DECIMAL(4, 1),
+    body_mass_index                 DECIMAL(4, 1),
+    waist_size                      DECIMAL(4, 1),
+    gender                          VARCHAR(255),
+    sbp_level                       DECIMAL(4, 1),
+    smoking                         BOOLEAN,
+    total_cholesterol_level         DECIMAL(4, 1),
+    cv_events_risk_value            INTEGER,
+    ideal_cardiovascular_ages_range VARCHAR(255),
+    created_at                      TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT fk_basic_indicators_users FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 

@@ -14,19 +14,34 @@ var _ service.ScoreService = (*scoreService)(nil)
 
 // scoreService implements service.ScoreService interface.
 type scoreService struct {
-	cveRisk storage.ScoreRepository
+	score storage.ScoreRepository
 }
 
-func NewScoreService(cveRisk storage.ScoreRepository) *scoreService {
+func NewScoreService(score storage.ScoreRepository) *scoreService {
 	return &scoreService{
-		cveRisk: cveRisk,
+		score: score,
 	}
 }
 
-func (s scoreService) GetCVERisk(cveRiskData models.CVERiskData) (uint64, error) {
-	if err := cveRiskData.Validate(); err != nil {
-		return 0, fmt.Errorf("%w: %v", serviceErrors.ErrInvalidCVERiskData, err)
+func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, error) {
+	if err := data.Validate(); err != nil {
+		return 0, fmt.Errorf("%w: %v", serviceErrors.ErrInvalidScoreData, err)
 	}
 
-	return s.cveRisk.GetCVERisk(cveRiskData)
+	return s.score.GetCVERisk(data)
+}
+
+func (s *scoreService) GetIdealAge(data models.ScoreData) (string, error) {
+	// pass SCORE data validation because GetCVERisk meth has it
+	riskValue, err := s.score.GetCVERisk(data)
+	if err != nil {
+		return "", err
+	}
+
+	min, max, err := s.score.GetIdealAge(riskValue, data)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%v-%v", min, max), nil
 }

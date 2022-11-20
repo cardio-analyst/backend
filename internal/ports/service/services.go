@@ -14,6 +14,6 @@ type Services interface {
 	Lifestyle() LifestyleService
 	// BasicIndicators TODO
 	BasicIndicators() BasicIndicatorsService
-
+	// Score TODO
 	Score() ScoreService
 }
