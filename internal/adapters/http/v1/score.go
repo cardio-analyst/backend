@@ -1,20 +1,31 @@
 package v1
 
 import (
-	"github.com/cardio-analyst/backend/internal/domain/common"
-	"github.com/cardio-analyst/backend/internal/domain/models"
-	"github.com/labstack/echo/v4"
+	"errors"
 	"net/http"
-	"strconv"
-	"time"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/internal/domain/common"
+	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
+	"github.com/cardio-analyst/backend/internal/domain/models"
 )
 
 func (r *Router) initScoreRoutes() {
 	cveRisk := r.api.Group("/score", r.identifyUser)
-	cveRisk.GET("/cveRisk", r.getCveRisk)
+	cveRisk.GET("/cveRisk", r.getCVERisk)
 }
 
-func (r *Router) getCveRisk(c echo.Context) error {
+type getCVERiskResponse struct {
+	Value uint64 `json:"value"`
+}
+
+func (r *Router) getCVERisk(c echo.Context) error {
+	var reqData models.CVERiskData
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+
 	userID := c.Get(ctxKeyUserID).(uint64)
 
 	criteria := models.UserCriteria{
@@ -22,46 +33,23 @@ func (r *Router) getCveRisk(c echo.Context) error {
 	}
 
 	user, err := r.services.User().Get(criteria)
-
-	if err != nil {
-		return err
-	}
-
-	// TODO added validate data
-	genderParam := c.QueryParam("gender")
-	smokingParam := c.QueryParam("smoking")
-	sbpLevelParam := c.QueryParam("sbpLevel")
-	totalCholesterolLevelParam := c.QueryParam("totalCholesterolLevel")
-
-	smoking, err := strconv.ParseBool(smokingParam)
-
-	if err != nil {
-		return err
-	}
-
-	sbpLevel, err := strconv.ParseUint(sbpLevelParam, 10, 64)
-
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	totalCholesterolLevel, err := strconv.ParseFloat(totalCholesterolLevelParam, 64)
+	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
 
-	age := common.GetAge(user.BirthDate.Time, time.Now())
-
-	cveRiskData := models.CveRiskData{
-		Age:                   age,
-		Gender:                genderParam,
-		Smoking:               smoking,
-		SbpLevel:              sbpLevel,
-		TotalCholesterolLevel: totalCholesterolLevel,
-	}
-
-	riskValue, err := r.services.Score().GetCveRisk(cveRiskData)
-
+	riskValue, err := r.services.Score().GetCVERisk(reqData)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidCVERiskData):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
+		default:
+			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+		}
 	}
 
-	return c.JSON(http.StatusOK, riskValue)
+	return c.JSON(http.StatusOK, &getCVERiskResponse{
+		Value: riskValue,
+	})
 }
