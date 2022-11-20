@@ -22,6 +22,7 @@ type postgresStorage struct {
 	analysisRepository        storage.AnalysisRepository
 	lifestyleRepository       storage.LifestyleRepository
 	basicIndicatorsRepository storage.BasicIndicatorsRepository
+	scoreRepository           storage.ScoreRepository
 }
 
 func NewStorage(cfg config.PostgresConfig) (*postgresStorage, error) {
@@ -91,6 +92,16 @@ func (s *postgresStorage) BasicIndicators() storage.BasicIndicatorsRepository {
 	s.basicIndicatorsRepository = NewBasicIndicatorsRepository(s)
 
 	return s.basicIndicatorsRepository
+}
+
+func (s *postgresStorage) Score() storage.ScoreRepository {
+	if s.scoreRepository != nil {
+		return s.scoreRepository
+	}
+
+	s.scoreRepository = NewScoreRepository(s)
+
+	return s.scoreRepository
 }
 
 func (s *postgresStorage) Close() error {

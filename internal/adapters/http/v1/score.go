@@ -1,0 +1,55 @@
+package v1
+
+import (
+	"errors"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/internal/domain/common"
+	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
+	"github.com/cardio-analyst/backend/internal/domain/models"
+)
+
+func (r *Router) initScoreRoutes() {
+	cveRisk := r.api.Group("/score", r.identifyUser)
+	cveRisk.GET("/cveRisk", r.getCVERisk)
+}
+
+type getCVERiskResponse struct {
+	Value uint64 `json:"value"`
+}
+
+func (r *Router) getCVERisk(c echo.Context) error {
+	var reqData models.CVERiskData
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+
+	userID := c.Get(ctxKeyUserID).(uint64)
+
+	criteria := models.UserCriteria{
+		ID: &userID,
+	}
+
+	user, err := r.services.User().Get(criteria)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+	}
+
+	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
+
+	riskValue, err := r.services.Score().GetCVERisk(reqData)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidCVERiskData):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
+		default:
+			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+		}
+	}
+
+	return c.JSON(http.StatusOK, &getCVERiskResponse{
+		Value: riskValue,
+	})
+}
