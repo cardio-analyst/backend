@@ -2,4 +2,4 @@ package errors
 
 import "errors"
 
-var ErrInvalidCVERiskData = errors.New("invalid CVE risk data")
+var ErrInvalidScoreData = errors.New("invalid SCORE data")
