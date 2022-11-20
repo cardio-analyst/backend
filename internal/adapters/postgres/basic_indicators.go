@@ -46,7 +46,7 @@ func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicat
         smoking=$9,
         total_cholesterol_level=$10,
         cv_events_risk_value=$11,
-        ideal_cardiovascular_age=$12`
+        ideal_cardiovascular_ages_range=$12`
 
 	query := fmt.Sprintf(`
 		INSERT INTO %[1]v (id,
@@ -60,7 +60,7 @@ func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicat
 						smoking,
 						total_cholesterol_level,
 						cv_events_risk_value,
-						ideal_cardiovascular_age)
+						ideal_cardiovascular_ages_range)
 		VALUES (%[2]v, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (id) 
 		    DO UPDATE SET 
@@ -81,7 +81,7 @@ func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicat
 		basicIndicatorsData.Smoking,
 		basicIndicatorsData.TotalCholesterolLevel,
 		basicIndicatorsData.CVEventsRiskValue,
-		basicIndicatorsData.IdealCardiovascularAge,
+		basicIndicatorsData.IdealCardiovascularAgesRange,
 	)
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
 		return sql.ErrNoRows
@@ -103,7 +103,7 @@ func (r *basicIndicatorsRepository) Get(id, userID uint64) (*models.BasicIndicat
 			smoking,
 			total_cholesterol_level,
 			cv_events_risk_value,
-			ideal_cardiovascular_age,
+			ideal_cardiovascular_ages_range,
 			created_at
 		FROM %v
 		WHERE id=$1 AND user_id=$2`,
@@ -126,7 +126,7 @@ func (r *basicIndicatorsRepository) Get(id, userID uint64) (*models.BasicIndicat
 		&basicIndicatorsData.Smoking,
 		&basicIndicatorsData.TotalCholesterolLevel,
 		&basicIndicatorsData.CVEventsRiskValue,
-		&basicIndicatorsData.IdealCardiovascularAge,
+		&basicIndicatorsData.IdealCardiovascularAgesRange,
 		&basicIndicatorsData.CreatedAt.Time,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -154,7 +154,7 @@ func (r *basicIndicatorsRepository) FindAll(userID uint64) ([]*models.BasicIndic
 			smoking,
 			total_cholesterol_level,
 			cv_events_risk_value,
-			ideal_cardiovascular_age,
+			ideal_cardiovascular_ages_range,
 			created_at
 		FROM %v
 		WHERE user_id=$1
@@ -187,7 +187,7 @@ func (r *basicIndicatorsRepository) FindAll(userID uint64) ([]*models.BasicIndic
 			&basicIndicators.Smoking,
 			&basicIndicators.TotalCholesterolLevel,
 			&basicIndicators.CVEventsRiskValue,
-			&basicIndicators.IdealCardiovascularAge,
+			&basicIndicators.IdealCardiovascularAgesRange,
 			&basicIndicators.CreatedAt.Time,
 		); err != nil {
 			return nil, err

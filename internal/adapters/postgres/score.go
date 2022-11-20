@@ -23,7 +23,7 @@ func NewScoreRepository(storage *postgresStorage) *scoreRepository {
 	}
 }
 
-func (s *scoreRepository) GetCVERisk(cveRiskData models.CVERiskData) (uint64, error) {
+func (s *scoreRepository) GetCVERisk(data models.ScoreData) (uint64, error) {
 	// TODO: replace 27-47 with custom CVE risk table builder, accepting CVE risk data
 	var tableNameBuilder strings.Builder
 
@@ -33,18 +33,18 @@ func (s *scoreRepository) GetCVERisk(cveRiskData models.CVERiskData) (uint64, er
 
 	tableNameBuilder.WriteString("_")
 
-	switch cveRiskData.Gender {
+	switch data.Gender {
 	case common.UserGenderMale:
 		tableNameBuilder.WriteString("male")
 	case common.UserGenderFemale:
 		tableNameBuilder.WriteString("female")
 	default:
-		return 0, fmt.Errorf("unknown user gender: %v", cveRiskData.Gender)
+		return 0, fmt.Errorf("unknown user gender: %v", data.Gender)
 	}
 
 	tableNameBuilder.WriteString("_")
 
-	if cveRiskData.Smoking {
+	if data.Smoking {
 		tableNameBuilder.WriteString("smoking")
 	} else {
 		tableNameBuilder.WriteString("not_smoking")
@@ -62,10 +62,56 @@ func (s *scoreRepository) GetCVERisk(cveRiskData models.CVERiskData) (uint64, er
 
 	var riskValue uint64
 	if err := s.storage.conn.QueryRow(
-		queryCtx, query, cveRiskData.SBPLevel, cveRiskData.TotalCholesterolLevel, cveRiskData.Age,
+		queryCtx, query, data.SBPLevel, data.TotalCholesterolLevel, data.Age,
 	).Scan(&riskValue); err != nil {
 		return 0, err
 	}
 
 	return riskValue, nil
+}
+
+func (s *scoreRepository) GetIdealAge(cveRiskValue uint64, data models.ScoreData) (uint64, uint64, error) {
+	// TODO: replace 27-47 with custom CVE risk table builder, accepting CVE risk data
+	var tableNameBuilder strings.Builder
+
+	// table prefix depends on geo scope value (now it is only Russian scope, others will become later)
+	// TODO: generate dynamically by scope
+	tableNameBuilder.WriteString("very_high_risk")
+
+	tableNameBuilder.WriteString("_")
+
+	switch data.Gender {
+	case common.UserGenderMale:
+		tableNameBuilder.WriteString("male")
+	case common.UserGenderFemale:
+		tableNameBuilder.WriteString("female")
+	default:
+		return 0, 0, fmt.Errorf("unknown user gender: %v", data.Gender)
+	}
+
+	tablesPrefix := tableNameBuilder.String()
+
+	query := fmt.Sprintf(`
+         WITH %[1]v AS (SELECT age_min, age_max, risk_value
+                             FROM %[2]v
+                             UNION
+                             SELECT age_min, age_max, risk_value
+                             FROM %[3]v) 
+         SELECT age_min, age_max 
+         FROM %[1]v 
+         WHERE risk_value=$1 
+         ORDER BY age_min, age_max 
+         LIMIT 1`,
+		tablesPrefix, fmt.Sprintf("%v_smoking", tablesPrefix), fmt.Sprintf("%v_not_smoking", tablesPrefix),
+	)
+	queryCtx := context.Background()
+
+	var ageMin, ageMax uint64
+	if err := s.storage.conn.QueryRow(
+		queryCtx, query, cveRiskValue,
+	).Scan(&ageMin, &ageMax); err != nil {
+		return 0, 0, err
+	}
+
+	return ageMin, ageMax, nil
 }
