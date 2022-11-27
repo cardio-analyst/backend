@@ -39,7 +39,8 @@ type PostgresConfig struct {
 }
 
 type ServicesConfig struct {
-	Auth AuthConfig `yaml:"auth"`
+	Auth            AuthConfig            `yaml:"auth"`
+	Recommendations RecommendationsConfig `yaml:"recommendations"`
 }
 
 type AuthConfig struct {
@@ -50,6 +51,18 @@ type AuthConfig struct {
 type TokenConfig struct {
 	SigningKey  string `yaml:"signing_key"`
 	TokenTTLSec int    `yaml:"token_ttl_sec"`
+}
+
+type RecommendationsConfig struct {
+	HealthyEating RecommendationConfig `yaml:"healthy_eating"`
+	Smoking       RecommendationConfig `yaml:"smoking"`
+	Lifestyle     RecommendationConfig `yaml:"lifestyle"`
+}
+
+type RecommendationConfig struct {
+	What string `yaml:"what"`
+	Why  string `yaml:"why"`
+	How  string `yaml:"how"`
 }
 
 func Load(configPath string) (*Config, error) {

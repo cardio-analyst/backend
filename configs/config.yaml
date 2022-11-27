@@ -12,4 +12,16 @@ services:
     refresh_token:
       signing_key: "VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx"
       token_ttl_sec: 120
-
+  recommendations:
+    healthy_eating:
+      what: "Здоровое питание"
+      why: "Здоровое питание"
+      how: "Здоровое питание"
+    smoking:
+      what: "Отказ от курения"
+      why: "Отказ от курения"
+      how: "Отказ от курения"
+    lifestyle:
+      what: "Здоровый образ жизни"
+      why: "Здоровый образ жизни"
+      how: "Здоровый образ жизни"

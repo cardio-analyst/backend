@@ -1,6 +1,7 @@
 package models
 
 type Recommendation struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	What string `json:"what"`
+	Why  string `json:"why"`
+	How  string `json:"how"`
 }
