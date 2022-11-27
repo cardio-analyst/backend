@@ -12,19 +12,21 @@ import (
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
-// templates that contains recommendation contents pattern
-const templatesPattern = "templates/recommendations/*.tmpl"
-
 // recommendation template names
 const (
 	templateHealthyEating = "healthy_eating.tmpl"
 	templateSmoking       = "smoking.tmpl"
+	templateLifestyle     = "lifestyle.tmpl"
 )
+
+// templates contains recommendation contents
+var templates = []string{templateHealthyEating, templateSmoking, templateLifestyle}
 
 // recommendation titles
 const (
 	titleHealthyEating = "Здоровое питание"
 	titleSmoking       = "Отказ от курения"
+	titleLifestyle     = "Здоровый образ жизни"
 )
 
 // check whether recommendationsService structure implements the service.RecommendationsService interface
@@ -55,21 +57,31 @@ func NewRecommendationsService(
 		score:           score,
 		users:           users,
 		templates: template.Must(
-			template.ParseGlob(templatesPattern),
+			template.ParseFiles(templates...),
 		),
 	}
 }
 
 func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Recommendation, error) {
-	recommendations := make([]*models.Recommendation, 0, 5)
+	recommendations := make([]*models.Recommendation, 0, 6)
 
-	recommendation := s.getHealthyEatingRecommendation()
+	recommendation, err := s.getSmokingRecommendation(userID)
+	if err != nil {
+		return nil, err
+	}
 	if recommendation != nil {
 		recommendations = append(recommendations, recommendation)
 	}
 
-	var err error
-	recommendation, err = s.getSmokingRecommendation(userID)
+	recommendation, err = s.getLifestyleRecommendation(userID)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation, err = s.getHealthyEatingRecommendation()
 	if err != nil {
 		return nil, err
 	}
@@ -80,21 +92,21 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	return recommendations, nil
 }
 
-func (s *recommendationsService) getHealthyEatingRecommendation() *models.Recommendation {
+func (s *recommendationsService) getHealthyEatingRecommendation() (*models.Recommendation, error) {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Intn(100)%2 != 1 {
-		return nil
+		return nil, nil
 	}
 
 	tmplBuffer := &bytes.Buffer{}
-	if err := s.templates.ExecuteTemplate(tmplBuffer, templateHealthyEating, map[string]interface{}{}); err != nil {
-		return nil
+	if err := s.templates.ExecuteTemplate(tmplBuffer, templateHealthyEating, nil); err != nil {
+		return nil, err
 	}
 
 	return &models.Recommendation{
 		Title:       titleHealthyEating,
 		Description: tmplBuffer.String(),
-	}
+	}, nil
 }
 
 func (s *recommendationsService) getSmokingRecommendation(userID uint64) (*models.Recommendation, error) {
@@ -164,4 +176,26 @@ func (s *recommendationsService) getSmokingRecommendation(userID uint64) (*model
 		Title:       titleSmoking,
 		Description: tmplBuffer.String(),
 	}, nil
+}
+
+func (s *recommendationsService) getLifestyleRecommendation(userID uint64) (*models.Recommendation, error) {
+	lifestyle, err := s.lifestyles.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if lifestyle.EventsParticipation == common.EventsParticipationNotFrequently ||
+		lifestyle.PhysicalActivity == common.PhysicalActivityOneInWeek {
+		tmplBuffer := &bytes.Buffer{}
+		if err = s.templates.ExecuteTemplate(tmplBuffer, templateLifestyle, nil); err != nil {
+			return nil, err
+		}
+
+		return &models.Recommendation{
+			Title:       titleLifestyle,
+			Description: tmplBuffer.String(),
+		}, nil
+	}
+
+	return nil, nil
 }

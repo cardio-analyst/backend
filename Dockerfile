@@ -13,4 +13,5 @@ FROM alpine:3.15.4
 WORKDIR /app/
 COPY --from=builder /app/application ./
 COPY --from=builder /app/configs/*.yaml ./
+COPY --from=builder /app/templates/recommendations/*.tmpl ./
 CMD ["/app/application", "-c", "/app/config.yaml"]
