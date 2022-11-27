@@ -6,6 +6,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/cardio-analyst/backend/internal/config"
 	"github.com/cardio-analyst/backend/internal/domain/common"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
@@ -14,19 +15,7 @@ import (
 
 // recommendation template names
 const (
-	templateHealthyEating = "healthy_eating.tmpl"
-	templateSmoking       = "smoking.tmpl"
-	templateLifestyle     = "lifestyle.tmpl"
-)
-
-// templates contains recommendation contents
-var templates = []string{templateHealthyEating, templateSmoking, templateLifestyle}
-
-// recommendation titles
-const (
-	titleHealthyEating = "Здоровое питание"
-	titleSmoking       = "Отказ от курения"
-	titleLifestyle     = "Здоровый образ жизни"
+	templateNameSmoking = "smoking"
 )
 
 // check whether recommendationsService structure implements the service.RecommendationsService interface
@@ -34,16 +23,17 @@ var _ service.RecommendationsService = (*recommendationsService)(nil)
 
 // recommendationsService implements service.RecommendationsService interface.
 type recommendationsService struct {
+	cfg config.RecommendationsConfig
+
 	diseases        storage.DiseasesRepository
 	basicIndicators storage.BasicIndicatorsRepository
 	lifestyles      storage.LifestyleRepository
 	score           storage.ScoreRepository
 	users           storage.UserRepository
-
-	templates *template.Template
 }
 
 func NewRecommendationsService(
+	config config.RecommendationsConfig,
 	diseases storage.DiseasesRepository,
 	basicIndicators storage.BasicIndicatorsRepository,
 	lifestyle storage.LifestyleRepository,
@@ -51,14 +41,12 @@ func NewRecommendationsService(
 	users storage.UserRepository,
 ) *recommendationsService {
 	return &recommendationsService{
+		cfg:             config,
 		diseases:        diseases,
 		basicIndicators: basicIndicators,
 		lifestyles:      lifestyle,
 		score:           score,
 		users:           users,
-		templates: template.Must(
-			template.ParseFiles(templates...),
-		),
 	}
 }
 
@@ -98,14 +86,10 @@ func (s *recommendationsService) getHealthyEatingRecommendation() (*models.Recom
 		return nil, nil
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err := s.templates.ExecuteTemplate(tmplBuffer, templateHealthyEating, nil); err != nil {
-		return nil, err
-	}
-
 	return &models.Recommendation{
-		Title:       titleHealthyEating,
-		Description: tmplBuffer.String(),
+		What: s.cfg.HealthyEating.What,
+		Why:  s.cfg.HealthyEating.Why,
+		How:  s.cfg.HealthyEating.How,
 	}, nil
 }
 
@@ -164,17 +148,18 @@ func (s *recommendationsService) getSmokingRecommendation(userID uint64) (*model
 		return nil, err
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err = s.templates.ExecuteTemplate(tmplBuffer, templateSmoking, map[string]interface{}{
+	why, err := textTemplateToString(templateNameSmoking, s.cfg.Smoking.Why, map[string]interface{}{
 		"riskSmoking":    riskSmoking,
 		"riskNotSmoking": riskNotSmoking,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	return &models.Recommendation{
-		Title:       titleSmoking,
-		Description: tmplBuffer.String(),
+		What: s.cfg.Smoking.What,
+		Why:  why,
+		How:  s.cfg.Smoking.How,
 	}, nil
 }
 
@@ -186,16 +171,26 @@ func (s *recommendationsService) getLifestyleRecommendation(userID uint64) (*mod
 
 	if lifestyle.EventsParticipation == common.EventsParticipationNotFrequently ||
 		lifestyle.PhysicalActivity == common.PhysicalActivityOneInWeek {
-		tmplBuffer := &bytes.Buffer{}
-		if err = s.templates.ExecuteTemplate(tmplBuffer, templateLifestyle, nil); err != nil {
-			return nil, err
-		}
-
 		return &models.Recommendation{
-			Title:       titleLifestyle,
-			Description: tmplBuffer.String(),
+			What: s.cfg.Lifestyle.What,
+			Why:  s.cfg.Lifestyle.Why,
+			How:  s.cfg.Lifestyle.How,
 		}, nil
 	}
 
 	return nil, nil
+}
+
+func textTemplateToString(tmplName, tmplText string, tmplData map[string]interface{}) (string, error) {
+	tmpl, err := template.New(tmplName).Parse(tmplText)
+	if err != nil {
+		return "", err
+	}
+
+	tmplBuffer := &bytes.Buffer{}
+	if err = tmpl.Execute(tmplBuffer, tmplData); err != nil {
+		return "", err
+	}
+
+	return tmplBuffer.String(), nil
 }
