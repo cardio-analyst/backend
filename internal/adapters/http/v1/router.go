@@ -39,4 +39,7 @@ func (r *Router) InitRoutes() {
 
 	// /score/*
 	r.initScoreRoutes()
+
+	// /recommendations/*
+	r.initRecommendationsRoutes()
 }

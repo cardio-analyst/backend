@@ -16,4 +16,6 @@ type Services interface {
 	BasicIndicators() BasicIndicatorsService
 	// Score TODO
 	Score() ScoreService
+	// Recommendations TODO
+	Recommendations() RecommendationsService
 }

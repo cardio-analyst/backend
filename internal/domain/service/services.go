@@ -21,6 +21,7 @@ type services struct {
 	lifestyleService       service.LifestyleService
 	basicIndicatorsService service.BasicIndicatorsService
 	scoreService           service.ScoreService
+	recommendationsService service.RecommendationsService
 }
 
 func NewServices(cfg config.ServicesConfig, storage storage.Storage) *services {
@@ -98,4 +99,20 @@ func (s *services) Score() service.ScoreService {
 	s.scoreService = NewScoreService(s.storage.Score())
 
 	return s.scoreService
+}
+
+func (s *services) Recommendations() service.RecommendationsService {
+	if s.recommendationsService != nil {
+		return s.recommendationsService
+	}
+
+	s.recommendationsService = NewRecommendationsService(
+		s.storage.Diseases(),
+		s.storage.BasicIndicators(),
+		s.storage.Lifestyles(),
+		s.storage.Score(),
+		s.storage.Users(),
+	)
+
+	return s.recommendationsService
 }
