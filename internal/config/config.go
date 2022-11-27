@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 
@@ -58,7 +58,7 @@ func Load(configPath string) (*Config, error) {
 		return nil, err
 	}
 
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
