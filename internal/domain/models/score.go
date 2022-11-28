@@ -14,6 +14,30 @@ type ScoreData struct {
 	TotalCholesterolLevel float64 `query:"totalCholesterolLevel"`
 }
 
+func ExtractScoreDataFrom(indicators []*BasicIndicators) ScoreData {
+	var data ScoreData
+	for _, basicIndicator := range indicators {
+		if basicIndicator.Smoking != nil && *basicIndicator.Smoking {
+			data.Smoking = true
+		}
+		if basicIndicator.Gender != nil && data.Gender == "" {
+			data.Gender = *basicIndicator.Gender
+		}
+		if basicIndicator.SBPLevel != nil && data.SBPLevel == 0 {
+			data.SBPLevel = *basicIndicator.SBPLevel
+		}
+		if basicIndicator.TotalCholesterolLevel != nil && data.TotalCholesterolLevel == 0 {
+			data.TotalCholesterolLevel = *basicIndicator.TotalCholesterolLevel
+		}
+
+		// fastest break condition
+		if data.Gender != "" && data.SBPLevel != 0 && data.TotalCholesterolLevel != 0 {
+			break
+		}
+	}
+	return data
+}
+
 func (d ScoreData) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Age, validation.Min(40), validation.Max(89)),

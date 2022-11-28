@@ -18,7 +18,7 @@ import (
 // recommendation titles
 const (
 	templateNameSmoking          = "smoking"
-	templateNameBmi              = "bmi"
+	templateNameBMI              = "bmi"
 	templateNameCholesterolLevel = "cholesterol_level"
 )
 
@@ -37,7 +37,7 @@ type recommendationsService struct {
 }
 
 func NewRecommendationsService(
-	config config.RecommendationsConfig,
+	cfg config.RecommendationsConfig,
 	diseases storage.DiseasesRepository,
 	basicIndicators storage.BasicIndicatorsRepository,
 	lifestyle storage.LifestyleRepository,
@@ -45,7 +45,7 @@ func NewRecommendationsService(
 	users storage.UserRepository,
 ) *recommendationsService {
 	return &recommendationsService{
-		cfg:             config,
+		cfg:             cfg,
 		diseases:        diseases,
 		basicIndicators: basicIndicators,
 		lifestyles:      lifestyle,
@@ -57,23 +57,14 @@ func NewRecommendationsService(
 func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Recommendation, error) {
 	recommendations := make([]*models.Recommendation, 0, 6)
 
-	var err error
-
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
-
 	if err != nil {
 		return nil, err
 	}
 
-	recommendation, err := s.getSmokingRecommendation(userID, basicIndicators)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
+	scoreData := models.ExtractScoreDataFrom(basicIndicators)
 
-	recommendation, err = s.getLifestyleRecommendation(userID)
+	recommendation, err := s.smokingRecommendation(userID, scoreData)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +72,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getSBPLevelRecommendation(basicIndicators)
+	recommendation, err = s.sbpLevelRecommendation(scoreData)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +80,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getBMIRecommendation(basicIndicators)
+	recommendation, err = s.bmiRecommendation(scoreData, basicIndicators)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +88,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getCholesterolLevelRecommendation(userID, basicIndicators)
+	recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +96,15 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getHealthyEatingRecommendation()
+	recommendation, err = s.lifestyleRecommendation(userID)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation, err = s.healthyEatingRecommendation()
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	return recommendations, nil
 }
 
-func (s *recommendationsService) getHealthyEatingRecommendation() (*models.Recommendation, error) {
+func (s *recommendationsService) healthyEatingRecommendation() (*models.Recommendation, error) {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Intn(100)%2 != 1 {
 		return nil, nil
@@ -129,15 +128,11 @@ func (s *recommendationsService) getHealthyEatingRecommendation() (*models.Recom
 	}, nil
 }
 
-func (s *recommendationsService) getSmokingRecommendation(userID uint64, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
-
-	scoreData := getScoreData(basicIndicators)
-
+func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData models.ScoreData) (*models.Recommendation, error) {
 	if !scoreData.Smoking {
 		return nil, nil
 	}
 
-	var user *models.User
 	user, err := s.users.GetByCriteria(models.UserCriteria{
 		ID: &userID,
 	})
@@ -176,132 +171,136 @@ func (s *recommendationsService) getSmokingRecommendation(userID uint64, basicIn
 	}, nil
 }
 
-func (s *recommendationsService) getSBPLevelRecommendation(basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
-	var sbpLevel float64
-
-	for _, basicIndicator := range basicIndicators {
-		if basicIndicator.SBPLevel != nil && sbpLevel == 0 {
-			sbpLevel = *basicIndicator.SBPLevel
-			break
-		}
-	}
-
-	if sbpLevel >= 140 {
+func (s *recommendationsService) sbpLevelRecommendation(scoreData models.ScoreData) (*models.Recommendation, error) {
+	if scoreData.SBPLevel >= 140 {
 		return &models.Recommendation{
-			What: s.cfg.SbpLevel.What,
-			Why:  s.cfg.SbpLevel.Why,
-			How:  s.cfg.SbpLevel.How,
+			What: s.cfg.SBPLevel.What,
+			Why:  s.cfg.SBPLevel.Why,
+			How:  s.cfg.SBPLevel.How,
 		}, nil
 	}
-
 	return nil, nil
 }
 
-func (s *recommendationsService) getBMIRecommendation(basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
+func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
+	var weight, height, waistSize, bodyMassIndex float64
+	for _, indicators := range basicIndicators {
+		if indicators.Weight != nil && weight == 0 {
+			weight = *indicators.Weight
+		}
+		if indicators.Height != nil && height == 0 {
+			height = *indicators.Height
+		}
+		if indicators.WaistSize != nil && waistSize == 0 {
+			waistSize = *indicators.WaistSize
+		}
+		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
+			bodyMassIndex = *indicators.BodyMassIndex
+		}
 
-	var weight, height, waistSize float64
-
-	for _, basicIndicator := range basicIndicators {
-		if basicIndicator.Weight != nil && weight == 0 {
-			weight = *basicIndicator.Weight
-		}
-		if basicIndicator.Height != nil && height == 0 {
-			height = *basicIndicator.Height
-		}
-		if basicIndicator.WaistSize != nil && waistSize == 0 {
-			waistSize = *basicIndicator.WaistSize
-		}
-		if weight != 0 && height != 0 && waistSize != 0 {
+		// fastest break condition
+		if weight != 0 && height != 0 && waistSize != 0 && bodyMassIndex != 0 {
 			break
 		}
 	}
 
-	if weight == 0 || height == 0 {
+	if bodyMassIndex < 25 {
+		bodyMassIndex = weight / math.Pow(height/100, 2)
+		if bodyMassIndex < 25 {
+			return nil, nil
+		}
+	}
+
+	var waistRecommendation string
+	switch {
+	case scoreData.Gender == common.UserGenderMale && waistSize > 102:
+		waistRecommendation = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 102."
+	case scoreData.Gender == common.UserGenderFemale && waistSize > 88:
+		waistRecommendation = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 88."
+	default:
 		return nil, nil
 	}
 
-	bmi := weight / math.Pow(height/100, 2)
-	scoreData := getScoreData(basicIndicators)
-
-	var waistPrint string
-
-	if scoreData.Gender == common.UserGenderMale && waistSize > 102 {
-		waistPrint = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 102."
-	}
-
-	if scoreData.Gender == common.UserGenderFemale && waistSize > 88 {
-		waistPrint = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 88."
-	}
-
-	why, err := textTemplateToString(templateNameBmi, s.cfg.Bmi.Why, map[string]interface{}{
-		"bmi":   fmt.Sprintf("%.2f", bmi),
-		"waist": waistPrint,
+	why, err := textTemplateToString(templateNameBMI, s.cfg.BMI.Why, map[string]interface{}{
+		"bmi":   fmt.Sprintf("%.2f", bodyMassIndex),
+		"waist": waistRecommendation,
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.Recommendation{
-		What: s.cfg.Bmi.What,
+		What: s.cfg.BMI.What,
 		Why:  why,
-		How:  s.cfg.Bmi.How,
+		How:  s.cfg.BMI.How,
 	}, nil
 }
 
-func (s *recommendationsService) getCholesterolLevelRecommendation(userID uint64, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
-	scoreData := getScoreData(basicIndicators)
-
+func (s *recommendationsService) cholesterolLevelRecommendation(userID uint64, scoreData models.ScoreData, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
 	if scoreData.TotalCholesterolLevel == 0 || scoreData.Gender == common.UserGenderUnknown {
 		return nil, nil
 	}
 
-	totalCholesterolLevel := scoreData.TotalCholesterolLevel
-	gender := scoreData.Gender
-
 	userDiseases, err := s.diseases.Get(userID)
-
 	if err != nil {
 		return nil, err
 	}
 
-	statusCholesterol := totalCholesterolLevel > 5 || (totalCholesterolLevel > 4.5 && userDiseases.HasTypeTwoDiabetes)
-
+	statusCholesterol := scoreData.TotalCholesterolLevel > 5 || (scoreData.TotalCholesterolLevel > 4.5 && userDiseases.HasTypeTwoDiabetes)
 	if !statusCholesterol {
 		return nil, nil
 	}
 
 	var minCholesterol string
-
 	if userDiseases.HasTypeTwoDiabetes {
 		minCholesterol = "4-4.5"
 	} else {
 		minCholesterol = "5"
 	}
 
-	var maxAlcohol string
+	why, err := textTemplateToString(templateNameCholesterolLevel, s.cfg.CholesterolLevel.Why, map[string]interface{}{
+		"minCholesterol": minCholesterol,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	if gender == "female" {
+	var maxAlcohol string
+	if scoreData.Gender == common.UserGenderFemale {
 		maxAlcohol = "10-20"
 	} else {
 		maxAlcohol = "20-30"
 	}
 
-	why, err := textTemplateToString(templateNameCholesterolLevel, s.cfg.CholesterolLevel.Why, map[string]interface{}{
-		"minCholesterol": minCholesterol,
-	})
+	var weight, height, bodyMassIndex float64
+	for _, indicators := range basicIndicators {
+		if indicators.Weight != nil && weight == 0 {
+			weight = *indicators.Weight
+		}
+		if indicators.Height != nil && height == 0 {
+			height = *indicators.Height
+		}
+		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
+			bodyMassIndex = *indicators.BodyMassIndex
+		}
 
-	if err != nil {
-		return nil, err
+		// fastest break condition
+		if weight != 0 && height != 0 && bodyMassIndex != 0 {
+			break
+		}
 	}
 
-	bmi := math.Pow(*basicIndicators[0].Weight/(*basicIndicators[0].Height/100), 2)
+	if bodyMassIndex == 0 {
+		bodyMassIndex = weight / math.Pow(height/100, 2)
+		if bodyMassIndex == 0 {
+			return nil, nil
+		}
+	}
 
 	how, err := textTemplateToString(templateNameCholesterolLevel, s.cfg.CholesterolLevel.How, map[string]interface{}{
-		"minSize":    fmt.Sprintf("%.2f", bmi),
+		"minSize":    fmt.Sprintf("%.2f", bodyMassIndex),
 		"maxAlcohol": maxAlcohol,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +312,7 @@ func (s *recommendationsService) getCholesterolLevelRecommendation(userID uint64
 	}, nil
 }
 
-func (s *recommendationsService) getLifestyleRecommendation(userID uint64) (*models.Recommendation, error) {
+func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models.Recommendation, error) {
 	lifestyle, err := s.lifestyles.Get(userID)
 	if err != nil {
 		return nil, err
@@ -329,31 +328,6 @@ func (s *recommendationsService) getLifestyleRecommendation(userID uint64) (*mod
 	}
 
 	return nil, nil
-}
-
-func getScoreData(basicIndicators []*models.BasicIndicators) models.ScoreData {
-	var scoreData models.ScoreData
-	for _, basicIndicator := range basicIndicators {
-		if basicIndicator.Smoking != nil && *basicIndicator.Smoking {
-			scoreData.Smoking = true
-		}
-		if basicIndicator.Gender != nil && scoreData.Gender == "" {
-			scoreData.Gender = *basicIndicator.Gender
-		}
-		if basicIndicator.SBPLevel != nil && scoreData.SBPLevel == 0 {
-			scoreData.SBPLevel = *basicIndicator.SBPLevel
-		}
-		if basicIndicator.TotalCholesterolLevel != nil && scoreData.TotalCholesterolLevel == 0 {
-			scoreData.TotalCholesterolLevel = *basicIndicator.TotalCholesterolLevel
-		}
-
-		// fastest break condition
-		if scoreData.Gender != "" && scoreData.SBPLevel != 0 && scoreData.TotalCholesterolLevel != 0 {
-			break
-		}
-	}
-
-	return scoreData
 }
 
 func textTemplateToString(tmplName, tmplText string, tmplData map[string]interface{}) (string, error) {
