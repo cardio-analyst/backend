@@ -54,9 +54,12 @@ type TokenConfig struct {
 }
 
 type RecommendationsConfig struct {
-	HealthyEating RecommendationConfig `yaml:"healthy_eating"`
-	Smoking       RecommendationConfig `yaml:"smoking"`
-	Lifestyle     RecommendationConfig `yaml:"lifestyle"`
+	HealthyEating    RecommendationConfig `yaml:"healthy_eating"`
+	Smoking          RecommendationConfig `yaml:"smoking"`
+	Lifestyle        RecommendationConfig `yaml:"lifestyle"`
+	Bmi              RecommendationConfig `yaml:"bmi"`
+	CholesterolLevel RecommendationConfig `yaml:"cholesterol_level"`
+	SbpLevel         RecommendationConfig `yaml:"sbp_level"`
 }
 
 type RecommendationConfig struct {
