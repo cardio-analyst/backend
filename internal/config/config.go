@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 
@@ -39,7 +39,8 @@ type PostgresConfig struct {
 }
 
 type ServicesConfig struct {
-	Auth AuthConfig `yaml:"auth"`
+	Auth            AuthConfig            `yaml:"auth"`
+	Recommendations RecommendationsConfig `yaml:"recommendations"`
 }
 
 type AuthConfig struct {
@@ -52,13 +53,28 @@ type TokenConfig struct {
 	TokenTTLSec int    `yaml:"token_ttl_sec"`
 }
 
+type RecommendationsConfig struct {
+	HealthyEating    RecommendationConfig `yaml:"healthy_eating"`
+	Smoking          RecommendationConfig `yaml:"smoking"`
+	Lifestyle        RecommendationConfig `yaml:"lifestyle"`
+	BMI              RecommendationConfig `yaml:"bmi"`
+	CholesterolLevel RecommendationConfig `yaml:"cholesterol_level"`
+	SBPLevel         RecommendationConfig `yaml:"sbp_level"`
+}
+
+type RecommendationConfig struct {
+	What string `yaml:"what"`
+	Why  string `yaml:"why"`
+	How  string `yaml:"how"`
+}
+
 func Load(configPath string) (*Config, error) {
 	file, err := os.Open(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
