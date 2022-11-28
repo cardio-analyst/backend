@@ -107,6 +107,7 @@ func (s *services) Recommendations() service.RecommendationsService {
 	}
 
 	s.recommendationsService = NewRecommendationsService(
+		s.cfg.Recommendations,
 		s.storage.Diseases(),
 		s.storage.BasicIndicators(),
 		s.storage.Lifestyles(),

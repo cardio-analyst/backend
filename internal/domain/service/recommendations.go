@@ -8,33 +8,18 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/cardio-analyst/backend/internal/config"
 	"github.com/cardio-analyst/backend/internal/domain/common"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
-// recommendation template names
-const (
-	templateHealthyEating    = "healthy_eating.tmpl"
-	templateSmoking          = "smoking.tmpl"
-	templateLifestyle        = "lifestyle.tmpl"
-	templateSBPLevel         = "sbp_level.tmpl"
-	templateCholesterolLevel = "cholesterol_level.tmpl"
-	templateBMI              = "bmi.tmpl"
-)
-
-// templates contains recommendation contents
-var templates = []string{templateHealthyEating, templateSmoking, templateLifestyle, templateSBPLevel, templateCholesterolLevel, templateBMI}
-
 // recommendation titles
 const (
-	titleHealthyEating    = "Здоровое питание"
-	titleSmoking          = "Отказ от курения"
-	titleLifestyle        = "Здоровый образ жизни"
-	titleSBPLevel         = "АД"
-	titleCholesterolLevel = "Холестерин"
-	titleBMI              = "Ожирение"
+	templateNameSmoking          = "smoking"
+	templateNameBmi              = "bmi"
+	templateNameCholesterolLevel = "cholesterol_level"
 )
 
 // check whether recommendationsService structure implements the service.RecommendationsService interface
@@ -42,16 +27,17 @@ var _ service.RecommendationsService = (*recommendationsService)(nil)
 
 // recommendationsService implements service.RecommendationsService interface.
 type recommendationsService struct {
+	cfg config.RecommendationsConfig
+
 	diseases        storage.DiseasesRepository
 	basicIndicators storage.BasicIndicatorsRepository
 	lifestyles      storage.LifestyleRepository
 	score           storage.ScoreRepository
 	users           storage.UserRepository
-
-	templates *template.Template
 }
 
 func NewRecommendationsService(
+	config config.RecommendationsConfig,
 	diseases storage.DiseasesRepository,
 	basicIndicators storage.BasicIndicatorsRepository,
 	lifestyle storage.LifestyleRepository,
@@ -59,14 +45,12 @@ func NewRecommendationsService(
 	users storage.UserRepository,
 ) *recommendationsService {
 	return &recommendationsService{
+		cfg:             config,
 		diseases:        diseases,
 		basicIndicators: basicIndicators,
 		lifestyles:      lifestyle,
 		score:           score,
 		users:           users,
-		templates: template.Must(
-			template.ParseFiles(templates...),
-		),
 	}
 }
 
@@ -76,6 +60,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	var err error
 
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
+
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +81,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getSBPLevelRecommendation(basicIndicators[0])
+	recommendation, err = s.getSBPLevelRecommendation(basicIndicators)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +97,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		recommendations = append(recommendations, recommendation)
 	}
 
-	recommendation, err = s.getCholesterolLevelRecommendation(basicIndicators, userID)
+	recommendation, err = s.getCholesterolLevelRecommendation(userID, basicIndicators)
 	if err != nil {
 		return nil, err
 	}
@@ -137,14 +122,10 @@ func (s *recommendationsService) getHealthyEatingRecommendation() (*models.Recom
 		return nil, nil
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err := s.templates.ExecuteTemplate(tmplBuffer, templateHealthyEating, nil); err != nil {
-		return nil, err
-	}
-
 	return &models.Recommendation{
-		Title:       titleHealthyEating,
-		Description: tmplBuffer.String(),
+		What: s.cfg.HealthyEating.What,
+		Why:  s.cfg.HealthyEating.Why,
+		How:  s.cfg.HealthyEating.How,
 	}, nil
 }
 
@@ -180,32 +161,36 @@ func (s *recommendationsService) getSmokingRecommendation(userID uint64, basicIn
 		return nil, err
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err = s.templates.ExecuteTemplate(tmplBuffer, templateSmoking, map[string]interface{}{
+	why, err := textTemplateToString(templateNameSmoking, s.cfg.Smoking.Why, map[string]interface{}{
 		"riskSmoking":    riskSmoking,
 		"riskNotSmoking": riskNotSmoking,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	return &models.Recommendation{
-		Title:       titleSmoking,
-		Description: tmplBuffer.String(),
+		What: s.cfg.Smoking.What,
+		Why:  why,
+		How:  s.cfg.Smoking.How,
 	}, nil
 }
 
-func (s *recommendationsService) getSBPLevelRecommendation(basicIndicator *models.BasicIndicators) (*models.Recommendation, error) {
-	sbpLevel := *basicIndicator.SBPLevel
+func (s *recommendationsService) getSBPLevelRecommendation(basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
+	var sbpLevel float64
+
+	for _, basicIndicator := range basicIndicators {
+		if basicIndicator.SBPLevel != nil && sbpLevel == 0 {
+			sbpLevel = *basicIndicator.SBPLevel
+			break
+		}
+	}
 
 	if sbpLevel >= 140 {
-		tmplBuffer := &bytes.Buffer{}
-		if err := s.templates.ExecuteTemplate(tmplBuffer, templateSBPLevel, map[string]interface{}{}); err != nil {
-			return nil, err
-		}
-
 		return &models.Recommendation{
-			Title:       titleSBPLevel,
-			Description: tmplBuffer.String(),
+			What: s.cfg.SbpLevel.What,
+			Why:  s.cfg.SbpLevel.Why,
+			How:  s.cfg.SbpLevel.How,
 		}, nil
 	}
 
@@ -213,35 +198,63 @@ func (s *recommendationsService) getSBPLevelRecommendation(basicIndicator *model
 }
 
 func (s *recommendationsService) getBMIRecommendation(basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
-	bmi := math.Pow(*basicIndicators[0].Weight/(*basicIndicators[0].Height/100), 2)
+
+	var weight, height, waistSize float64
+
+	for _, basicIndicator := range basicIndicators {
+		if basicIndicator.Weight != nil && weight == 0 {
+			weight = *basicIndicator.Weight
+		}
+		if basicIndicator.Height != nil && height == 0 {
+			height = *basicIndicator.Height
+		}
+		if basicIndicator.WaistSize != nil && waistSize == 0 {
+			waistSize = *basicIndicator.WaistSize
+		}
+		if weight != 0 && height != 0 && waistSize != 0 {
+			break
+		}
+	}
+
+	if weight == 0 || height == 0 {
+		return nil, nil
+	}
+
+	bmi := weight / math.Pow(height/100, 2)
 	scoreData := getScoreData(basicIndicators)
 
-	var waist string
+	var waistPrint string
 
-	if scoreData.Gender == "male" && bmi > 102 {
-		waist = "Также у Вас превышен объем талии, необходимо уменьшить его минимум до 102"
+	if scoreData.Gender == common.UserGenderMale && waistSize > 102 {
+		waistPrint = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 102."
 	}
 
-	if scoreData.Gender == "female" && bmi > 88 {
-		waist = "Также у Вас превышен объем талии, необходимо уменьшить его минимум до 88"
+	if scoreData.Gender == common.UserGenderFemale && waistSize > 88 {
+		waistPrint = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 88."
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err := s.templates.ExecuteTemplate(tmplBuffer, templateBMI, map[string]interface{}{
+	why, err := textTemplateToString(templateNameBmi, s.cfg.Bmi.Why, map[string]interface{}{
 		"bmi":   fmt.Sprintf("%.2f", bmi),
-		"waist": waist,
-	}); err != nil {
+		"waist": waistPrint,
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
 	return &models.Recommendation{
-		Title:       titleBMI,
-		Description: tmplBuffer.String(),
+		What: s.cfg.Bmi.What,
+		Why:  why,
+		How:  s.cfg.Bmi.How,
 	}, nil
 }
 
-func (s *recommendationsService) getCholesterolLevelRecommendation(basicIndicators []*models.BasicIndicators, userID uint64) (*models.Recommendation, error) {
+func (s *recommendationsService) getCholesterolLevelRecommendation(userID uint64, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
 	scoreData := getScoreData(basicIndicators)
+
+	if scoreData.TotalCholesterolLevel == 0 || scoreData.Gender == common.UserGenderUnknown {
+		return nil, nil
+	}
 
 	totalCholesterolLevel := scoreData.TotalCholesterolLevel
 	gender := scoreData.Gender
@@ -274,17 +287,29 @@ func (s *recommendationsService) getCholesterolLevelRecommendation(basicIndicato
 		maxAlcohol = "20-30"
 	}
 
-	tmplBuffer := &bytes.Buffer{}
-	if err = s.templates.ExecuteTemplate(tmplBuffer, templateCholesterolLevel, map[string]interface{}{
+	why, err := textTemplateToString(templateNameCholesterolLevel, s.cfg.CholesterolLevel.Why, map[string]interface{}{
 		"minCholesterol": minCholesterol,
-		"maxAlcohol":     maxAlcohol,
-	}); err != nil {
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	bmi := math.Pow(*basicIndicators[0].Weight/(*basicIndicators[0].Height/100), 2)
+
+	how, err := textTemplateToString(templateNameCholesterolLevel, s.cfg.CholesterolLevel.How, map[string]interface{}{
+		"minSize":    fmt.Sprintf("%.2f", bmi),
+		"maxAlcohol": maxAlcohol,
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
 	return &models.Recommendation{
-		Title:       titleCholesterolLevel,
-		Description: tmplBuffer.String(),
+		What: s.cfg.CholesterolLevel.What,
+		Why:  why,
+		How:  how,
 	}, nil
 }
 
@@ -296,14 +321,10 @@ func (s *recommendationsService) getLifestyleRecommendation(userID uint64) (*mod
 
 	if lifestyle.EventsParticipation == common.EventsParticipationNotFrequently ||
 		lifestyle.PhysicalActivity == common.PhysicalActivityOneInWeek {
-		tmplBuffer := &bytes.Buffer{}
-		if err = s.templates.ExecuteTemplate(tmplBuffer, templateLifestyle, nil); err != nil {
-			return nil, err
-		}
-
 		return &models.Recommendation{
-			Title:       titleLifestyle,
-			Description: tmplBuffer.String(),
+			What: s.cfg.Lifestyle.What,
+			Why:  s.cfg.Lifestyle.Why,
+			How:  s.cfg.Lifestyle.How,
 		}, nil
 	}
 
@@ -335,3 +356,16 @@ func getScoreData(basicIndicators []*models.BasicIndicators) models.ScoreData {
 	return scoreData
 }
 
+func textTemplateToString(tmplName, tmplText string, tmplData map[string]interface{}) (string, error) {
+	tmpl, err := template.New(tmplName).Parse(tmplText)
+	if err != nil {
+		return "", err
+	}
+
+	tmplBuffer := &bytes.Buffer{}
+	if err = tmpl.Execute(tmplBuffer, tmplData); err != nil {
+		return "", err
+	}
+
+	return tmplBuffer.String(), nil
+}
