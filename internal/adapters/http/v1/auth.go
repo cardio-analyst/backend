@@ -10,6 +10,21 @@ import (
 	"github.com/cardio-analyst/backend/internal/domain/models"
 )
 
+// possible auth errors designations
+const (
+	errorInvalidFirstName    = "InvalidFirstName"
+	errorInvalidLastName     = "InvalidLastName"
+	errorInvalidRegion       = "InvalidRegion"
+	errorInvalidBirthDate    = "InvalidBirthDate"
+	errorInvalidLogin        = "InvalidLogin"
+	errorInvalidEmail        = "InvalidEmail"
+	errorInvalidPassword     = "InvalidPassword"
+	errorRefreshTokenExpired = "RefreshTokenExpired"
+	errorWrongRefreshToken   = "WrongRefreshToken"
+	errorWrongCredentials    = "WrongCredentials"
+	errorIPNotAllowed        = "IPNotAllowed"
+)
+
 func (r *Router) initAuthRoutes() {
 	auth := r.api.Group("/auth")
 	auth.POST("/signUp", r.signUp)
@@ -25,6 +40,20 @@ func (r *Router) signUp(c echo.Context) error {
 
 	if err := r.services.Auth().RegisterUser(reqData); err != nil {
 		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidFirstName):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidFirstName))
+		case errors.Is(err, serviceErrors.ErrInvalidLastName):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLastName))
+		case errors.Is(err, serviceErrors.ErrInvalidRegion):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRegion))
+		case errors.Is(err, serviceErrors.ErrInvalidBirthDate):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidBirthDate))
+		case errors.Is(err, serviceErrors.ErrInvalidLogin):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLogin))
+		case errors.Is(err, serviceErrors.ErrInvalidEmail):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidEmail))
+		case errors.Is(err, serviceErrors.ErrInvalidPassword):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidPassword))
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
 		case errors.Is(err, serviceErrors.ErrUserLoginAlreadyOccupied):

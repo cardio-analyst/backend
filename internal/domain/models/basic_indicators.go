@@ -1,9 +1,12 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/cardio-analyst/backend/internal/domain/common"
+	"github.com/cardio-analyst/backend/internal/domain/errors"
 )
 
 type BasicIndicators struct {
@@ -23,7 +26,7 @@ type BasicIndicators struct {
 }
 
 func (a BasicIndicators) Validate(updating bool) error {
-	return validation.ValidateStruct(&a,
+	err := validation.ValidateStruct(&a,
 		validation.Field(&a.ID, validation.When(
 			updating,
 			validation.Required,
@@ -66,4 +69,47 @@ func (a BasicIndicators) Validate(updating bool) error {
 			validation.Required,
 		)),
 	)
+	if err != nil {
+		var errBytes []byte
+		errBytes, err = json.Marshal(err)
+		if err != nil {
+			return err
+		}
+
+		var validationErrors map[string]string
+		if err = json.Unmarshal(errBytes, &validationErrors); err != nil {
+			return err
+		}
+
+		if validationError, found := validationErrors["weight"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidWeight, validationError)
+		}
+		if validationError, found := validationErrors["height"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidHeight, validationError)
+		}
+		if validationError, found := validationErrors["bodyMassIndex"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidBodyMassIndex, validationError)
+		}
+		if validationError, found := validationErrors["waistSize"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidWaistSize, validationError)
+		}
+		if validationError, found := validationErrors["gender"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidGender, validationError)
+		}
+		if validationError, found := validationErrors["sbpLevel"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidSBPLevel, validationError)
+		}
+		if validationError, found := validationErrors["totalCholesterolLevel"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidTotalCholesterolLevel, validationError)
+		}
+		if validationError, found := validationErrors["cvEventsRiskValue"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidCVEventsRiskValue, validationError)
+		}
+		if validationError, found := validationErrors["idealCardiovascularAgesRange"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidIdealCardiovascularAgesRange, validationError)
+		}
+
+		return errors.ErrInvalidBasicIndicatorsData
+	}
+	return nil
 }

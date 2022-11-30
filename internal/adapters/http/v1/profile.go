@@ -41,6 +41,20 @@ func (r *Router) editProfileInfo(c echo.Context) error {
 
 	if err := r.services.User().Update(reqData); err != nil {
 		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidFirstName):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidFirstName))
+		case errors.Is(err, serviceErrors.ErrInvalidLastName):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLastName))
+		case errors.Is(err, serviceErrors.ErrInvalidRegion):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRegion))
+		case errors.Is(err, serviceErrors.ErrInvalidBirthDate):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidBirthDate))
+		case errors.Is(err, serviceErrors.ErrInvalidLogin):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLogin))
+		case errors.Is(err, serviceErrors.ErrInvalidEmail):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidEmail))
+		case errors.Is(err, serviceErrors.ErrInvalidPassword):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidPassword))
 		case errors.Is(err, serviceErrors.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
 		case errors.Is(err, serviceErrors.ErrUserLoginAlreadyOccupied):

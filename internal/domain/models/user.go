@@ -1,7 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/cardio-analyst/backend/internal/domain/errors"
 	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -30,7 +32,7 @@ type User struct {
 }
 
 func (u User) Validate(validatePassword bool) error {
-	return validation.ValidateStruct(&u,
+	err := validation.ValidateStruct(&u,
 		validation.Field(&u.FirstName, validation.Required),
 		validation.Field(&u.LastName, validation.Required),
 		validation.Field(&u.Region, validation.Required),
@@ -42,6 +44,43 @@ func (u User) Validate(validatePassword bool) error {
 			validation.Required, validation.Length(common.MinPasswordLength, common.MaxPasswordLength)),
 		),
 	)
+	if err != nil {
+		var errBytes []byte
+		errBytes, err = json.Marshal(err)
+		if err != nil {
+			return err
+		}
+
+		var validationErrors map[string]string
+		if err = json.Unmarshal(errBytes, &validationErrors); err != nil {
+			return err
+		}
+
+		if validationError, found := validationErrors["firstName"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidFirstName, validationError)
+		}
+		if validationError, found := validationErrors["lastName"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidLastName, validationError)
+		}
+		if validationError, found := validationErrors["region"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidRegion, validationError)
+		}
+		if validationError, found := validationErrors["birthDate"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidBirthDate, validationError)
+		}
+		if validationError, found := validationErrors["login"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidLogin, validationError)
+		}
+		if validationError, found := validationErrors["email"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidEmail, validationError)
+		}
+		if validationError, found := validationErrors["password"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidPassword, validationError)
+		}
+
+		return errors.ErrInvalidUserData
+	}
+	return nil
 }
 
 // UserCriteria TODO

@@ -3,8 +3,6 @@ package service
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-
 	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
@@ -27,7 +25,7 @@ func NewBasicIndicatorsService(basicIndicators storage.BasicIndicatorsRepository
 
 func (s *basicIndicatorsService) Create(basicIndicatorsData models.BasicIndicators) error {
 	if err := basicIndicatorsData.Validate(false); err != nil {
-		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidBasicIndicatorsData, err)
+		return err
 	}
 
 	return s.basicIndicators.Save(basicIndicatorsData)
@@ -35,7 +33,7 @@ func (s *basicIndicatorsService) Create(basicIndicatorsData models.BasicIndicato
 
 func (s *basicIndicatorsService) Update(basicIndicatorsData models.BasicIndicators) error {
 	if err := basicIndicatorsData.Validate(true); err != nil {
-		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidBasicIndicatorsData, err)
+		return err
 	}
 
 	_, err := s.basicIndicators.Get(basicIndicatorsData.ID, basicIndicatorsData.UserID)

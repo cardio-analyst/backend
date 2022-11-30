@@ -15,6 +15,13 @@ const (
 	ctxKeyUserID        = "userID"
 )
 
+// possible middleware error designations
+const (
+	errorWrongAuthHeader    = "WrongAuthHeader"
+	errorAccessTokenExpired = "AccessTokenExpired"
+	errorWrongAccessToken   = "WrongAccessToken"
+)
+
 var (
 	errEmptyAuthHeader   = errors.New("empty auth header")
 	errInvalidAuthHeader = errors.New("invalid auth header")

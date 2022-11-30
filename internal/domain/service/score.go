@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 
-	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
 	"github.com/cardio-analyst/backend/internal/ports/storage"
@@ -25,7 +24,7 @@ func NewScoreService(score storage.ScoreRepository) *scoreService {
 
 func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, error) {
 	if err := data.Validate(); err != nil {
-		return 0, fmt.Errorf("%w: %v", serviceErrors.ErrInvalidScoreData, err)
+		return 0, err
 	}
 
 	return s.score.GetCVERisk(data)

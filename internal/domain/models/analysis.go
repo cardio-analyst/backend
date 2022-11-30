@@ -1,7 +1,12 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"github.com/cardio-analyst/backend/internal/domain/errors"
 )
 
 type Analysis struct {
@@ -19,7 +24,7 @@ type Analysis struct {
 }
 
 func (a Analysis) Validate(updating bool) error {
-	return validation.ValidateStruct(&a,
+	err := validation.ValidateStruct(&a,
 		validation.Field(&a.ID, validation.When(
 			updating,
 			validation.Required,
@@ -54,4 +59,41 @@ func (a Analysis) Validate(updating bool) error {
 			validation.Required, validation.Min(20.0), validation.Max(500.0),
 		)),
 	)
+	if err != nil {
+		var errBytes []byte
+		errBytes, err = json.Marshal(err)
+		if err != nil {
+			return err
+		}
+
+		var validationErrors map[string]string
+		if err = json.Unmarshal(errBytes, &validationErrors); err != nil {
+			return err
+		}
+
+		if validationError, found := validationErrors["highDensityCholesterol"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidHighDensityCholesterol, validationError)
+		}
+		if validationError, found := validationErrors["lowDensityCholesterol"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidLowDensityCholesterol, validationError)
+		}
+		if validationError, found := validationErrors["triglycerides"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidTriglycerides, validationError)
+		}
+		if validationError, found := validationErrors["lipoprotein"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidLipoprotein, validationError)
+		}
+		if validationError, found := validationErrors["highlySensitiveCReactiveProtein"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidHighlySensitiveCReactiveProtein, validationError)
+		}
+		if validationError, found := validationErrors["atherogenicityCoefficient"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidAtherogenicityCoefficient, validationError)
+		}
+		if validationError, found := validationErrors["creatinine"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidCreatinine, validationError)
+		}
+
+		return errors.ErrInvalidAnalysisData
+	}
+	return nil
 }
