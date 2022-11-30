@@ -3,7 +3,7 @@ package http
 import "regexp"
 
 const (
-	passwordPattern           = `"password": ".+"`
+	passwordPattern           = `"password":.*".+"`
 	passwordReplacementString = `"password": "******"`
 )
 
