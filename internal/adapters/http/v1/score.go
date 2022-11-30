@@ -44,7 +44,7 @@ func (r *Router) cveRisk(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidScoreData):
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
+			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}
@@ -82,7 +82,7 @@ func (r *Router) idealAge(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidScoreData):
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
+			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}

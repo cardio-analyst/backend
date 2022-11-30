@@ -62,70 +62,73 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 		return nil, err
 	}
 
+	recommendation, err := s.lifestyleRecommendation(userID)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation = s.healthyEatingRecommendation()
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
 	scoreData := models.ExtractScoreDataFrom(basicIndicators)
+	if err = scoreData.Validate(); err == nil {
+		recommendation, err = s.smokingRecommendation(userID, scoreData)
+		if err != nil {
+			return nil, err
+		}
+		if recommendation != nil {
+			recommendations = append(recommendations, recommendation)
+		}
 
-	recommendation, err := s.smokingRecommendation(userID, scoreData)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
+		recommendation, err = s.sbpLevelRecommendation(scoreData)
+		if err != nil {
+			return nil, err
+		}
+		if recommendation != nil {
+			recommendations = append(recommendations, recommendation)
+		}
 
-	recommendation, err = s.sbpLevelRecommendation(scoreData)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
+		recommendation, err = s.bmiRecommendation(scoreData, basicIndicators)
+		if err != nil {
+			return nil, err
+		}
+		if recommendation != nil {
+			recommendations = append(recommendations, recommendation)
+		}
 
-	recommendation, err = s.bmiRecommendation(scoreData, basicIndicators)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
-
-	recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
-
-	recommendation, err = s.lifestyleRecommendation(userID)
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
+		recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
+		if err != nil {
+			return nil, err
+		}
+		if recommendation != nil {
+			recommendations = append(recommendations, recommendation)
+		}
 	}
 
-	recommendation, err = s.healthyEatingRecommendation()
-	if err != nil {
-		return nil, err
-	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(recommendations), func(i, j int) {
+		recommendations[i], recommendations[j] = recommendations[j], recommendations[i]
+	})
 
 	return recommendations, nil
 }
 
-func (s *recommendationsService) healthyEatingRecommendation() (*models.Recommendation, error) {
+func (s *recommendationsService) healthyEatingRecommendation() *models.Recommendation {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Intn(100)%2 != 1 {
-		return nil, nil
+		return nil
 	}
 
 	return &models.Recommendation{
 		What: s.cfg.HealthyEating.What,
 		Why:  s.cfg.HealthyEating.Why,
 		How:  s.cfg.HealthyEating.How,
-	}, nil
+	}
 }
 
 func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData models.ScoreData) (*models.Recommendation, error) {
