@@ -119,11 +119,6 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 }
 
 func (s *recommendationsService) healthyEatingRecommendation() *models.Recommendation {
-	rand.Seed(time.Now().UnixNano())
-	if rand.Intn(100)%2 != 1 {
-		return nil
-	}
-
 	return &models.Recommendation{
 		What: s.cfg.HealthyEating.What,
 		Why:  s.cfg.HealthyEating.Why,
