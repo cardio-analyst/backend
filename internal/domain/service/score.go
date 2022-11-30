@@ -33,7 +33,7 @@ func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, error) {
 
 func (s *scoreService) GetIdealAge(data models.ScoreData) (string, error) {
 	// pass SCORE data validation because GetCVERisk meth has it
-	riskValue, err := s.score.GetCVERisk(data)
+	riskValue, err := s.GetCVERisk(data)
 	if err != nil {
 		return "", err
 	}
