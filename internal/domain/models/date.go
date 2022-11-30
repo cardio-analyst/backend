@@ -21,7 +21,10 @@ func (d *Date) Validate(value interface{}) error {
 	if !ok {
 		return errors.New("cannot cast to date")
 	}
-	return validation.Validate(date.String(), validation.Required, validation.Date(DateLayout), validation.Max(time.Now()))
+	if err := validation.Validate(date.String(), validation.Required, validation.Date(DateLayout)); err != nil {
+		return err
+	}
+	return validation.Validate(date.Time, validation.Required, validation.Max(time.Now()))
 }
 
 func (d *Date) String() string {
