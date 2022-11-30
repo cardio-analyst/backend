@@ -28,6 +28,7 @@ const (
 	errorWrongAuthHeader               = "WrongAuthHeader"
 	errorAnalysisRecordNotFound        = "AnalysisRecordNotFound"
 	errorBasicIndicatorsRecordNotFound = "BasicIndicatorsRecordNotFound"
+	errorNotEnoughInformation          = "NotEnoughInformation"
 )
 
 var errorDescriptions = map[string]string{
@@ -45,6 +46,7 @@ var errorDescriptions = map[string]string{
 	errorWrongAuthHeader:               "Некорректный заголовок авторизации",
 	errorAnalysisRecordNotFound:        "Запись о лабораторных исследованиях не найдена",
 	errorBasicIndicatorsRecordNotFound: "Запись о базовых показателях не найдена",
+	errorNotEnoughInformation:          "Недостаточно данных для выполнения запроса",
 }
 
 type response struct {
