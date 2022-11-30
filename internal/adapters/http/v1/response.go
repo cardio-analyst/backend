@@ -14,21 +14,11 @@ const (
 
 // possible errors designations
 const (
-	errorParseRequestData              = "ParseRequestError"
-	errorInvalidRequestData            = "InvalidRequestData"
-	errorLoginAlreadyOccupied          = "LoginAlreadyOccupied"
-	errorEmailAlreadyOccupied          = "EmailAlreadyOccupied"
-	errorInternal                      = "InternalError"
-	errorWrongCredentials              = "WrongCredentials"
-	errorWrongAccessToken              = "WrongAccessToken"
-	errorWrongRefreshToken             = "WrongRefreshToken"
-	errorAccessTokenExpired            = "AccessTokenExpired"
-	errorRefreshTokenExpired           = "RefreshTokenExpired"
-	errorIPNotAllowed                  = "IPNotAllowed"
-	errorWrongAuthHeader               = "WrongAuthHeader"
-	errorAnalysisRecordNotFound        = "AnalysisRecordNotFound"
-	errorBasicIndicatorsRecordNotFound = "BasicIndicatorsRecordNotFound"
-	errorNotEnoughInformation          = "NotEnoughInformation"
+	errorParseRequestData     = "ParseRequestError"
+	errorInvalidRequestData   = "InvalidRequestData"
+	errorLoginAlreadyOccupied = "LoginAlreadyOccupied"
+	errorEmailAlreadyOccupied = "EmailAlreadyOccupied"
+	errorInternal             = "InternalError"
 )
 
 var errorDescriptions = map[string]string{
@@ -47,6 +37,34 @@ var errorDescriptions = map[string]string{
 	errorAnalysisRecordNotFound:        "Запись о лабораторных исследованиях не найдена",
 	errorBasicIndicatorsRecordNotFound: "Запись о базовых показателях не найдена",
 	errorNotEnoughInformation:          "Недостаточно данных для выполнения запроса",
+	// analysis
+	errorInvalidHighDensityCholesterol:          "Некорректное значение холестерина высокой плотности (ЛПВП)",
+	errorInvalidLowDensityCholesterol:           "Некорректное значение холестерина низкой плотности (ЛПНП)",
+	errorInvalidTriglycerides:                   "Некорректное значение триглицеридов",
+	errorInvalidLipoprotein:                     "Некорректное значение липопротеина",
+	errorInvalidHighlySensitiveCReactiveProtein: "Некорректное значение высокочувствительного С-реактивного белка",
+	errorInvalidAtherogenicityCoefficient:       "Некорректное значение коэффициента атерогенности",
+	errorInvalidCreatinine:                      "Некорректное значение креатинина",
+	// basic indicators, score
+	errorInvalidWeight:                       "Некорректное значение веса",
+	errorInvalidHeight:                       "Некорректное значение роста",
+	errorInvalidBodyMassIndex:                "Некорректное значение индекса массы тела (ИМТ)",
+	errorInvalidWaistSize:                    "Некорректное значение объема талии",
+	errorInvalidGender:                       "Некорректный пол",
+	errorInvalidSBPLevel:                     "Некорректное значение уровня систолического АД",
+	errorInvalidTotalCholesterolLevel:        "Некорректное значение общего холестерина",
+	errorInvalidCVEventsRiskValue:            "Некорректное значение риска сердечно-сосудистых заболеваний",
+	errorInvalidIdealCardiovascularAgesRange: "Некорректное значение идеального возраста сердечно-сосудистой системы",
+	// auth, profile
+	errorInvalidFirstName: "Некорректное значение имени",
+	errorInvalidLastName:  "Некорректное значение фамилии",
+	errorInvalidRegion:    "Некорректное значение региона",
+	errorInvalidBirthDate: "Некорректное значение даты рождения",
+	errorInvalidLogin:     "Некорректное значение логина",
+	errorInvalidEmail:     "Некорректное значение электронной почты",
+	errorInvalidPassword:  "Некорректное значение пароля",
+	// score
+	errorInvalidAge: "Некорректное значение возраста",
 }
 
 type response struct {

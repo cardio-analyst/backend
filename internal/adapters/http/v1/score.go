@@ -11,6 +11,12 @@ import (
 	"github.com/cardio-analyst/backend/internal/domain/models"
 )
 
+// possible score errors designations
+const (
+	errorInvalidAge           = "InvalidAge"
+	errorNotEnoughInformation = "NotEnoughInformation"
+)
+
 func (r *Router) initScoreRoutes() {
 	score := r.api.Group("/score", r.identifyUser)
 	score.GET("/cveRisk", r.cveRisk)
@@ -43,6 +49,14 @@ func (r *Router) cveRisk(c echo.Context) error {
 	riskValue, err := r.services.Score().GetCVERisk(reqData)
 	if err != nil {
 		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidAge):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAge))
+		case errors.Is(err, serviceErrors.ErrInvalidGender):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
+		case errors.Is(err, serviceErrors.ErrInvalidSBPLevel):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
+		case errors.Is(err, serviceErrors.ErrInvalidTotalCholesterolLevel):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
 		case errors.Is(err, serviceErrors.ErrInvalidScoreData):
 			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:
@@ -81,6 +95,14 @@ func (r *Router) idealAge(c echo.Context) error {
 	agesRange, err := r.services.Score().GetIdealAge(reqData)
 	if err != nil {
 		switch {
+		case errors.Is(err, serviceErrors.ErrInvalidAge):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAge))
+		case errors.Is(err, serviceErrors.ErrInvalidGender):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
+		case errors.Is(err, serviceErrors.ErrInvalidSBPLevel):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
+		case errors.Is(err, serviceErrors.ErrInvalidTotalCholesterolLevel):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
 		case errors.Is(err, serviceErrors.ErrInvalidScoreData):
 			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:

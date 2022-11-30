@@ -3,8 +3,6 @@ package service
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-
 	"github.com/alexedwards/argon2id"
 
 	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
@@ -49,7 +47,7 @@ func (s *userService) Update(user models.User) error {
 	}
 
 	if err := user.Validate(validatePassword); err != nil {
-		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
+		return err
 	}
 
 	criteria := models.UserCriteria{

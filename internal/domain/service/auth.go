@@ -42,7 +42,7 @@ func NewAuthService(
 
 func (s *authService) RegisterUser(user models.User) error {
 	if err := user.Validate(true); err != nil {
-		return fmt.Errorf("%w: %v", serviceErrors.ErrInvalidUserData, err)
+		return err
 	}
 
 	criteria := models.UserCriteria{

@@ -1,9 +1,13 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/cardio-analyst/backend/internal/domain/common"
+	"github.com/cardio-analyst/backend/internal/domain/errors"
 )
 
 type ScoreData struct {
@@ -39,10 +43,38 @@ func ExtractScoreDataFrom(indicators []*BasicIndicators) ScoreData {
 }
 
 func (d ScoreData) Validate() error {
-	return validation.ValidateStruct(&d,
+	err := validation.ValidateStruct(&d,
 		validation.Field(&d.Age, validation.Min(40), validation.Max(89)),
 		validation.Field(&d.Gender, validation.In(common.UserGenderMale, common.UserGenderFemale)),
 		validation.Field(&d.SBPLevel, validation.Min(100.0), validation.Max(179.0)),
 		validation.Field(&d.TotalCholesterolLevel, validation.Min(3.0), validation.Max(6.9)),
 	)
+	if err != nil {
+		var errBytes []byte
+		errBytes, err = json.Marshal(err)
+		if err != nil {
+			return err
+		}
+
+		var validationErrors map[string]string
+		if err = json.Unmarshal(errBytes, &validationErrors); err != nil {
+			return err
+		}
+
+		if validationError, found := validationErrors["gender"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidGender, validationError)
+		}
+		if validationError, found := validationErrors["sbpLevel"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidSBPLevel, validationError)
+		}
+		if validationError, found := validationErrors["totalCholesterolLevel"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidTotalCholesterolLevel, validationError)
+		}
+		if validationError, found := validationErrors["age"]; found {
+			return fmt.Errorf("%w: %v", errors.ErrInvalidAge, validationError)
+		}
+
+		return errors.ErrInvalidScoreData
+	}
+	return nil
 }
