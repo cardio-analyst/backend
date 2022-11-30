@@ -215,8 +215,6 @@ func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, b
 		waistRecommendation = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 102."
 	case scoreData.Gender == common.UserGenderFemale && waistSize > 88:
 		waistRecommendation = " Также у Вас превышен объем талии, необходимо уменьшить его минимум до 88."
-	default:
-		return nil, nil
 	}
 
 	why, err := textTemplateToString(templateNameBMI, s.cfg.BMI.Why, map[string]interface{}{
