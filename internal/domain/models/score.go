@@ -11,7 +11,7 @@ import (
 )
 
 type ScoreData struct {
-	Age                   int     // receive from user data
+	Age                   int     `json:"age"` // receive from user data
 	Gender                string  `query:"gender"`
 	Smoking               bool    `query:"smoking"`
 	SBPLevel              float64 `query:"sbpLevel"`
