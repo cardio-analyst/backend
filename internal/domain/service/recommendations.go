@@ -203,6 +203,10 @@ func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, b
 	}
 
 	if bodyMassIndex < 25 {
+		if weight == 0 || height == 0 {
+			return nil, nil
+		}
+
 		bodyMassIndex = weight / math.Pow(height/100, 2)
 		if bodyMassIndex < 25 {
 			return nil, nil
