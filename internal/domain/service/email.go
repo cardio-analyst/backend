@@ -18,7 +18,7 @@ const (
 		<title>{{ .title }}</title>
 	</head>
 	<body>
-        <p>Отчёт по показателям здоровья пациента {{ .firstName }} {{ .lastName }}, {{ .birthDate }} г.р.</p>
+        <p>{{ .firstName }} {{ .lastName }}, {{ .birthDate }} г.р.</p>
 		<p>Сгенерирован сервисом "Кардио Аналитик".</p>
 	</body>
 </html>`
