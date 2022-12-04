@@ -12,6 +12,9 @@ services:
       - DATABASE_URL=postgres://db/postgres?sslmode=disable&user=postgres&password=qwerty
       - ACCESS_TOKEN_SIGNING_KEY=UNyi3vWZeY0QHUJgI4Qv5qVcew9JnBwJ
       - REFRESH_TOKEN_SIGNING_KEY=VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx
+      - ACCESS_TOKEN_TTL_SEC=30
+      - REFRESH_TOKEN_TTL_SEC=256000
+      - SMTP_PASSWORD=qwerty
     depends_on:
       - db
   db:

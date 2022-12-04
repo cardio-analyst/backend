@@ -12,6 +12,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/adapters/http"
 	"github.com/cardio-analyst/backend/internal/adapters/postgres"
 	"github.com/cardio-analyst/backend/internal/adapters/postgres_migrator"
+	"github.com/cardio-analyst/backend/internal/adapters/smtp"
 	"github.com/cardio-analyst/backend/internal/config"
 	"github.com/cardio-analyst/backend/internal/domain/service"
 )
@@ -52,14 +53,19 @@ func NewApp(_ context.Context, configPath string) *app {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	services := service.NewServices(cfg.Services, storage)
+	smtpClient, err := smtp.NewClient(cfg.Adapters.SMTP)
+	if err != nil {
+		log.Fatalf("failed to create SMTP client: %v", err)
+	}
+
+	services := service.NewServices(cfg.Services, storage, smtpClient)
 
 	srv := http.NewServer(services)
 
 	return &app{
 		config:  *cfg,
 		server:  srv,
-		closers: []io.Closer{srv, storage},
+		closers: []io.Closer{srv, storage, smtpClient},
 	}
 }
 

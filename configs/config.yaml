@@ -3,6 +3,11 @@ adapters:
     port: 8080
   postgres:
     dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+  smtp:
+    host: "smtp.yandex.ru"
+    port: 465
+    username: "go-course-team5@yandex.ru"
+    password: "DYT8ShlS3n"
 
 services:
   auth:
@@ -11,7 +16,7 @@ services:
       token_ttl_sec: 30
     refresh_token:
       signing_key: "VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx"
-      token_ttl_sec: 120
+      token_ttl_sec: 256000
   recommendations:
     healthy_eating:
       what: "Здоровое питание"

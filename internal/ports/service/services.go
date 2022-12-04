@@ -1,5 +1,7 @@
 package service
 
+import "github.com/cardio-analyst/backend/internal/domain/models"
+
 // Services represents a layer of business logic.
 type Services interface {
 	// User contains the methods of business logic of working with users.
@@ -18,4 +20,8 @@ type Services interface {
 	Score() ScoreService
 	// Recommendations TODO
 	Recommendations() RecommendationsService
+	// Email TODO
+	Email() EmailService
+	// Report TODO
+	Report(reportType models.ReportType) ReportService
 }

@@ -18,6 +18,8 @@ const (
 
 	accessTokenTTLEnvKey  = "ACCESS_TOKEN_TTL_SEC"
 	refreshTokenTTLEnvKey = "REFRESH_TOKEN_TTL_SEC"
+
+	smtpPasswordEnvKey = "SMTP_PASSWORD"
 )
 
 type Config struct {
@@ -28,6 +30,7 @@ type Config struct {
 type AdaptersConfig struct {
 	HTTP     HTTPConfig     `yaml:"http"`
 	Postgres PostgresConfig `yaml:"postgres"`
+	SMTP     SMTPConfig     `yaml:"smtp"`
 }
 
 type HTTPConfig struct {
@@ -36,6 +39,13 @@ type HTTPConfig struct {
 
 type PostgresConfig struct {
 	DSN string `yaml:"dsn"`
+}
+
+type SMTPConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 type ServicesConfig struct {
@@ -125,5 +135,10 @@ func (c *Config) loadFromEnv() {
 			log.Debugf("refresh token TTL was set from environment: %v sec", ttl)
 			c.Services.Auth.RefreshToken.TokenTTLSec = ttl
 		}
+	}
+
+	// if smtp password was set at the environment
+	if smtpPassword, exists := os.LookupEnv(smtpPasswordEnvKey); exists {
+		c.Adapters.SMTP.Password = smtpPassword
 	}
 }
