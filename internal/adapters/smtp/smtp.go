@@ -16,6 +16,7 @@ var _ smtp.Client = (*Client)(nil)
 
 type Client struct {
 	smtpClient *mail.SMTPClient
+	username   string
 }
 
 func NewClient(cfg config.SMTPConfig) (*Client, error) {
@@ -25,7 +26,7 @@ func NewClient(cfg config.SMTPConfig) (*Client, error) {
 	smtpServer.Port = cfg.Port
 	smtpServer.Username = cfg.Username
 	smtpServer.Password = cfg.Password
-	smtpServer.Encryption = mail.EncryptionSTARTTLS
+	smtpServer.Encryption = mail.EncryptionSSLTLS
 	smtpServer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	smtpClient, err := smtpServer.Connect()
@@ -35,13 +36,14 @@ func NewClient(cfg config.SMTPConfig) (*Client, error) {
 
 	return &Client{
 		smtpClient: smtpClient,
+		username:   cfg.Username,
 	}, nil
 }
 
 func (c *Client) SendFile(to []string, subject, body, filePath string) error {
 	emailMsg := mail.NewMSG()
 
-	emailMsg.SetFrom("From Example <test@example.com>")
+	emailMsg.SetFrom(c.username)
 	emailMsg.AddTo(to...)
 
 	emailMsg.SetSubject(subject)

@@ -14,7 +14,7 @@ services:
       - REFRESH_TOKEN_SIGNING_KEY=VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx
       - ACCESS_TOKEN_TTL_SEC=30
       - REFRESH_TOKEN_TTL_SEC=256000
-      - SMTP_PASSWORD=qwerty
+      - SMTP_PASSWORD=DYT8ShlS3n
     depends_on:
       - db
   db:

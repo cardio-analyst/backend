@@ -19,7 +19,6 @@ const (
 	</head>
 	<body>
         <p>Отчёт по показателям здоровья пациента {{ .firstName }} {{ .lastName }}, {{ .birthDate }} г.р.</p>
-		<p><img src="cid:{{ .reportPath }}" alt="Отчёт" /></p>
 		<p>Сгенерирован сервисом "Кардио Аналитик".</p>
 	</body>
 </html>`
@@ -48,7 +47,7 @@ func (s *emailService) SendReport(receivers []string, reportPath string, userDat
 		"title":      fmt.Sprintf("%v %v %v", reportSubject, userData.FirstName, userData.LastName),
 		"firstName":  userData.FirstName,
 		"lastName":   userData.LastName,
-		"birthDate":  userData.BirthDate,
+		"birthDate":  userData.BirthDate.String(),
 		"reportPath": reportPath,
 	}); err != nil {
 		return err
