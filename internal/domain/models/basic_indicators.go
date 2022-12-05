@@ -42,7 +42,7 @@ func (a BasicIndicators) Validate(updating bool) error {
 		)),
 		validation.Field(&a.BodyMassIndex, validation.When(
 			a.BodyMassIndex != nil,
-			validation.Required, validation.Min(16.0), validation.Max(60.0),
+			validation.Required, validation.Min(1.0), validation.Max(60.0),
 		)),
 		validation.Field(&a.WaistSize, validation.When(
 			a.WaistSize != nil,
