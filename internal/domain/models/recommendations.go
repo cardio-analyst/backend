@@ -17,7 +17,6 @@ const (
 )
 
 var recommendationTypeNames = []string{
-	"None",
 	"Smoking",
 	"SBPLevel",
 	"BMI",
