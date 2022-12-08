@@ -23,7 +23,12 @@ func NewScoreService(score storage.ScoreRepository) *scoreService {
 }
 
 func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, error) {
-	if err := data.Validate(); err != nil {
+	if err := data.Validate(models.ValidationOptionsScore{
+		Age:                   true,
+		Gender:                true,
+		SBPLevel:              true,
+		TotalCholesterolLevel: true,
+	}); err != nil {
 		return 0, err
 	}
 

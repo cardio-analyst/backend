@@ -42,12 +42,31 @@ func ExtractScoreDataFrom(indicators []*BasicIndicators) ScoreData {
 	return data
 }
 
-func (d ScoreData) Validate() error {
+type ValidationOptionsScore struct {
+	Age                   bool
+	Gender                bool
+	SBPLevel              bool
+	TotalCholesterolLevel bool
+}
+
+func (d ScoreData) Validate(params ValidationOptionsScore) error {
 	err := validation.ValidateStruct(&d,
-		validation.Field(&d.Age, validation.Min(40), validation.Max(89)),
-		validation.Field(&d.Gender, validation.In(common.UserGenderMale, common.UserGenderFemale)),
-		validation.Field(&d.SBPLevel, validation.Min(100.0), validation.Max(179.0)),
-		validation.Field(&d.TotalCholesterolLevel, validation.Min(3.0), validation.Max(6.9)),
+		validation.Field(&d.Age, validation.When(
+			params.Age,
+			validation.Min(40), validation.Max(89),
+		)),
+		validation.Field(&d.Gender, validation.When(
+			params.Gender,
+			validation.In(common.UserGenderMale, common.UserGenderFemale),
+		)),
+		validation.Field(&d.SBPLevel, validation.When(
+			params.SBPLevel,
+			validation.Min(100.0), validation.Max(179.0),
+		)),
+		validation.Field(&d.TotalCholesterolLevel, validation.When(
+			params.TotalCholesterolLevel,
+			validation.Min(3.0), validation.Max(6.9),
+		)),
 	)
 	if err != nil {
 		var errBytes []byte
@@ -77,4 +96,37 @@ func (d ScoreData) Validate() error {
 		return errors.ErrInvalidScoreData
 	}
 	return nil
+}
+
+func (d ScoreData) ValidateByRecommendation(recommendationType RecommendationType) error {
+	switch recommendationType {
+	case Smoking:
+		return d.Validate(ValidationOptionsScore{
+			Age:                   true,
+			Gender:                true,
+			SBPLevel:              true,
+			TotalCholesterolLevel: true,
+		})
+	case SBPLevel:
+		return d.Validate(ValidationOptionsScore{
+			SBPLevel: true,
+		})
+	case BMI:
+		return d.Validate(ValidationOptionsScore{
+			Gender: true,
+		})
+	case CholesterolLevel:
+		return d.Validate(ValidationOptionsScore{
+			Gender:                true,
+			SBPLevel:              true,
+			TotalCholesterolLevel: true,
+		})
+	default:
+		return d.Validate(ValidationOptionsScore{
+			Age:                   true,
+			Gender:                true,
+			SBPLevel:              true,
+			TotalCholesterolLevel: true,
+		})
+	}
 }
