@@ -2,7 +2,9 @@ package service
 
 import (
 	"github.com/cardio-analyst/backend/internal/config"
+	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
+	"github.com/cardio-analyst/backend/internal/ports/smtp"
 	"github.com/cardio-analyst/backend/internal/ports/storage"
 )
 
@@ -11,8 +13,9 @@ var _ service.Services = (*services)(nil)
 
 // services implements service.Services interface.
 type services struct {
-	cfg     config.ServicesConfig
-	storage storage.Storage
+	cfg        config.ServicesConfig
+	storage    storage.Storage
+	smtpClient smtp.Client
 
 	userService            service.UserService
 	authService            service.AuthService
@@ -22,12 +25,24 @@ type services struct {
 	basicIndicatorsService service.BasicIndicatorsService
 	scoreService           service.ScoreService
 	recommendationsService service.RecommendationsService
+	emailService           service.EmailService
+
+	reportServices reportServices
 }
 
-func NewServices(cfg config.ServicesConfig, storage storage.Storage) *services {
+type reportServices struct {
+	PDF service.ReportService
+}
+
+func NewServices(
+	cfg config.ServicesConfig,
+	storage storage.Storage,
+	smtpClient smtp.Client,
+) *services {
 	return &services{
-		cfg:     cfg,
-		storage: storage,
+		cfg:        cfg,
+		storage:    storage,
+		smtpClient: smtpClient,
 	}
 }
 
@@ -116,4 +131,29 @@ func (s *services) Recommendations() service.RecommendationsService {
 	)
 
 	return s.recommendationsService
+}
+
+func (s *services) Email() service.EmailService {
+	if s.emailService != nil {
+		return s.emailService
+	}
+
+	s.emailService = NewEmailService(s.smtpClient)
+
+	return s.emailService
+}
+
+func (s *services) Report(reportType models.ReportType) service.ReportService {
+	switch reportType {
+	case models.PDF:
+		if s.reportServices.PDF != nil {
+			return s.reportServices.PDF
+		}
+
+		s.reportServices.PDF = NewPDFReportService(s.smtpClient)
+
+		return s.reportServices.PDF
+	default:
+		return nil
+	}
 }

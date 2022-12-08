@@ -100,7 +100,7 @@ func (s *scoreRepository) GetIdealAge(cveRiskValue uint64, data models.ScoreData
          SELECT age_min, age_max 
          FROM %[1]v 
          WHERE risk_value=$1 
-         ORDER BY age_min, age_max 
+         ORDER BY age_min DESC, age_max DESC 
          LIMIT 1`,
 		tablesPrefix, fmt.Sprintf("%v_smoking", tablesPrefix), fmt.Sprintf("%v_not_smoking", tablesPrefix),
 	)
