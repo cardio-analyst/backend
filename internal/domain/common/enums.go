@@ -19,3 +19,11 @@ const (
 	PhysicalActivityMoreThanOneInWeek = "Тренировка более 1 раза в неделю"
 	PhysicalActivityOneInDay          = "Тренировка раз в день"
 )
+
+// possible SCORE scale values
+const (
+	ScaleUnknown  = "unknown"
+	ScalePositive = "positive"
+	ScaleNeutral  = "neutral"
+	ScaleNegative = "negative"
+)
