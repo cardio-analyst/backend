@@ -45,9 +45,9 @@ func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, string, error)
 
 func (s *scoreService) ResolveScale(riskValue float64, age int) string {
 	switch {
-	case age < 50:
+	case age > 0 && age < 50:
 		switch {
-		case riskValue < 2.5:
+		case riskValue > 0 && riskValue < 2.5:
 			return common.ScalePositive
 		case riskValue >= 2.5 && riskValue < 7.5:
 			return common.ScaleNeutral
@@ -58,7 +58,7 @@ func (s *scoreService) ResolveScale(riskValue float64, age int) string {
 		}
 	case age >= 50 && age <= 69:
 		switch {
-		case riskValue < 5.0:
+		case riskValue > 0 && riskValue < 5.0:
 			return common.ScalePositive
 		case riskValue >= 5.0 && riskValue < 10.0:
 			return common.ScaleNeutral
@@ -69,7 +69,7 @@ func (s *scoreService) ResolveScale(riskValue float64, age int) string {
 		}
 	case age >= 70:
 		switch {
-		case riskValue < 7.5:
+		case riskValue > 0 && riskValue < 7.5:
 			return common.ScalePositive
 		case riskValue >= 7.5 && riskValue < 15.0:
 			return common.ScaleNeutral
