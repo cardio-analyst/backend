@@ -22,6 +22,7 @@ type BasicIndicators struct {
 	TotalCholesterolLevel        *float64 `json:"totalCholesterolLevel" db:"total_cholesterol_level"`
 	CVEventsRiskValue            *int64   `json:"cvEventsRiskValue" db:"cv_events_risk_value"`
 	IdealCardiovascularAgesRange *string  `json:"idealCardiovascularAgesRange" db:"ideal_cardiovascular_ages_range"`
+	Scale                        string   `json:"scale" db:"-"`
 	CreatedAt                    Datetime `json:"createdAt" db:"created_at"`
 }
 
