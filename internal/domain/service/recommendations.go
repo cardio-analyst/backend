@@ -141,7 +141,7 @@ func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData 
 		return nil, err
 	}
 
-	scoreData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	scoreData.Age = user.Age()
 
 	var riskSmoking uint64
 	riskSmoking, err = s.score.GetCVERisk(scoreData)
