@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cardio-analyst/backend/internal/domain/common"
 	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 )
@@ -45,7 +44,7 @@ func (r *Router) cveRisk(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	reqData.Age = user.Age()
 
 	riskValue, scale, err := r.services.Score().GetCVERisk(reqData)
 	if err != nil {
@@ -93,7 +92,7 @@ func (r *Router) idealAge(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	reqData.Age = user.Age()
 
 	agesRange, scale, err := r.services.Score().GetIdealAge(reqData)
 	if err != nil {
