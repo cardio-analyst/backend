@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cardio-analyst/backend/internal/domain/errors"
 	"strings"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -29,6 +30,29 @@ type User struct {
 	Login      string `json:"login" db:"login"`
 	Email      string `json:"email" db:"email"`
 	Password   string `json:"password,omitempty" db:"password_hash"`
+}
+
+func (u User) Age() int {
+	today := time.Now().In(u.BirthDate.Location())
+
+	ty, tm, td := today.Date()
+	today = time.Date(ty, tm, td, 0, 0, 0, 0, time.UTC)
+
+	by, bm, bd := u.BirthDate.Date()
+	birthDate := time.Date(by, bm, bd, 0, 0, 0, 0, time.UTC)
+
+	if today.Before(birthDate) {
+		return 0
+	}
+
+	age := ty - by
+
+	anniversary := birthDate.AddDate(age, 0, 0)
+	if anniversary.After(today) {
+		age--
+	}
+
+	return age
 }
 
 func (u User) Validate(validatePassword bool) error {

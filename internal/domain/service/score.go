@@ -38,12 +38,12 @@ func (s *scoreService) GetCVERisk(data models.ScoreData) (uint64, string, error)
 		return 0, common.ScaleUnknown, err
 	}
 
-	scale := s.resolveScaleFromRiskAndAge(float64(riskValue), data.Age)
+	scale := s.ResolveScale(float64(riskValue), data.Age)
 
 	return riskValue, scale, nil
 }
 
-func (s *scoreService) resolveScaleFromRiskAndAge(riskValue float64, age int) string {
+func (s *scoreService) ResolveScale(riskValue float64, age int) string {
 	switch {
 	case age < 50:
 		switch {
