@@ -56,7 +56,6 @@ func NewRecommendationsService(
 
 func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Recommendation, error) {
 	recommendations := make([]*models.Recommendation, 0, 6)
-
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
 		return nil, err
@@ -181,26 +180,7 @@ func (s *recommendationsService) sbpLevelRecommendation(scoreData models.ScoreDa
 }
 
 func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
-	var weight, height, waistSize, bodyMassIndex float64
-	for _, indicators := range basicIndicators {
-		if indicators.Weight != nil && weight == 0 {
-			weight = *indicators.Weight
-		}
-		if indicators.Height != nil && height == 0 {
-			height = *indicators.Height
-		}
-		if indicators.WaistSize != nil && waistSize == 0 {
-			waistSize = *indicators.WaistSize
-		}
-		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
-			bodyMassIndex = *indicators.BodyMassIndex
-		}
-
-		// fastest break condition
-		if weight != 0 && height != 0 && waistSize != 0 && bodyMassIndex != 0 {
-			break
-		}
-	}
+	weight, height, waistSize, bodyMassIndex := GetBMIIndications(basicIndicators)
 
 	if bodyMassIndex < 25 {
 		if weight == 0 || height == 0 {
@@ -342,4 +322,29 @@ func textTemplateToString(tmplName, tmplText string, tmplData map[string]interfa
 	}
 
 	return tmplBuffer.String(), nil
+}
+
+func GetBMIIndications(basicIndicators []*models.BasicIndicators) (float64, float64, float64, float64) {
+	var weight, height, waistSize, bodyMassIndex float64
+	for _, indicators := range basicIndicators {
+		if indicators.Weight != nil && weight == 0 {
+			weight = *indicators.Weight
+		}
+		if indicators.Height != nil && height == 0 {
+			height = *indicators.Height
+		}
+		if indicators.WaistSize != nil && waistSize == 0 {
+			waistSize = *indicators.WaistSize
+		}
+		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
+			bodyMassIndex = *indicators.BodyMassIndex
+		}
+
+		// fastest break condition
+		if weight != 0 && height != 0 && waistSize != 0 && bodyMassIndex != 0 {
+			break
+		}
+	}
+
+	return weight, height, waistSize, bodyMassIndex
 }

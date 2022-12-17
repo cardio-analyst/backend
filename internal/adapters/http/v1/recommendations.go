@@ -26,7 +26,6 @@ type getRecommendationsResponse struct {
 
 func (r *Router) getRecommendations(c echo.Context) error {
 	userID := c.Get(ctxKeyUserID).(uint64)
-
 	recommendations, err := r.services.Recommendations().GetRecommendations(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
