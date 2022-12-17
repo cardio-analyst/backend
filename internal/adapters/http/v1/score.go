@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cardio-analyst/backend/internal/domain/common"
 	serviceErrors "github.com/cardio-analyst/backend/internal/domain/errors"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 )
@@ -25,6 +24,7 @@ func (r *Router) initScoreRoutes() {
 
 type getCVERiskResponse struct {
 	Value uint64 `json:"value"`
+	Scale string `json:"scale"`
 }
 
 func (r *Router) cveRisk(c echo.Context) error {
@@ -44,9 +44,9 @@ func (r *Router) cveRisk(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	reqData.Age = user.Age()
 
-	riskValue, err := r.services.Score().GetCVERisk(reqData)
+	riskValue, scale, err := r.services.Score().GetCVERisk(reqData)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidAge):
@@ -66,11 +66,13 @@ func (r *Router) cveRisk(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, &getCVERiskResponse{
 		Value: riskValue,
+		Scale: scale,
 	})
 }
 
 type getIdealAgeResponse struct {
 	Value string `json:"value"`
+	Scale string `json:"scale"`
 }
 
 func (r *Router) idealAge(c echo.Context) error {
@@ -90,9 +92,9 @@ func (r *Router) idealAge(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	reqData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	reqData.Age = user.Age()
 
-	agesRange, err := r.services.Score().GetIdealAge(reqData)
+	agesRange, scale, err := r.services.Score().GetIdealAge(reqData)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceErrors.ErrInvalidAge):
@@ -112,5 +114,6 @@ func (r *Router) idealAge(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, &getIdealAgeResponse{
 		Value: agesRange,
+		Scale: scale,
 	})
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/domain/common"
 	"github.com/cardio-analyst/backend/internal/domain/models"
 	"github.com/cardio-analyst/backend/internal/ports/service"
 	"github.com/cardio-analyst/backend/internal/ports/smtp"
@@ -110,117 +109,113 @@ func (s *pdfReportService) generateReportByBasicIndicators(userID uint64, pdf *g
 		return err
 	}
 
-	scoreData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	scoreData.Age = user.Age()
 
-	if err = scoreData.Validate(); err == nil {
-		weight, height, waistSize, bodyMassIndex := GetBMIIndications(basicIndicators)
+	weight, height, waistSize, bodyMassIndex := GetBMIIndications(basicIndicators)
 
-		generateRow(
-			"Возвраст",
-			strconv.FormatInt(int64(scoreData.Age), 10),
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Возвраст",
+		strconv.FormatInt(int64(scoreData.Age), 10),
+		pdf,
+		htmlWhite,
+	)
 
-		generateRow(
-			"Пол",
-			scoreData.Gender,
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Пол",
+		scoreData.Gender,
+		pdf,
+		htmlWhite,
+	)
 
-		generateRow(
-			"Вес",
-			fmt.Sprintf("%.1f", weight),
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Вес",
+		fmt.Sprintf("%.1f", weight),
+		pdf,
+		htmlWhite,
+	)
 
-		generateRow(
-			"Рост",
-			fmt.Sprintf("%.1f", height),
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Рост",
+		fmt.Sprintf("%.1f", height),
+		pdf,
+		htmlWhite,
+	)
 
-		generateRow(
-			"Объем талии(см)",
-			fmt.Sprintf("%.1f", waistSize),
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Объем талии(см)",
+		fmt.Sprintf("%.1f", waistSize),
+		pdf,
+		htmlWhite,
+	)
 
-		generateRow(
-			"Индекс массы тела (ИМТ)",
-			fmt.Sprintf("%.1f", bodyMassIndex),
-			pdf,
-			htmlWhite,
-		)
+	generateRow(
+		"Индекс массы тела (ИМТ)",
+		fmt.Sprintf("%.1f", bodyMassIndex),
+		pdf,
+		htmlWhite,
+	)
 
-		var smokingStr string
+	var smokingStr string
 
-		if scoreData.Smoking {
-			smokingStr = "Да"
-		} else {
-			smokingStr = "Нет"
-		}
-
-		generateRow(
-			"Статус курения",
-			smokingStr,
-			pdf,
-			htmlWhite,
-		)
-
-		generateRow(
-			"Уровень систолического АД",
-			fmt.Sprintf("%.1f", scoreData.SBPLevel),
-			pdf,
-			htmlWhite,
-		)
-
-		generateRow(
-			"Общий холестерин",
-			fmt.Sprintf("%.1f", scoreData.TotalCholesterolLevel),
-			pdf,
-			htmlWhite,
-		)
-
-		var cvEventsRiskValue int64
-		var idealCardiovascularAgesRange string
-
-		for _, indicators := range basicIndicators {
-			if indicators.CVEventsRiskValue != nil && cvEventsRiskValue == 0 {
-				cvEventsRiskValue = *indicators.CVEventsRiskValue
-			}
-			if indicators.IdealCardiovascularAgesRange != nil && idealCardiovascularAgesRange == "" {
-				idealCardiovascularAgesRange = *indicators.IdealCardiovascularAgesRange
-			}
-
-			// fastest break condition
-			if cvEventsRiskValue != 0 && idealCardiovascularAgesRange != "" {
-				break
-			}
-		}
-
-		generateRow(
-			"Риск сердечно-сосудистых событий<br></br>в течение 10 лет по шкале SCORE",
-			fmt.Sprintf("%d", cvEventsRiskValue)+"%",
-			pdf,
-			htmlWhite,
-		)
-
-		generateRow(
-			"Ваш идеальный «сердечно-сосудистый возраст»",
-			idealCardiovascularAgesRange,
-			pdf,
-			htmlWhite,
-		)
-
-		return nil
+	if scoreData.Smoking {
+		smokingStr = "Да"
+	} else {
+		smokingStr = "Нет"
 	}
 
-	return err
+	generateRow(
+		"Статус курения",
+		smokingStr,
+		pdf,
+		htmlWhite,
+	)
+
+	generateRow(
+		"Уровень систолического АД",
+		fmt.Sprintf("%.1f", scoreData.SBPLevel),
+		pdf,
+		htmlWhite,
+	)
+
+	generateRow(
+		"Общий холестерин",
+		fmt.Sprintf("%.1f", scoreData.TotalCholesterolLevel),
+		pdf,
+		htmlWhite,
+	)
+
+	var cvEventsRiskValue int64
+	var idealCardiovascularAgesRange string
+
+	for _, indicators := range basicIndicators {
+		if indicators.CVEventsRiskValue != nil && cvEventsRiskValue == 0 {
+			cvEventsRiskValue = *indicators.CVEventsRiskValue
+		}
+		if indicators.IdealCardiovascularAgesRange != nil && idealCardiovascularAgesRange == "" {
+			idealCardiovascularAgesRange = *indicators.IdealCardiovascularAgesRange
+		}
+
+		// fastest break condition
+		if cvEventsRiskValue != 0 && idealCardiovascularAgesRange != "" {
+			break
+		}
+	}
+
+	generateRow(
+		"Риск сердечно-сосудистых событий<br></br>в течение 10 лет по шкале SCORE",
+		fmt.Sprintf("%d", cvEventsRiskValue)+"%",
+		pdf,
+		htmlWhite,
+	)
+
+	generateRow(
+		"Ваш идеальный «сердечно-сосудистый возраст»",
+		idealCardiovascularAgesRange,
+		pdf,
+		htmlWhite,
+	)
+
+	return nil
 }
 
 func (s *pdfReportService) generateReportByAnalyses(userID uint64, pdf *gofpdf.Fpdf, htmlWhite func(value string)) error {

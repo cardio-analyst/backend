@@ -75,38 +75,37 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	}
 
 	scoreData := models.ExtractScoreDataFrom(basicIndicators)
-	if err = scoreData.Validate(); err == nil {
-		recommendation, err = s.smokingRecommendation(userID, scoreData)
-		if err != nil {
-			return nil, err
-		}
-		if recommendation != nil {
-			recommendations = append(recommendations, recommendation)
-		}
 
-		recommendation, err = s.sbpLevelRecommendation(scoreData)
-		if err != nil {
-			return nil, err
-		}
-		if recommendation != nil {
-			recommendations = append(recommendations, recommendation)
-		}
+	recommendation, err = s.smokingRecommendation(userID, scoreData)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
 
-		recommendation, err = s.bmiRecommendation(scoreData, basicIndicators)
-		if err != nil {
-			return nil, err
-		}
-		if recommendation != nil {
-			recommendations = append(recommendations, recommendation)
-		}
+	recommendation, err = s.sbpLevelRecommendation(scoreData)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
 
-		recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
-		if err != nil {
-			return nil, err
-		}
-		if recommendation != nil {
-			recommendations = append(recommendations, recommendation)
-		}
+	recommendation, err = s.bmiRecommendation(scoreData, basicIndicators)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -126,6 +125,10 @@ func (s *recommendationsService) healthyEatingRecommendation() *models.Recommend
 }
 
 func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData models.ScoreData) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.Smoking); err != nil {
+		return nil, nil
+	}
+
 	if !scoreData.Smoking {
 		return nil, nil
 	}
@@ -137,7 +140,7 @@ func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData 
 		return nil, err
 	}
 
-	scoreData.Age = common.GetCurrentAge(user.BirthDate.Time)
+	scoreData.Age = user.Age()
 
 	var riskSmoking uint64
 	riskSmoking, err = s.score.GetCVERisk(scoreData)
@@ -169,6 +172,10 @@ func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData 
 }
 
 func (s *recommendationsService) sbpLevelRecommendation(scoreData models.ScoreData) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.SBPLevel); err != nil {
+		return nil, nil
+	}
+
 	if scoreData.SBPLevel >= 140 {
 		return &models.Recommendation{
 			What: s.cfg.SBPLevel.What,
@@ -176,10 +183,14 @@ func (s *recommendationsService) sbpLevelRecommendation(scoreData models.ScoreDa
 			How:  s.cfg.SBPLevel.How,
 		}, nil
 	}
+
 	return nil, nil
 }
 
 func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.BMI); err != nil {
+		return nil, nil
+	}
 	weight, height, waistSize, bodyMassIndex := GetBMIIndications(basicIndicators)
 
 	if bodyMassIndex < 25 {
@@ -217,6 +228,10 @@ func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, b
 }
 
 func (s *recommendationsService) cholesterolLevelRecommendation(userID uint64, scoreData models.ScoreData, basicIndicators []*models.BasicIndicators) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.CholesterolLevel); err != nil {
+		return nil, nil
+	}
+
 	if scoreData.TotalCholesterolLevel == 0 || scoreData.Gender == common.UserGenderUnknown {
 		return nil, nil
 	}

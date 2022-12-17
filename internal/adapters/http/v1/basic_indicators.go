@@ -47,6 +47,22 @@ func (r *Router) getUserBasicIndicators(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
+	user, err := r.services.User().Get(models.UserCriteria{
+		ID: &userID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+	}
+
+	userAge := user.Age()
+
+	for _, basicIndicator := range basicIndicators {
+		if basicIndicator.CVEventsRiskValue != nil {
+			riskValue := float64(*basicIndicator.CVEventsRiskValue)
+			basicIndicator.Scale = r.services.Score().ResolveScale(riskValue, userAge)
+		}
+	}
+
 	return c.JSON(http.StatusOK, &getUserBasicIndicatorsResponse{
 		BasicIndicators: basicIndicators,
 	})
