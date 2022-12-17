@@ -20,6 +20,7 @@ const (
 	templateNameSmoking          = "smoking"
 	templateNameBMI              = "bmi"
 	templateNameCholesterolLevel = "cholesterol_level"
+	templateNameRisk             = "risk"
 )
 
 // check whether recommendationsService structure implements the service.RecommendationsService interface
@@ -101,6 +102,14 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	}
 
 	recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation, err = s.riskRecommendation(userID, scoreData)
 	if err != nil {
 		return nil, err
 	}
@@ -323,6 +332,52 @@ func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models
 	}
 
 	return nil, nil
+}
+
+func (s *recommendationsService) riskRecommendation(userID uint64, scoreData models.ScoreData) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.Risk); err != nil {
+		return nil, nil
+	}
+
+	user, err := s.users.GetByCriteria(models.UserCriteria{
+		ID: &userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	scoreData.Age = user.Age()
+
+	riskActual, err := s.score.GetCVERisk(scoreData)
+	if err != nil {
+		return nil, err
+	}
+
+	ageMinActual, ageMaxActual, err := s.score.GetIdealAge(riskActual, scoreData)
+	if err != nil {
+		return nil, err
+	}
+
+	ageMinDifference := int(ageMinActual) - scoreData.Age
+	ageMaxDifference := int(ageMaxActual) - scoreData.Age
+	if ageMinDifference <= 0 || ageMaxDifference <= 0 {
+		return nil, nil
+	}
+
+	why, err := textTemplateToString(templateNameRisk, s.cfg.Risk.Why, map[string]interface{}{
+		"riskActual":          riskActual,
+		"agesRangeActual":     fmt.Sprintf("%v-%v", ageMinActual, ageMaxActual),
+		"agesRangeDifference": fmt.Sprintf("%v-%v", ageMinDifference, ageMaxDifference),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Recommendation{
+		What: s.cfg.Risk.What,
+		Why:  why,
+		How:  s.cfg.Risk.How,
+	}, nil
 }
 
 func textTemplateToString(tmplName, tmplText string, tmplData map[string]interface{}) (string, error) {

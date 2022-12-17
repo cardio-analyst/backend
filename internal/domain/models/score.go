@@ -100,7 +100,7 @@ func (d ScoreData) Validate(params ValidationOptionsScore) error {
 
 func (d ScoreData) ValidateByRecommendation(recommendationType RecommendationType) error {
 	switch recommendationType {
-	case Smoking:
+	case Smoking, Risk:
 		return d.Validate(ValidationOptionsScore{
 			Age:                   true,
 			Gender:                true,
