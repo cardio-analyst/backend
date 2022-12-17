@@ -191,8 +191,8 @@ func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, b
 	if err := scoreData.ValidateByRecommendation(models.BMI); err != nil {
 		return nil, nil
 	}
-	weight, height, waistSize, bodyMassIndex := GetBMIIndications(basicIndicators)
 
+	weight, height, waistSize, bodyMassIndex := extractBMIIndications(basicIndicators)
 	if bodyMassIndex < 25 {
 		if weight == 0 || height == 0 {
 			return nil, nil
@@ -339,8 +339,7 @@ func textTemplateToString(tmplName, tmplText string, tmplData map[string]interfa
 	return tmplBuffer.String(), nil
 }
 
-func GetBMIIndications(basicIndicators []*models.BasicIndicators) (float64, float64, float64, float64) {
-	var weight, height, waistSize, bodyMassIndex float64
+func extractBMIIndications(basicIndicators []*models.BasicIndicators) (weight, height, waistSize, bodyMassIndex float64) {
 	for _, indicators := range basicIndicators {
 		if indicators.Weight != nil && weight == 0 {
 			weight = *indicators.Weight
@@ -360,6 +359,5 @@ func GetBMIIndications(basicIndicators []*models.BasicIndicators) (float64, floa
 			break
 		}
 	}
-
-	return weight, height, waistSize, bodyMassIndex
+	return
 }

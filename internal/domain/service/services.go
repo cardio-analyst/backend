@@ -151,7 +151,6 @@ func (s *services) Report(reportType models.ReportType) service.ReportService {
 		}
 
 		s.reportServices.PDF = NewPDFReportService(
-			s.smtpClient,
 			s.Recommendations(),
 			s.storage.Analyses(),
 			s.storage.BasicIndicators(),
