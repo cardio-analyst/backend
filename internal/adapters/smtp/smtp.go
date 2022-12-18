@@ -51,7 +51,7 @@ func (c *Client) SendFile(to []string, subject, body, filePath string) error {
 
 	emailMsg.Attach(&mail.File{
 		FilePath: filePath,
-		Name:     fmt.Sprintf("%v.txt", time.Now().Format("2006_01_02_15_04_05")),
+		Name:     fmt.Sprintf("%v.pdf", time.Now().Format("2006_01_02_15_04_05")),
 		Inline:   true,
 	})
 

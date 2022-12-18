@@ -70,6 +70,7 @@ type RecommendationsConfig struct {
 	BMI              RecommendationConfig `yaml:"bmi"`
 	CholesterolLevel RecommendationConfig `yaml:"cholesterol_level"`
 	SBPLevel         RecommendationConfig `yaml:"sbp_level"`
+	Risk             RecommendationConfig `yaml:"risk"`
 }
 
 type RecommendationConfig struct {
