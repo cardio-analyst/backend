@@ -57,7 +57,7 @@ func (d ScoreData) Validate(params ValidationOptionsScore) error {
 		)),
 		validation.Field(&d.Gender, validation.When(
 			params.Gender,
-			validation.In(common.UserGenderMale, common.UserGenderFemale),
+			validation.Required, validation.In(common.UserGenderMale, common.UserGenderFemale),
 		)),
 		validation.Field(&d.SBPLevel, validation.When(
 			params.SBPLevel,

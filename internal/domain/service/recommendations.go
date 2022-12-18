@@ -56,7 +56,8 @@ func NewRecommendationsService(
 }
 
 func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Recommendation, error) {
-	recommendations := make([]*models.Recommendation, 0, 6)
+	recommendations := make([]*models.Recommendation, 0, 7)
+
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
 		return nil, err
