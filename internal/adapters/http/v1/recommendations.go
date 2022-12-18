@@ -75,7 +75,7 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 	if reqData.Receiver != "" {
 		receivers = append(receivers, reqData.Receiver)
 	}
-	if reqData.SendMyself {
+	if reqData.SendMyself && reqData.Receiver != user.Email {
 		receivers = append(receivers, user.Email)
 	}
 
