@@ -20,6 +20,7 @@ const (
 	templateNameSmoking          = "smoking"
 	templateNameBMI              = "bmi"
 	templateNameCholesterolLevel = "cholesterol_level"
+	templateNameRisk             = "risk"
 )
 
 // check whether recommendationsService structure implements the service.RecommendationsService interface
@@ -56,7 +57,6 @@ func NewRecommendationsService(
 
 func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Recommendation, error) {
 	recommendations := make([]*models.Recommendation, 0, 6)
-
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
 		return nil, err
@@ -102,6 +102,14 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models.Re
 	}
 
 	recommendation, err = s.cholesterolLevelRecommendation(userID, scoreData, basicIndicators)
+	if err != nil {
+		return nil, err
+	}
+	if recommendation != nil {
+		recommendations = append(recommendations, recommendation)
+	}
+
+	recommendation, err = s.riskRecommendation(userID, scoreData)
 	if err != nil {
 		return nil, err
 	}
@@ -193,27 +201,7 @@ func (s *recommendationsService) bmiRecommendation(scoreData models.ScoreData, b
 		return nil, nil
 	}
 
-	var weight, height, waistSize, bodyMassIndex float64
-	for _, indicators := range basicIndicators {
-		if indicators.Weight != nil && weight == 0 {
-			weight = *indicators.Weight
-		}
-		if indicators.Height != nil && height == 0 {
-			height = *indicators.Height
-		}
-		if indicators.WaistSize != nil && waistSize == 0 {
-			waistSize = *indicators.WaistSize
-		}
-		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
-			bodyMassIndex = *indicators.BodyMassIndex
-		}
-
-		// fastest break condition
-		if weight != 0 && height != 0 && waistSize != 0 && bodyMassIndex != 0 {
-			break
-		}
-	}
-
+	weight, height, waistSize, bodyMassIndex := extractBMIIndications(basicIndicators)
 	if bodyMassIndex < 25 {
 		if weight == 0 || height == 0 {
 			return nil, nil
@@ -346,6 +334,52 @@ func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models
 	return nil, nil
 }
 
+func (s *recommendationsService) riskRecommendation(userID uint64, scoreData models.ScoreData) (*models.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(models.Risk); err != nil {
+		return nil, nil
+	}
+
+	user, err := s.users.GetByCriteria(models.UserCriteria{
+		ID: &userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	scoreData.Age = user.Age()
+
+	riskActual, err := s.score.GetCVERisk(scoreData)
+	if err != nil {
+		return nil, err
+	}
+
+	ageMinActual, ageMaxActual, err := s.score.GetIdealAge(riskActual, scoreData)
+	if err != nil {
+		return nil, err
+	}
+
+	ageMinDifference := int(ageMinActual) - scoreData.Age
+	ageMaxDifference := int(ageMaxActual) - scoreData.Age
+	if ageMinDifference <= 0 || ageMaxDifference <= 0 {
+		return nil, nil
+	}
+
+	why, err := textTemplateToString(templateNameRisk, s.cfg.Risk.Why, map[string]interface{}{
+		"riskActual":          riskActual,
+		"agesRangeActual":     fmt.Sprintf("%v-%v", ageMinActual, ageMaxActual),
+		"agesRangeDifference": fmt.Sprintf("%v-%v", ageMinDifference, ageMaxDifference),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Recommendation{
+		What: s.cfg.Risk.What,
+		Why:  why,
+		How:  s.cfg.Risk.How,
+	}, nil
+}
+
 func textTemplateToString(tmplName, tmplText string, tmplData map[string]interface{}) (string, error) {
 	tmpl, err := template.New(tmplName).Parse(tmplText)
 	if err != nil {
@@ -358,4 +392,27 @@ func textTemplateToString(tmplName, tmplText string, tmplData map[string]interfa
 	}
 
 	return tmplBuffer.String(), nil
+}
+
+func extractBMIIndications(basicIndicators []*models.BasicIndicators) (weight, height, waistSize, bodyMassIndex float64) {
+	for _, indicators := range basicIndicators {
+		if indicators.Weight != nil && weight == 0 {
+			weight = *indicators.Weight
+		}
+		if indicators.Height != nil && height == 0 {
+			height = *indicators.Height
+		}
+		if indicators.WaistSize != nil && waistSize == 0 {
+			waistSize = *indicators.WaistSize
+		}
+		if indicators.BodyMassIndex != nil && bodyMassIndex == 0 {
+			bodyMassIndex = *indicators.BodyMassIndex
+		}
+
+		// fastest break condition
+		if weight != 0 && height != 0 && waistSize != 0 && bodyMassIndex != 0 {
+			break
+		}
+	}
+	return
 }

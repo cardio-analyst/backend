@@ -10,14 +10,17 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/jackc/pgtype v1.12.0
 	github.com/jackc/pgx/v4 v4.17.2
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/sirupsen/logrus v1.9.0
+	github.com/xhit/go-simple-mail/v2 v2.13.0
 	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
+	github.com/go-test/deep v1.0.8 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect
@@ -32,7 +35,6 @@ require (
 	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
-	github.com/xhit/go-simple-mail/v2 v2.13.0 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20221006211917-84dc82d7e875 // indirect

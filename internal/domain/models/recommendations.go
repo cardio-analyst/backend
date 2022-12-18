@@ -14,6 +14,7 @@ const (
 	SBPLevel
 	BMI
 	CholesterolLevel
+	Risk
 )
 
 var recommendationTypeNames = []string{
@@ -21,10 +22,11 @@ var recommendationTypeNames = []string{
 	"SBPLevel",
 	"BMI",
 	"CholesterolLevel",
+	"Risk",
 }
 
 func (t RecommendationType) String() string {
-	if Smoking <= t && t <= CholesterolLevel {
+	if Smoking <= t && t <= Risk {
 		return recommendationTypeNames[t]
 	}
 	buf := make([]byte, 20)
