@@ -89,4 +89,4 @@ make compose-up
 ### Рекомендации
 
 * `GET /api/v1/recommendations`: получить список сгенерированных рекомендаций
-* `PUT /api/v1/recommendations/send`: отправить сформированный отчёт на электронную почту
+* `POST /api/v1/recommendations/send`: отправить сформированный отчёт на электронную почту
