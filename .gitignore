@@ -16,3 +16,6 @@
 
 # GoLand
 .idea/
+
+# Environment vars
+*.env

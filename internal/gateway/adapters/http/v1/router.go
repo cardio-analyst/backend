@@ -1,0 +1,44 @@
+package v1
+
+import (
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
+	"github.com/labstack/echo/v4"
+)
+
+type Router struct {
+	api      *echo.Group
+	services service.Services
+}
+
+func NewRouter(api *echo.Group, services service.Services) *Router {
+	return &Router{
+		api:      api,
+		services: services,
+	}
+}
+
+func (r *Router) InitRoutes() {
+	// /auth/*
+	r.initAuthRoutes()
+
+	// /profile/*
+	r.initProfileRoutes()
+
+	// /diseases/*
+	r.initDiseasesRoutes()
+
+	// /analyses/*
+	r.initAnalysesRoutes()
+
+	// /lifestyles/*
+	r.initLifestylesRoutes()
+
+	// /basicIndicators/*
+	r.initBasicIndicatorsRoutes()
+
+	// /score/*
+	r.initScoreRoutes()
+
+	// /recommendations/*
+	r.initRecommendationsRoutes()
+}

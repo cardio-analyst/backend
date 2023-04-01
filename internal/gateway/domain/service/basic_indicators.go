@@ -1,0 +1,52 @@
+package service
+
+import (
+	"database/sql"
+	"errors"
+	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
+	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
+)
+
+// check whether basicIndicatorsService structure implements the service.BasicIndicatorsService interface
+var _ service.BasicIndicatorsService = (*basicIndicatorsService)(nil)
+
+// basicIndicatorsService implements service.BasicIndicatorsService interface.
+type basicIndicatorsService struct {
+	basicIndicators storage.BasicIndicatorsRepository
+}
+
+func NewBasicIndicatorsService(basicIndicators storage.BasicIndicatorsRepository) *basicIndicatorsService {
+	return &basicIndicatorsService{
+		basicIndicators: basicIndicators,
+	}
+}
+
+func (s *basicIndicatorsService) Create(basicIndicatorsData models.BasicIndicators) error {
+	if err := basicIndicatorsData.Validate(false); err != nil {
+		return err
+	}
+
+	return s.basicIndicators.Save(basicIndicatorsData)
+}
+
+func (s *basicIndicatorsService) Update(basicIndicatorsData models.BasicIndicators) error {
+	if err := basicIndicatorsData.Validate(true); err != nil {
+		return err
+	}
+
+	_, err := s.basicIndicators.Get(basicIndicatorsData.ID, basicIndicatorsData.UserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return serviceErrors.ErrBasicIndicatorsRecordNotFound
+		}
+		return err
+	}
+
+	return s.basicIndicators.Save(basicIndicatorsData)
+}
+
+func (s *basicIndicatorsService) FindAll(userID uint64) ([]*models.BasicIndicators, error) {
+	return s.basicIndicators.FindAll(userID)
+}
