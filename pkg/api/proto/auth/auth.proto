@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package auth;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "./;auth";
+
+service AuthService {
+  rpc SaveUser(SaveUserRequest) returns (SaveUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc IdentifyUser(IdentifyUserRequest) returns (IdentifyUserResponse);
+  rpc GetTokens(GetTokensRequest) returns (TokensResponse);
+  rpc RefreshTokens(RefreshTokensRequest) returns (TokensResponse);
+}
+
+enum UserRole {
+  CUSTOMER = 0;
+  MODERATOR = 1;
+}
+
+message SaveUserRequest {
+  UserRole role = 1;
+  string login = 2;
+  string email = 3;
+  string password = 4;
+  string first_name = 5;
+  string last_name = 6;
+  optional string middle_name = 7;
+  optional string region = 8;
+  optional google.protobuf.Timestamp birth_date = 9;
+}
+
+enum ErrorCode {
+  INVALID_DATA = 0;
+  INVALID_ROLE = 1;
+  INVALID_FIRST_NAME = 2;
+  INVALID_LAST_NAME = 3;
+  INVALID_REGION = 4;
+  INVALID_BIRTH_DATE = 5;
+  INVALID_LOGIN = 6;
+  INVALID_EMAIL = 7;
+  INVALID_PASSWORD = 8;
+  LOGIN_ALREADY_OCCUPIED = 9;
+  EMAIL_ALREADY_OCCUPIED = 10;
+  WRONG_ACCESS_TOKEN = 11;
+  ACCESS_TOKEN_EXPIRED = 12;
+  WRONG_REFRESH_TOKEN = 13;
+  REFRESH_TOKEN_EXPIRED = 14;
+  IP_NOT_ALLOWED = 15;
+  WRONG_CREDENTIALS = 16;
+  USER_NOT_FOUND = 17;
+}
+
+message ErrorResponse {
+  ErrorCode error_code = 1;
+}
+
+message SaveUserResponse {
+  oneof response {
+    google.protobuf.Empty success_response = 1;
+    ErrorResponse error_response = 2;
+  }
+}
+
+message GetUserRequest {
+  optional uint64 id = 1;
+  optional string login = 2;
+  optional string email = 3;
+}
+
+message User {
+  uint64 id = 1;
+  UserRole role = 2;
+  string login = 3;
+  string email = 4;
+  string first_name = 6;
+  string last_name = 7;
+  string password_hash = 5;
+  optional string middle_name = 8;
+  optional string region = 9;
+  optional google.protobuf.Timestamp birth_date = 10;
+}
+
+message GetUserSuccessResponse {
+  User user = 1;
+}
+
+message GetUserResponse {
+  oneof response {
+    GetUserSuccessResponse success_response = 1;
+    ErrorResponse error_response = 2;
+  }
+}
+
+message GetTokensRequest {
+  optional string login = 1;
+  optional string email = 2;
+  string password = 3;
+  string ip = 4;
+}
+
+message RefreshTokensRequest {
+  string refresh_token = 1;
+  string ip = 2;
+}
+
+message TokensSuccessResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message TokensResponse {
+  oneof response {
+    TokensSuccessResponse success_response = 1;
+    ErrorResponse error_response = 2;
+  }
+}
+
+message IdentifyUserRequest {
+  string access_token = 1;
+}
+
+message IdentifyUserSuccessResponse {
+  uint64 user_id = 1;
+  UserRole role = 2;
+}
+
+message IdentifyUserResponse {
+  oneof response {
+    IdentifyUserSuccessResponse success_response = 1;
+    ErrorResponse error_response = 2;
+  }
+}

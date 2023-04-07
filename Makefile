@@ -1,11 +1,3 @@
-.PHONY: build
-build:
-	go build -o application -v ./cmd/main.go
-
-.PHONY: run
-run: build
-	./application
-
 .PHONY: compose-up
 compose-up:
 	docker-compose up
@@ -14,4 +6,11 @@ compose-up:
 tidy:
 	go mod tidy
 
-.DEFAULT_GOAL := run
+.PHONY: proto-auth
+proto-auth:
+	protoc -I pkg/api/proto/auth --go_out=pkg/api/proto/auth --go-grpc_out=pkg/api/proto/auth pkg/api/proto/auth/*.proto
+
+.PHONY: proto
+proto: proto-auth
+
+.DEFAULT_GOAL := compose-up

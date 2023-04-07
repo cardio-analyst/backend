@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 )
 
 type Router struct {

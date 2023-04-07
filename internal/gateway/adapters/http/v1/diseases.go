@@ -1,10 +1,11 @@
 package v1
 
 import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 )
 
 func (r *Router) initDiseasesRoutes() {
@@ -25,7 +26,7 @@ func (r *Router) getDiseasesInfo(c echo.Context) error {
 }
 
 func (r *Router) editDiseasesInfo(c echo.Context) error {
-	var reqData models.Diseases
+	var reqData domain.Diseases
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}

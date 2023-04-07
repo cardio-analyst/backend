@@ -2,58 +2,36 @@ package postgres
 
 import (
 	"context"
-	"github.com/cardio-analyst/backend/internal/gateway/config"
-	storage2 "github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
-// check whether postgresStorage structure implements the storage.Storage interface
-var _ storage2.Storage = (*postgresStorage)(nil)
+// check whether Storage structure implements the storage.Storage interface
+var _ storage.Storage = (*Storage)(nil)
 
-// postgresStorage implements storage.Storage interface.
-type postgresStorage struct {
+// Storage implements storage.Storage interface.
+type Storage struct {
 	conn *pgxpool.Pool
 
-	userRepository            storage2.UserRepository
-	sessionRepository         storage2.SessionRepository
-	diseasesRepository        storage2.DiseasesRepository
-	analysisRepository        storage2.AnalysisRepository
-	lifestyleRepository       storage2.LifestyleRepository
-	basicIndicatorsRepository storage2.BasicIndicatorsRepository
-	scoreRepository           storage2.ScoreRepository
+	diseasesRepository        storage.DiseasesRepository
+	analysisRepository        storage.AnalysisRepository
+	lifestyleRepository       storage.LifestyleRepository
+	basicIndicatorsRepository storage.BasicIndicatorsRepository
+	scoreRepository           storage.ScoreRepository
 }
 
-func NewStorage(cfg config.PostgresConfig) (*postgresStorage, error) {
-	pool, err := pgxpool.Connect(context.Background(), cfg.DSN)
+func NewStorage(dsn string) (*Storage, error) {
+	pool, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return &postgresStorage{conn: pool}, nil
+	return &Storage{conn: pool}, nil
 }
 
-func (s *postgresStorage) Users() storage2.UserRepository {
-	if s.userRepository != nil {
-		return s.userRepository
-	}
-
-	s.userRepository = NewUserRepository(s)
-
-	return s.userRepository
-}
-
-func (s *postgresStorage) Sessions() storage2.SessionRepository {
-	if s.sessionRepository != nil {
-		return s.sessionRepository
-	}
-
-	s.sessionRepository = NewSessionRepository(s)
-
-	return s.sessionRepository
-}
-
-func (s *postgresStorage) Diseases() storage2.DiseasesRepository {
+func (s *Storage) Diseases() storage.DiseasesRepository {
 	if s.diseasesRepository != nil {
 		return s.diseasesRepository
 	}
@@ -63,7 +41,7 @@ func (s *postgresStorage) Diseases() storage2.DiseasesRepository {
 	return s.diseasesRepository
 }
 
-func (s *postgresStorage) Analyses() storage2.AnalysisRepository {
+func (s *Storage) Analyses() storage.AnalysisRepository {
 	if s.analysisRepository != nil {
 		return s.analysisRepository
 	}
@@ -73,7 +51,7 @@ func (s *postgresStorage) Analyses() storage2.AnalysisRepository {
 	return s.analysisRepository
 }
 
-func (s *postgresStorage) Lifestyles() storage2.LifestyleRepository {
+func (s *Storage) Lifestyles() storage.LifestyleRepository {
 	if s.lifestyleRepository != nil {
 		return s.lifestyleRepository
 	}
@@ -83,7 +61,7 @@ func (s *postgresStorage) Lifestyles() storage2.LifestyleRepository {
 	return s.lifestyleRepository
 }
 
-func (s *postgresStorage) BasicIndicators() storage2.BasicIndicatorsRepository {
+func (s *Storage) BasicIndicators() storage.BasicIndicatorsRepository {
 	if s.basicIndicatorsRepository != nil {
 		return s.basicIndicatorsRepository
 	}
@@ -93,7 +71,7 @@ func (s *postgresStorage) BasicIndicators() storage2.BasicIndicatorsRepository {
 	return s.basicIndicatorsRepository
 }
 
-func (s *postgresStorage) Score() storage2.ScoreRepository {
+func (s *Storage) Score() storage.ScoreRepository {
 	if s.scoreRepository != nil {
 		return s.scoreRepository
 	}
@@ -103,7 +81,7 @@ func (s *postgresStorage) Score() storage2.ScoreRepository {
 	return s.scoreRepository
 }
 
-func (s *postgresStorage) Close() error {
+func (s *Storage) Close() error {
 	s.conn.Close()
 	return nil
 }

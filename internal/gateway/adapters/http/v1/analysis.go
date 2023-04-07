@@ -3,12 +3,12 @@ package v1
 import (
 	"errors"
 	"fmt"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 )
 
 const analysisIDPathKey = "analysisID"
@@ -33,7 +33,7 @@ func (r *Router) initAnalysesRoutes() {
 }
 
 type getUserAnalysesResponse struct {
-	Analyses []*models.Analysis `json:"analyses"`
+	Analyses []*domain.Analysis `json:"analyses"`
 }
 
 func (r *Router) getUserAnalyses(c echo.Context) error {
@@ -50,7 +50,7 @@ func (r *Router) getUserAnalyses(c echo.Context) error {
 }
 
 func (r *Router) createAnalysisRecord(c echo.Context) error {
-	var reqData models.Analysis
+	var reqData domain.Analysis
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
@@ -59,21 +59,21 @@ func (r *Router) createAnalysisRecord(c echo.Context) error {
 
 	if err := r.services.Analysis().Create(reqData); err != nil {
 		switch {
-		case errors.Is(err, serviceErrors.ErrInvalidHighDensityCholesterol):
+		case errors.Is(err, domain.ErrInvalidHighDensityCholesterol):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHighDensityCholesterol))
-		case errors.Is(err, serviceErrors.ErrInvalidLowDensityCholesterol):
+		case errors.Is(err, domain.ErrInvalidLowDensityCholesterol):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLowDensityCholesterol))
-		case errors.Is(err, serviceErrors.ErrInvalidTriglycerides):
+		case errors.Is(err, domain.ErrInvalidTriglycerides):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTriglycerides))
-		case errors.Is(err, serviceErrors.ErrInvalidLipoprotein):
+		case errors.Is(err, domain.ErrInvalidLipoprotein):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLipoprotein))
-		case errors.Is(err, serviceErrors.ErrInvalidHighlySensitiveCReactiveProtein):
+		case errors.Is(err, domain.ErrInvalidHighlySensitiveCReactiveProtein):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHighlySensitiveCReactiveProtein))
-		case errors.Is(err, serviceErrors.ErrInvalidAtherogenicityCoefficient):
+		case errors.Is(err, domain.ErrInvalidAtherogenicityCoefficient):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAtherogenicityCoefficient))
-		case errors.Is(err, serviceErrors.ErrInvalidCreatinine):
+		case errors.Is(err, domain.ErrInvalidCreatinine):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidCreatinine))
-		case errors.Is(err, serviceErrors.ErrInvalidAnalysisData):
+		case errors.Is(err, domain.ErrInvalidAnalysisData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -89,7 +89,7 @@ func (r *Router) updateAnalysisRecord(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	var reqData models.Analysis
+	var reqData domain.Analysis
 	if err = c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
@@ -99,23 +99,23 @@ func (r *Router) updateAnalysisRecord(c echo.Context) error {
 
 	if err = r.services.Analysis().Update(reqData); err != nil {
 		switch {
-		case errors.Is(err, serviceErrors.ErrInvalidHighDensityCholesterol):
+		case errors.Is(err, domain.ErrInvalidHighDensityCholesterol):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHighDensityCholesterol))
-		case errors.Is(err, serviceErrors.ErrInvalidLowDensityCholesterol):
+		case errors.Is(err, domain.ErrInvalidLowDensityCholesterol):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLowDensityCholesterol))
-		case errors.Is(err, serviceErrors.ErrInvalidTriglycerides):
+		case errors.Is(err, domain.ErrInvalidTriglycerides):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTriglycerides))
-		case errors.Is(err, serviceErrors.ErrInvalidLipoprotein):
+		case errors.Is(err, domain.ErrInvalidLipoprotein):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLipoprotein))
-		case errors.Is(err, serviceErrors.ErrInvalidHighlySensitiveCReactiveProtein):
+		case errors.Is(err, domain.ErrInvalidHighlySensitiveCReactiveProtein):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHighlySensitiveCReactiveProtein))
-		case errors.Is(err, serviceErrors.ErrInvalidAtherogenicityCoefficient):
+		case errors.Is(err, domain.ErrInvalidAtherogenicityCoefficient):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAtherogenicityCoefficient))
-		case errors.Is(err, serviceErrors.ErrInvalidCreatinine):
+		case errors.Is(err, domain.ErrInvalidCreatinine):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidCreatinine))
-		case errors.Is(err, serviceErrors.ErrInvalidAnalysisData):
+		case errors.Is(err, domain.ErrInvalidAnalysisData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
-		case errors.Is(err, serviceErrors.ErrAnalysisRecordNotFound):
+		case errors.Is(err, domain.ErrAnalysisRecordNotFound):
 			return c.JSON(http.StatusNotFound, newError(c, err, errorAnalysisRecordNotFound))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))

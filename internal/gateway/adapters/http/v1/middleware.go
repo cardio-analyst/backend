@@ -2,16 +2,18 @@ package v1
 
 import (
 	"errors"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 const (
 	headerAuthorization = "Authorization"
 	ctxKeyUserID        = "userID"
+	ctxKeyUserRole      = "userRole"
 )
 
 // possible middleware error designations
@@ -44,12 +46,12 @@ func (r *Router) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, newError(c, errTokenIsEmpty, errorWrongAuthHeader))
 		}
 
-		userID, err := r.services.Auth().ValidateAccessToken(token)
+		userID, userRole, err := r.services.Auth().ValidateAccessToken(c.Request().Context(), token)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceErrors.ErrWrongToken):
+			case errors.Is(err, model.ErrWrongToken):
 				return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongAccessToken))
-			case errors.Is(err, serviceErrors.ErrTokenIsExpired):
+			case errors.Is(err, model.ErrTokenIsExpired):
 				return c.JSON(http.StatusUnauthorized, newError(c, err, errorAccessTokenExpired))
 			default:
 				return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -57,6 +59,7 @@ func (r *Router) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Set(ctxKeyUserID, userID)
+		c.Set(ctxKeyUserRole, userRole)
 
 		return next(c)
 	}

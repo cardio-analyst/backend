@@ -1,15 +1,9 @@
 package service
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 
-// AnalysisService TODO
 type AnalysisService interface {
-	// Create TODO
-	Create(analysisData models.Analysis) (err error)
-	// Update TODO
-	Update(analysisData models.Analysis) (err error)
-	// FindAll TODO
-	FindAll(userID uint64) (analysisDataList []*models.Analysis, err error)
+	Create(analysisData domain.Analysis) (err error)
+	Update(analysisData domain.Analysis) (err error)
+	FindAll(userID uint64) (analysisDataList []*domain.Analysis, err error)
 }

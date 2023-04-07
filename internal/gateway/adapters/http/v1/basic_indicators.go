@@ -3,12 +3,13 @@ package v1
 import (
 	"errors"
 	"fmt"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	models2 "github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+
+	common "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 const basicIndicatorsIDPathKey = "basicIndicatorsID"
@@ -35,7 +36,7 @@ func (r *Router) initBasicIndicatorsRoutes() {
 }
 
 type getUserBasicIndicatorsResponse struct {
-	BasicIndicators []*models2.BasicIndicators `json:"basicIndicators"`
+	BasicIndicators []*common.BasicIndicators `json:"basicIndicators"`
 }
 
 func (r *Router) getUserBasicIndicators(c echo.Context) error {
@@ -46,9 +47,11 @@ func (r *Router) getUserBasicIndicators(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	user, err := r.services.User().Get(models2.UserCriteria{
-		ID: &userID,
-	})
+	criteria := model.UserCriteria{
+		ID: userID,
+	}
+
+	user, err := r.services.User().GetOne(c.Request().Context(), criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
@@ -68,7 +71,7 @@ func (r *Router) getUserBasicIndicators(c echo.Context) error {
 }
 
 func (r *Router) createBasicIndicatorsRecord(c echo.Context) error {
-	var reqData models2.BasicIndicators
+	var reqData common.BasicIndicators
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
@@ -77,25 +80,25 @@ func (r *Router) createBasicIndicatorsRecord(c echo.Context) error {
 
 	if err := r.services.BasicIndicators().Create(reqData); err != nil {
 		switch {
-		case errors.Is(err, serviceErrors.ErrInvalidWeight):
+		case errors.Is(err, common.ErrInvalidWeight):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidWeight))
-		case errors.Is(err, serviceErrors.ErrInvalidHeight):
+		case errors.Is(err, common.ErrInvalidHeight):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHeight))
-		case errors.Is(err, serviceErrors.ErrInvalidBodyMassIndex):
+		case errors.Is(err, common.ErrInvalidBodyMassIndex):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidBodyMassIndex))
-		case errors.Is(err, serviceErrors.ErrInvalidWaistSize):
+		case errors.Is(err, common.ErrInvalidWaistSize):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidWaistSize))
-		case errors.Is(err, serviceErrors.ErrInvalidGender):
+		case errors.Is(err, common.ErrInvalidGender):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
-		case errors.Is(err, serviceErrors.ErrInvalidSBPLevel):
+		case errors.Is(err, common.ErrInvalidSBPLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
-		case errors.Is(err, serviceErrors.ErrInvalidTotalCholesterolLevel):
+		case errors.Is(err, common.ErrInvalidTotalCholesterolLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
-		case errors.Is(err, serviceErrors.ErrInvalidCVEventsRiskValue):
+		case errors.Is(err, common.ErrInvalidCVEventsRiskValue):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidCVEventsRiskValue))
-		case errors.Is(err, serviceErrors.ErrInvalidIdealCardiovascularAgesRange):
+		case errors.Is(err, common.ErrInvalidIdealCardiovascularAgesRange):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidIdealCardiovascularAgesRange))
-		case errors.Is(err, serviceErrors.ErrInvalidBasicIndicatorsData):
+		case errors.Is(err, common.ErrInvalidBasicIndicatorsData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -111,7 +114,7 @@ func (r *Router) updateBasicIndicatorsRecord(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	var reqData models2.BasicIndicators
+	var reqData common.BasicIndicators
 	if err = c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
@@ -121,27 +124,27 @@ func (r *Router) updateBasicIndicatorsRecord(c echo.Context) error {
 
 	if err = r.services.BasicIndicators().Update(reqData); err != nil {
 		switch {
-		case errors.Is(err, serviceErrors.ErrInvalidWeight):
+		case errors.Is(err, common.ErrInvalidWeight):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidWeight))
-		case errors.Is(err, serviceErrors.ErrInvalidHeight):
+		case errors.Is(err, common.ErrInvalidHeight):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidHeight))
-		case errors.Is(err, serviceErrors.ErrInvalidBodyMassIndex):
+		case errors.Is(err, common.ErrInvalidBodyMassIndex):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidBodyMassIndex))
-		case errors.Is(err, serviceErrors.ErrInvalidWaistSize):
+		case errors.Is(err, common.ErrInvalidWaistSize):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidWaistSize))
-		case errors.Is(err, serviceErrors.ErrInvalidGender):
+		case errors.Is(err, common.ErrInvalidGender):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
-		case errors.Is(err, serviceErrors.ErrInvalidSBPLevel):
+		case errors.Is(err, common.ErrInvalidSBPLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
-		case errors.Is(err, serviceErrors.ErrInvalidTotalCholesterolLevel):
+		case errors.Is(err, common.ErrInvalidTotalCholesterolLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
-		case errors.Is(err, serviceErrors.ErrInvalidCVEventsRiskValue):
+		case errors.Is(err, common.ErrInvalidCVEventsRiskValue):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidCVEventsRiskValue))
-		case errors.Is(err, serviceErrors.ErrInvalidIdealCardiovascularAgesRange):
+		case errors.Is(err, common.ErrInvalidIdealCardiovascularAgesRange):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidIdealCardiovascularAgesRange))
-		case errors.Is(err, serviceErrors.ErrInvalidBasicIndicatorsData):
+		case errors.Is(err, common.ErrInvalidBasicIndicatorsData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
-		case errors.Is(err, serviceErrors.ErrBasicIndicatorsRecordNotFound):
+		case errors.Is(err, common.ErrBasicIndicatorsRecordNotFound):
 			return c.JSON(http.StatusNotFound, newError(c, err, errorBasicIndicatorsRecordNotFound))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))

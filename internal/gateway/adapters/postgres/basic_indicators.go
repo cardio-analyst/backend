@@ -5,29 +5,30 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 
 	"github.com/jackc/pgx/v4"
+
+	"github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
 const basicIndicatorsTable = "basic_indicators"
 
-// check whether basicIndicatorsRepository structure implements the storage.BasicIndicatorsRepository interface
-var _ storage.BasicIndicatorsRepository = (*basicIndicatorsRepository)(nil)
+// check whether BasicIndicatorsRepository structure implements the storage.BasicIndicatorsRepository interface
+var _ storage.BasicIndicatorsRepository = (*BasicIndicatorsRepository)(nil)
 
-// basicIndicatorsRepository implements storage.BasicIndicatorsRepository interface.
-type basicIndicatorsRepository struct {
-	storage *postgresStorage
+// BasicIndicatorsRepository implements storage.BasicIndicatorsRepository interface.
+type BasicIndicatorsRepository struct {
+	storage *Storage
 }
 
-func NewBasicIndicatorsRepository(storage *postgresStorage) *basicIndicatorsRepository {
-	return &basicIndicatorsRepository{
+func NewBasicIndicatorsRepository(storage *Storage) *BasicIndicatorsRepository {
+	return &BasicIndicatorsRepository{
 		storage: storage,
 	}
 }
 
-func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicators) error {
+func (r *BasicIndicatorsRepository) Save(basicIndicatorsData model.BasicIndicators) error {
 	queryCtx := context.Background()
 
 	basicIndicatorsIDPlaceholder := "DEFAULT"
@@ -88,7 +89,7 @@ func (r *basicIndicatorsRepository) Save(basicIndicatorsData models.BasicIndicat
 	return err
 }
 
-func (r *basicIndicatorsRepository) Get(id, userID uint64) (*models.BasicIndicators, error) {
+func (r *BasicIndicatorsRepository) Get(id, userID uint64) (*model.BasicIndicators, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			id,
@@ -110,7 +111,7 @@ func (r *basicIndicatorsRepository) Get(id, userID uint64) (*models.BasicIndicat
 	)
 	queryCtx := context.Background()
 
-	var basicIndicatorsData models.BasicIndicators
+	var basicIndicatorsData model.BasicIndicators
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, id, userID,
 	).Scan(
@@ -137,7 +138,7 @@ func (r *basicIndicatorsRepository) Get(id, userID uint64) (*models.BasicIndicat
 	return &basicIndicatorsData, nil
 }
 
-func (r *basicIndicatorsRepository) FindAll(userID uint64) ([]*models.BasicIndicators, error) {
+func (r *BasicIndicatorsRepository) FindAll(userID uint64) ([]*model.BasicIndicators, error) {
 	queryCtx := context.Background()
 
 	query := fmt.Sprintf(`
@@ -170,9 +171,9 @@ func (r *basicIndicatorsRepository) FindAll(userID uint64) ([]*models.BasicIndic
 	}
 	defer rows.Close()
 
-	analyses := make([]*models.BasicIndicators, 0, 3)
+	analyses := make([]*model.BasicIndicators, 0, 3)
 	for rows.Next() {
-		var basicIndicators models.BasicIndicators
+		var basicIndicators model.BasicIndicators
 
 		if err = rows.Scan(
 			&basicIndicators.ID,

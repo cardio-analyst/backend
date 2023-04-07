@@ -3,27 +3,27 @@ package service
 import (
 	"database/sql"
 	"errors"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
-// check whether analysisService structure implements the service.AnalysisService interface
-var _ service.AnalysisService = (*analysisService)(nil)
+// check whether AnalysisService structure implements the service.AnalysisService interface
+var _ service.AnalysisService = (*AnalysisService)(nil)
 
-// analysisService implements service.AnalysisService interface.
-type analysisService struct {
+// AnalysisService implements service.AnalysisService interface.
+type AnalysisService struct {
 	analyses storage.AnalysisRepository
 }
 
-func NewAnalysisService(analyses storage.AnalysisRepository) *analysisService {
-	return &analysisService{
+func NewAnalysisService(analyses storage.AnalysisRepository) *AnalysisService {
+	return &AnalysisService{
 		analyses: analyses,
 	}
 }
 
-func (s *analysisService) Create(analysisData models.Analysis) error {
+func (s *AnalysisService) Create(analysisData domain.Analysis) error {
 	if err := analysisData.Validate(false); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (s *analysisService) Create(analysisData models.Analysis) error {
 	return s.analyses.Save(analysisData)
 }
 
-func (s *analysisService) Update(analysisData models.Analysis) error {
+func (s *AnalysisService) Update(analysisData domain.Analysis) error {
 	if err := analysisData.Validate(true); err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (s *analysisService) Update(analysisData models.Analysis) error {
 	_, err := s.analyses.Get(analysisData.ID, analysisData.UserID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return serviceErrors.ErrAnalysisRecordNotFound
+			return domain.ErrAnalysisRecordNotFound
 		}
 		return err
 	}
@@ -47,6 +47,6 @@ func (s *analysisService) Update(analysisData models.Analysis) error {
 	return s.analyses.Save(analysisData)
 }
 
-func (s *analysisService) FindAll(userID uint64) ([]*models.Analysis, error) {
+func (s *AnalysisService) FindAll(userID uint64) ([]*domain.Analysis, error) {
 	return s.analyses.FindAll(userID)
 }

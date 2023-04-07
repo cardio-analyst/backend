@@ -5,29 +5,30 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 
 	"github.com/jackc/pgx/v4"
+
+	"github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
 const analysisTable = "analyses"
 
-// check whether analysisRepository structure implements the storage.AnalysisRepository interface
-var _ storage.AnalysisRepository = (*analysisRepository)(nil)
+// check whether AnalysisRepository structure implements the storage.AnalysisRepository interface
+var _ storage.AnalysisRepository = (*AnalysisRepository)(nil)
 
-// analysisRepository implements storage.AnalysisRepository interface.
-type analysisRepository struct {
-	storage *postgresStorage
+// AnalysisRepository implements storage.AnalysisRepository interface.
+type AnalysisRepository struct {
+	storage *Storage
 }
 
-func NewAnalysisRepository(storage *postgresStorage) *analysisRepository {
-	return &analysisRepository{
+func NewAnalysisRepository(storage *Storage) *AnalysisRepository {
+	return &AnalysisRepository{
 		storage: storage,
 	}
 }
 
-func (r *analysisRepository) Save(analysisData models.Analysis) error {
+func (r *AnalysisRepository) Save(analysisData model.Analysis) error {
 	queryCtx := context.Background()
 
 	analysisIDPlaceholder := "DEFAULT"
@@ -82,7 +83,7 @@ func (r *analysisRepository) Save(analysisData models.Analysis) error {
 	return err
 }
 
-func (r *analysisRepository) Get(id, userID uint64) (*models.Analysis, error) {
+func (r *AnalysisRepository) Get(id, userID uint64) (*model.Analysis, error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			id,
@@ -102,7 +103,7 @@ func (r *analysisRepository) Get(id, userID uint64) (*models.Analysis, error) {
 	)
 	queryCtx := context.Background()
 
-	var analysisData models.Analysis
+	var analysisData model.Analysis
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, id, userID,
 	).Scan(
@@ -127,7 +128,7 @@ func (r *analysisRepository) Get(id, userID uint64) (*models.Analysis, error) {
 	return &analysisData, nil
 }
 
-func (r *analysisRepository) FindAll(userID uint64) ([]*models.Analysis, error) {
+func (r *AnalysisRepository) FindAll(userID uint64) ([]*model.Analysis, error) {
 	queryCtx := context.Background()
 
 	query := fmt.Sprintf(`
@@ -158,9 +159,9 @@ func (r *analysisRepository) FindAll(userID uint64) ([]*models.Analysis, error) 
 	}
 	defer rows.Close()
 
-	analyses := make([]*models.Analysis, 0, 3)
+	analyses := make([]*model.Analysis, 0, 3)
 	for rows.Next() {
-		var analysis models.Analysis
+		var analysis model.Analysis
 
 		if err = rows.Scan(
 			&analysis.ID,

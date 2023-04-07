@@ -1,13 +1,12 @@
 package service
 
 import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
+	"context"
+
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
-// UserService TODO
 type UserService interface {
-	// Get TODO
-	Get(criteria models.UserCriteria) (userData *models.User, err error)
-	// Update TODO
-	Update(userData models.User) (err error)
+	GetOne(ctx context.Context, criteria model.UserCriteria) (user model.User, err error)
+	Update(ctx context.Context, userData model.User) (err error)
 }

@@ -2,16 +2,19 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 
+	pbauth "github.com/cardio-analyst/backend/pkg/api/proto/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/cardio-analyst/backend/internal/gateway/adapters/auth"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/http"
+	"github.com/cardio-analyst/backend/internal/gateway/adapters/migrator"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/postgres"
-	"github.com/cardio-analyst/backend/internal/gateway/adapters/postgres_migrator"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/smtp"
 	"github.com/cardio-analyst/backend/internal/gateway/config"
 	"github.com/cardio-analyst/backend/internal/gateway/domain/service"
@@ -24,57 +27,65 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 }
 
-type app struct {
+type App struct {
 	config  config.Config
 	server  *http.Server
 	closers []io.Closer
 }
 
-func NewApp(configPath string) *app {
+func New(configPath string) *App {
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config data: %v", err)
 	}
 
-	var migrator *postgres_migrator.PostgresMigrator
-	migrator, err = postgres_migrator.NewPostgresMigrator(cfg.Adapters.Postgres.DSN)
+	var postgresMigrator *migrator.PostgresMigrator
+	postgresMigrator, err = migrator.NewPostgresMigrator(cfg.Postgres.DSN)
 	if err != nil {
 		log.Fatalf("failed to initialize postgres migrator: %v", err)
 	}
-	if err = migrator.Migrate(); err != nil {
+	if err = postgresMigrator.Migrate(); err != nil {
 		log.Fatalf("migration failed: %v", err)
 	}
-	if err = migrator.Close(); err != nil {
+	if err = postgresMigrator.Close(); err != nil {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
-	storage, err := postgres.NewStorage(cfg.Adapters.Postgres)
+	storage, err := postgres.NewStorage(cfg.Postgres.DSN)
 	if err != nil {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	smtpClient, err := smtp.NewClient(cfg.Adapters.SMTP)
+	smtpClient, err := smtp.NewClient(cfg.Gateway.SMTP.Host, cfg.Gateway.SMTP.Port, cfg.Gateway.SMTP.Username, cfg.Gateway.SMTP.Password)
 	if err != nil {
 		log.Fatalf("failed to create SMTP client: %v", err)
 	}
 
-	services := service.NewServices(cfg.Services, storage, smtpClient)
+	authGRPCConn, err := grpc.Dial(cfg.Services.Auth.GRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to connect to auth gRPC server: %v", err)
+	}
+	authGRPCClient := pbauth.NewAuthServiceClient(authGRPCConn)
+
+	authClient := auth.NewClient(authGRPCClient)
+
+	services := service.NewServices(cfg, storage, smtpClient, authClient)
 
 	srv := http.NewServer(services)
 
-	return &app{
-		config:  *cfg,
+	return &App{
+		config:  cfg,
 		server:  srv,
-		closers: []io.Closer{srv, storage, smtpClient},
+		closers: []io.Closer{srv, storage, smtpClient, authGRPCConn},
 	}
 }
 
-func (a *app) Start() {
+func (a *App) Start() {
 	log.Info("the app is running")
 
 	var group errgroup.Group
 	group.Go(func() error {
-		listenAddress := fmt.Sprintf(":%v", a.config.Adapters.HTTP.Port)
+		listenAddress := a.config.Gateway.HTTPAddress
 		return a.server.Start(listenAddress)
 	})
 
@@ -83,7 +94,7 @@ func (a *app) Start() {
 	}
 }
 
-func (a *app) Stop(_ context.Context) {
+func (a *App) Stop(_ context.Context) {
 	for _, closer := range a.closers {
 		if err := closer.Close(); err != nil {
 			log.Warnf("failed to stop the closer: %T: %v", closer, err)

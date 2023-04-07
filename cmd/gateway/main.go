@@ -25,7 +25,7 @@ func main() {
 
 	// graceful shutdown
 
-	application := app.NewApp(configPath)
+	application := app.New(configPath)
 	go application.Start()
 
 	quit := make(chan os.Signal, 1)

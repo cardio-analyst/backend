@@ -2,13 +2,15 @@ package v1
 
 import (
 	"errors"
-	models2 "github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 	"os"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/labstack/echo/v4"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 var errNoOneToSendReport = errors.New("there is no one to send report to")
@@ -20,7 +22,7 @@ func (r *Router) initRecommendationsRoutes() {
 }
 
 type getRecommendationsResponse struct {
-	Recommendations []*models2.Recommendation `json:"recommendations"`
+	Recommendations []*domain.Recommendation `json:"recommendations"`
 }
 
 func (r *Router) getRecommendations(c echo.Context) error {
@@ -65,7 +67,7 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 
 	userID := c.Get(ctxKeyUserID).(uint64)
 
-	user, err := r.services.User().Get(models2.UserCriteria{ID: &userID})
+	user, err := r.services.User().GetOne(c.Request().Context(), model.UserCriteria{ID: userID})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
@@ -78,13 +80,13 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 		receivers = append(receivers, user.Email)
 	}
 
-	reportPath, err := r.services.Report(models2.PDF).GenerateReport(userID)
+	reportPath, err := r.services.Report(domain.PDF).GenerateReport(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
-	defer os.Remove(reportPath)
+	defer func() { _ = os.Remove(reportPath) }()
 
-	if err = r.services.Email().SendReport(receivers, reportPath, *user); err != nil {
+	if err = r.services.Email().SendReport(receivers, reportPath, user); err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 

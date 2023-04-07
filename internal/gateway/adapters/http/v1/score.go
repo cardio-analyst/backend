@@ -2,11 +2,12 @@ package v1
 
 import (
 	"errors"
-	errors2 "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	models2 "github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 // possible score errors designations
@@ -27,18 +28,18 @@ type getCVERiskResponse struct {
 }
 
 func (r *Router) cveRisk(c echo.Context) error {
-	var reqData models2.ScoreData
+	var reqData domain.ScoreData
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
 	userID := c.Get(ctxKeyUserID).(uint64)
 
-	criteria := models2.UserCriteria{
-		ID: &userID,
+	criteria := model.UserCriteria{
+		ID: userID,
 	}
 
-	user, err := r.services.User().Get(criteria)
+	user, err := r.services.User().GetOne(c.Request().Context(), criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
@@ -48,15 +49,15 @@ func (r *Router) cveRisk(c echo.Context) error {
 	riskValue, scale, err := r.services.Score().GetCVERisk(reqData)
 	if err != nil {
 		switch {
-		case errors.Is(err, errors2.ErrInvalidAge):
+		case errors.Is(err, domain.ErrInvalidAge):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAge))
-		case errors.Is(err, errors2.ErrInvalidGender):
+		case errors.Is(err, domain.ErrInvalidGender):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
-		case errors.Is(err, errors2.ErrInvalidSBPLevel):
+		case errors.Is(err, domain.ErrInvalidSBPLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
-		case errors.Is(err, errors2.ErrInvalidTotalCholesterolLevel):
+		case errors.Is(err, domain.ErrInvalidTotalCholesterolLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
-		case errors.Is(err, errors2.ErrInvalidScoreData):
+		case errors.Is(err, domain.ErrInvalidScoreData):
 			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -75,18 +76,18 @@ type getIdealAgeResponse struct {
 }
 
 func (r *Router) idealAge(c echo.Context) error {
-	var reqData models2.ScoreData
+	var reqData domain.ScoreData
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
 	userID := c.Get(ctxKeyUserID).(uint64)
 
-	criteria := models2.UserCriteria{
-		ID: &userID,
+	criteria := model.UserCriteria{
+		ID: userID,
 	}
 
-	user, err := r.services.User().Get(criteria)
+	user, err := r.services.User().GetOne(c.Request().Context(), criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
@@ -96,15 +97,15 @@ func (r *Router) idealAge(c echo.Context) error {
 	agesRange, scale, err := r.services.Score().GetIdealAge(reqData)
 	if err != nil {
 		switch {
-		case errors.Is(err, errors2.ErrInvalidAge):
+		case errors.Is(err, domain.ErrInvalidAge):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidAge))
-		case errors.Is(err, errors2.ErrInvalidGender):
+		case errors.Is(err, domain.ErrInvalidGender):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidGender))
-		case errors.Is(err, errors2.ErrInvalidSBPLevel):
+		case errors.Is(err, domain.ErrInvalidSBPLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSBPLevel))
-		case errors.Is(err, errors2.ErrInvalidTotalCholesterolLevel):
+		case errors.Is(err, domain.ErrInvalidTotalCholesterolLevel):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidTotalCholesterolLevel))
-		case errors.Is(err, errors2.ErrInvalidScoreData):
+		case errors.Is(err, domain.ErrInvalidScoreData):
 			return c.JSON(http.StatusUnprocessableEntity, newError(c, err, errorNotEnoughInformation))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))

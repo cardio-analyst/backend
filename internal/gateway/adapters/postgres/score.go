@@ -3,26 +3,27 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/common"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 	"strings"
+
+	"github.com/cardio-analyst/backend/internal/gateway/domain/common"
+	"github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
-var _ storage.ScoreRepository = (*scoreRepository)(nil)
+var _ storage.ScoreRepository = (*ScoreRepository)(nil)
 
-// scoreRepository implements storage.ScoreRepository interface.
-type scoreRepository struct {
-	storage *postgresStorage
+// ScoreRepository implements storage.ScoreRepository interface.
+type ScoreRepository struct {
+	storage *Storage
 }
 
-func NewScoreRepository(storage *postgresStorage) *scoreRepository {
-	return &scoreRepository{
+func NewScoreRepository(storage *Storage) *ScoreRepository {
+	return &ScoreRepository{
 		storage: storage,
 	}
 }
 
-func (s *scoreRepository) GetCVERisk(data models.ScoreData) (uint64, error) {
+func (s *ScoreRepository) GetCVERisk(data model.ScoreData) (uint64, error) {
 	// TODO: replace 27-47 with custom CVE risk table builder, accepting CVE risk data
 	var tableNameBuilder strings.Builder
 
@@ -69,7 +70,7 @@ func (s *scoreRepository) GetCVERisk(data models.ScoreData) (uint64, error) {
 	return riskValue, nil
 }
 
-func (s *scoreRepository) GetIdealAge(cveRiskValue uint64, data models.ScoreData) (uint64, uint64, error) {
+func (s *ScoreRepository) GetIdealAge(cveRiskValue uint64, data model.ScoreData) (uint64, uint64, error) {
 	// TODO: replace 27-47 with custom CVE risk table builder, accepting CVE risk data
 	var tableNameBuilder strings.Builder
 

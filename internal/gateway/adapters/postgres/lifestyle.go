@@ -5,27 +5,28 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 
 	"github.com/jackc/pgx/v4"
+
+	"github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
 const lifestyleTable = "lifestyles"
 
-var _ storage.LifestyleRepository = (*lifestyleRepository)(nil)
+var _ storage.LifestyleRepository = (*LifestyleRepository)(nil)
 
-type lifestyleRepository struct {
-	storage *postgresStorage
+type LifestyleRepository struct {
+	storage *Storage
 }
 
-func NewLifestyleRepository(storage *postgresStorage) *lifestyleRepository {
-	return &lifestyleRepository{
+func NewLifestyleRepository(storage *Storage) *LifestyleRepository {
+	return &LifestyleRepository{
 		storage: storage,
 	}
 }
 
-func (r *lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
+func (r *LifestyleRepository) Update(lifestyleData model.Lifestyle) error {
 	query := fmt.Sprintf(`
 		UPDATE %v
         SET 
@@ -62,7 +63,7 @@ func (r *lifestyleRepository) Update(lifestyleData models.Lifestyle) error {
 	return err
 }
 
-func (r *lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
+func (r *LifestyleRepository) Get(userID uint64) (*model.Lifestyle, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT user_id,
@@ -82,7 +83,7 @@ func (r *lifestyleRepository) Get(userID uint64) (*models.Lifestyle, error) {
 	)
 	queryCtx := context.Background()
 
-	var lifestyleData models.Lifestyle
+	var lifestyleData model.Lifestyle
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(

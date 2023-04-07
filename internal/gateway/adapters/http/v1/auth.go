@@ -2,11 +2,11 @@ package v1
 
 import (
 	"errors"
-	errors2 "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 // possible auth errors designations
@@ -32,32 +32,32 @@ func (r *Router) initAuthRoutes() {
 }
 
 func (r *Router) signUp(c echo.Context) error {
-	var reqData models.User
+	var reqData model.User
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	if err := r.services.Auth().RegisterUser(reqData); err != nil {
+	if err := r.services.Auth().RegisterUser(c.Request().Context(), reqData); err != nil {
 		switch {
-		case errors.Is(err, errors2.ErrInvalidFirstName):
+		case errors.Is(err, model.ErrInvalidFirstName):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidFirstName))
-		case errors.Is(err, errors2.ErrInvalidLastName):
+		case errors.Is(err, model.ErrInvalidLastName):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLastName))
-		case errors.Is(err, errors2.ErrInvalidRegion):
+		case errors.Is(err, model.ErrInvalidRegion):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRegion))
-		case errors.Is(err, errors2.ErrInvalidBirthDate):
+		case errors.Is(err, model.ErrInvalidBirthDate):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidBirthDate))
-		case errors.Is(err, errors2.ErrInvalidLogin):
+		case errors.Is(err, model.ErrInvalidLogin):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidLogin))
-		case errors.Is(err, errors2.ErrInvalidEmail):
+		case errors.Is(err, model.ErrInvalidEmail):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidEmail))
-		case errors.Is(err, errors2.ErrInvalidPassword):
+		case errors.Is(err, model.ErrInvalidPassword):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidPassword))
-		case errors.Is(err, errors2.ErrInvalidUserData):
+		case errors.Is(err, model.ErrInvalidUserData):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
-		case errors.Is(err, errors2.ErrUserLoginAlreadyOccupied):
+		case errors.Is(err, model.ErrUserLoginAlreadyOccupied):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorLoginAlreadyOccupied))
-		case errors.Is(err, errors2.ErrUserEmailAlreadyOccupied):
+		case errors.Is(err, model.ErrUserEmailAlreadyOccupied):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorEmailAlreadyOccupied))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -68,17 +68,17 @@ func (r *Router) signUp(c echo.Context) error {
 }
 
 func (r *Router) signIn(c echo.Context) error {
-	var reqData models.UserCredentials
+	var reqData model.Credentials
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := r.services.Auth().GetTokens(reqData, c.RealIP())
+	tokens, err := r.services.Auth().GetTokens(c.Request().Context(), reqData, c.RealIP())
 	if err != nil {
 		switch {
-		case errors.Is(err, errors2.ErrInvalidUserCredentials):
+		case errors.Is(err, model.ErrInvalidCredentials):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
-		case errors.Is(err, errors2.ErrWrongCredentials):
+		case errors.Is(err, model.ErrWrongCredentials):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongCredentials))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
@@ -98,16 +98,14 @@ func (r *Router) refreshTokens(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := r.services.Auth().RefreshTokens(reqData.RefreshToken, c.RealIP())
+	tokens, err := r.services.Auth().RefreshTokens(c.Request().Context(), reqData.RefreshToken, c.RealIP())
 	if err != nil {
 		switch {
-		case errors.Is(err, errors2.ErrWrongToken):
+		case errors.Is(err, model.ErrWrongToken):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongRefreshToken))
-		case errors.Is(err, errors2.ErrTokenIsExpired):
+		case errors.Is(err, model.ErrTokenIsExpired):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorRefreshTokenExpired))
-		case errors.Is(err, errors2.ErrSessionNotFound):
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongRefreshToken))
-		case errors.Is(err, errors2.ErrIPIsNotInWhitelist):
+		case errors.Is(err, model.ErrIPIsNotInWhitelist):
 			return c.JSON(http.StatusForbidden, newError(c, err, errorIPNotAllowed))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))

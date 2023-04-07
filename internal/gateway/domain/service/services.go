@@ -2,71 +2,74 @@ package service
 
 import (
 	"github.com/cardio-analyst/backend/internal/gateway/config"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	service2 "github.com/cardio-analyst/backend/internal/gateway/ports/service"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/smtp"
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
 // check whether services structure implements the service.Services interface
-var _ service2.Services = (*services)(nil)
+var _ service.Services = (*Services)(nil)
 
-// services implements service.Services interface.
-type services struct {
-	cfg        config.ServicesConfig
+// Services implements service.Services interface.
+type Services struct {
+	cfg        config.Config
 	storage    storage.Storage
-	smtpClient smtp.Client
+	smtpClient client.SMTP
+	authClient client.Auth
 
-	userService            service2.UserService
-	authService            service2.AuthService
-	diseasesService        service2.DiseasesService
-	analysisService        service2.AnalysisService
-	lifestyleService       service2.LifestyleService
-	basicIndicatorsService service2.BasicIndicatorsService
-	scoreService           service2.ScoreService
-	recommendationsService service2.RecommendationsService
-	emailService           service2.EmailService
+	userService            service.UserService
+	authService            service.AuthService
+	diseasesService        service.DiseasesService
+	analysisService        service.AnalysisService
+	lifestyleService       service.LifestyleService
+	basicIndicatorsService service.BasicIndicatorsService
+	scoreService           service.ScoreService
+	recommendationsService service.RecommendationsService
+	emailService           service.EmailService
 
-	reportServices reportServices
+	reportServices ReportServices
 }
 
-type reportServices struct {
-	PDF service2.ReportService
+type ReportServices struct {
+	PDF service.ReportService
 }
 
 func NewServices(
-	cfg config.ServicesConfig,
+	cfg config.Config,
 	storage storage.Storage,
-	smtpClient smtp.Client,
-) *services {
-	return &services{
+	smtpClient client.SMTP,
+	authClient client.Auth,
+) *Services {
+	return &Services{
 		cfg:        cfg,
 		storage:    storage,
 		smtpClient: smtpClient,
+		authClient: authClient,
 	}
 }
 
-func (s *services) User() service2.UserService {
+func (s *Services) User() service.UserService {
 	if s.userService != nil {
 		return s.userService
 	}
 
-	s.userService = NewUserService(s.storage.Users())
+	s.userService = NewUserService(s.authClient)
 
 	return s.userService
 }
 
-func (s *services) Auth() service2.AuthService {
+func (s *Services) Auth() service.AuthService {
 	if s.authService != nil {
 		return s.authService
 	}
 
-	s.authService = NewAuthService(s.cfg.Auth, s.storage.Users(), s.storage.Sessions())
+	s.authService = NewAuthService(s.authClient)
 
 	return s.authService
 }
 
-func (s *services) Diseases() service2.DiseasesService {
+func (s *Services) Diseases() service.DiseasesService {
 	if s.diseasesService != nil {
 		return s.diseasesService
 	}
@@ -76,7 +79,7 @@ func (s *services) Diseases() service2.DiseasesService {
 	return s.diseasesService
 }
 
-func (s *services) Analysis() service2.AnalysisService {
+func (s *Services) Analysis() service.AnalysisService {
 	if s.analysisService != nil {
 		return s.analysisService
 	}
@@ -86,7 +89,7 @@ func (s *services) Analysis() service2.AnalysisService {
 	return s.analysisService
 }
 
-func (s *services) Lifestyle() service2.LifestyleService {
+func (s *Services) Lifestyle() service.LifestyleService {
 	if s.lifestyleService != nil {
 		return s.lifestyleService
 	}
@@ -96,7 +99,7 @@ func (s *services) Lifestyle() service2.LifestyleService {
 	return s.lifestyleService
 }
 
-func (s *services) BasicIndicators() service2.BasicIndicatorsService {
+func (s *Services) BasicIndicators() service.BasicIndicatorsService {
 	if s.basicIndicatorsService != nil {
 		return s.basicIndicatorsService
 	}
@@ -106,7 +109,7 @@ func (s *services) BasicIndicators() service2.BasicIndicatorsService {
 	return s.basicIndicatorsService
 }
 
-func (s *services) Score() service2.ScoreService {
+func (s *Services) Score() service.ScoreService {
 	if s.scoreService != nil {
 		return s.scoreService
 	}
@@ -116,7 +119,7 @@ func (s *services) Score() service2.ScoreService {
 	return s.scoreService
 }
 
-func (s *services) Recommendations() service2.RecommendationsService {
+func (s *Services) Recommendations() service.RecommendationsService {
 	if s.recommendationsService != nil {
 		return s.recommendationsService
 	}
@@ -127,13 +130,13 @@ func (s *services) Recommendations() service2.RecommendationsService {
 		s.storage.BasicIndicators(),
 		s.storage.Lifestyles(),
 		s.storage.Score(),
-		s.storage.Users(),
+		s.authClient,
 	)
 
 	return s.recommendationsService
 }
 
-func (s *services) Email() service2.EmailService {
+func (s *Services) Email() service.EmailService {
 	if s.emailService != nil {
 		return s.emailService
 	}
@@ -143,9 +146,9 @@ func (s *services) Email() service2.EmailService {
 	return s.emailService
 }
 
-func (s *services) Report(reportType models.ReportType) service2.ReportService {
+func (s *Services) Report(reportType domain.ReportType) service.ReportService {
 	switch reportType {
-	case models.PDF:
+	case domain.PDF:
 		if s.reportServices.PDF != nil {
 			return s.reportServices.PDF
 		}
@@ -154,7 +157,7 @@ func (s *services) Report(reportType models.ReportType) service2.ReportService {
 			s.Recommendations(),
 			s.storage.Analyses(),
 			s.storage.BasicIndicators(),
-			s.storage.Users(),
+			s.authClient,
 		)
 
 		return s.reportServices.PDF

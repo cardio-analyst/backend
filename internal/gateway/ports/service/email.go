@@ -1,9 +1,7 @@
 package service
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import "github.com/cardio-analyst/backend/pkg/model"
 
 type EmailService interface {
-	SendReport(receivers []string, reportPath string, userData models.User) error
+	SendReport(receivers []string, reportPath string, user model.User) error
 }

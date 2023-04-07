@@ -1,9 +1,7 @@
 package service
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 
 type RecommendationsService interface {
-	GetRecommendations(userID uint64) (recommendations []*models.Recommendation, err error)
+	GetRecommendations(userID uint64) (recommendations []*domain.Recommendation, err error)
 }

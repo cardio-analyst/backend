@@ -1,13 +1,8 @@
 package service
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 
-// DiseasesService TODO
 type DiseasesService interface {
-	// Update TODO
-	Update(diseasesData models.Diseases) (err error)
-	// Get TODO
-	Get(userID uint64) (diseasesData *models.Diseases, err error)
+	Update(diseasesData domain.Diseases) (err error)
+	Get(userID uint64) (diseasesData *domain.Diseases, err error)
 }

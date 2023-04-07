@@ -5,29 +5,30 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 
 	"github.com/jackc/pgx/v4"
+
+	"github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
 const diseasesTable = "diseases"
 
-// check whether diseasesRepository structure implements the storage.DiseasesRepository interface
-var _ storage.DiseasesRepository = (*diseasesRepository)(nil)
+// check whether DiseasesRepository structure implements the storage.DiseasesRepository interface
+var _ storage.DiseasesRepository = (*DiseasesRepository)(nil)
 
-// diseasesRepository implements storage.DiseasesRepository interface.
-type diseasesRepository struct {
-	storage *postgresStorage
+// DiseasesRepository implements storage.DiseasesRepository interface.
+type DiseasesRepository struct {
+	storage *Storage
 }
 
-func NewDiseasesRepository(storage *postgresStorage) *diseasesRepository {
-	return &diseasesRepository{
+func NewDiseasesRepository(storage *Storage) *DiseasesRepository {
+	return &DiseasesRepository{
 		storage: storage,
 	}
 }
 
-func (r *diseasesRepository) Update(diseasesData models.Diseases) error {
+func (r *DiseasesRepository) Update(diseasesData model.Diseases) error {
 	query := fmt.Sprintf(`
 		UPDATE %v
         SET 
@@ -60,7 +61,7 @@ func (r *diseasesRepository) Update(diseasesData models.Diseases) error {
 	return err
 }
 
-func (r *diseasesRepository) Get(userID uint64) (*models.Diseases, error) {
+func (r *DiseasesRepository) Get(userID uint64) (*model.Diseases, error) {
 	query := fmt.Sprintf(
 		`
 		SELECT user_id,
@@ -78,7 +79,7 @@ func (r *diseasesRepository) Get(userID uint64) (*models.Diseases, error) {
 	)
 	queryCtx := context.Background()
 
-	var diseasesData models.Diseases
+	var diseasesData model.Diseases
 	if err := r.storage.conn.QueryRow(
 		queryCtx, query, userID,
 	).Scan(

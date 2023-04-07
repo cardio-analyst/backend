@@ -10,14 +10,14 @@ services:
     env_file:
       - gateway.env
     depends_on:
-      - db
-  db:
+      - postgres
+  postgres:
     image: postgres:13
     restart: always
     ports:
       - "5432:5432"
     env_file:
-      - db.env
+      - postgres.env
     volumes:
       - postgres_volume:/var/lib/postgresql/data
 

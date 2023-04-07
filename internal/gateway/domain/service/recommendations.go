@@ -2,16 +2,20 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/config"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/common"
-	models2 "github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
-	storage2 "github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 	"math"
 	"math/rand"
 	"text/template"
 	"time"
+
+	"github.com/cardio-analyst/backend/internal/gateway/config"
+	"github.com/cardio-analyst/backend/internal/gateway/domain/common"
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 // recommendation titles
@@ -22,40 +26,41 @@ const (
 	templateNameRisk             = "risk"
 )
 
-// check whether recommendationsService structure implements the service.RecommendationsService interface
-var _ service.RecommendationsService = (*recommendationsService)(nil)
+// check whether RecommendationsService structure implements the service.RecommendationsService interface
+var _ service.RecommendationsService = (*RecommendationsService)(nil)
 
-// recommendationsService implements service.RecommendationsService interface.
-type recommendationsService struct {
+// RecommendationsService implements service.RecommendationsService interface.
+type RecommendationsService struct {
 	cfg config.RecommendationsConfig
 
-	diseases        storage2.DiseasesRepository
-	basicIndicators storage2.BasicIndicatorsRepository
-	lifestyles      storage2.LifestyleRepository
-	score           storage2.ScoreRepository
-	users           storage2.UserRepository
+	diseases        storage.DiseasesRepository
+	basicIndicators storage.BasicIndicatorsRepository
+	lifestyles      storage.LifestyleRepository
+	score           storage.ScoreRepository
+
+	authClient client.Auth
 }
 
 func NewRecommendationsService(
 	cfg config.RecommendationsConfig,
-	diseases storage2.DiseasesRepository,
-	basicIndicators storage2.BasicIndicatorsRepository,
-	lifestyle storage2.LifestyleRepository,
-	score storage2.ScoreRepository,
-	users storage2.UserRepository,
-) *recommendationsService {
-	return &recommendationsService{
+	diseases storage.DiseasesRepository,
+	basicIndicators storage.BasicIndicatorsRepository,
+	lifestyle storage.LifestyleRepository,
+	score storage.ScoreRepository,
+	authClient client.Auth,
+) *RecommendationsService {
+	return &RecommendationsService{
 		cfg:             cfg,
 		diseases:        diseases,
 		basicIndicators: basicIndicators,
 		lifestyles:      lifestyle,
 		score:           score,
-		users:           users,
+		authClient:      authClient,
 	}
 }
 
-func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models2.Recommendation, error) {
-	recommendations := make([]*models2.Recommendation, 0, 7)
+func (s *RecommendationsService) GetRecommendations(userID uint64) ([]*domain.Recommendation, error) {
+	recommendations := make([]*domain.Recommendation, 0, 7)
 
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
@@ -75,7 +80,7 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models2.R
 		recommendations = append(recommendations, recommendation)
 	}
 
-	scoreData := models2.ExtractScoreDataFrom(basicIndicators)
+	scoreData := domain.ExtractScoreDataFrom(basicIndicators)
 
 	recommendation, err = s.smokingRecommendation(userID, scoreData)
 	if err != nil {
@@ -125,16 +130,16 @@ func (s *recommendationsService) GetRecommendations(userID uint64) ([]*models2.R
 	return recommendations, nil
 }
 
-func (s *recommendationsService) healthyEatingRecommendation() *models2.Recommendation {
-	return &models2.Recommendation{
+func (s *RecommendationsService) healthyEatingRecommendation() *domain.Recommendation {
+	return &domain.Recommendation{
 		What: s.cfg.HealthyEating.What,
 		Why:  s.cfg.HealthyEating.Why,
 		How:  s.cfg.HealthyEating.How,
 	}
 }
 
-func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData models2.ScoreData) (*models2.Recommendation, error) {
-	if err := scoreData.ValidateByRecommendation(models2.Smoking); err != nil {
+func (s *RecommendationsService) smokingRecommendation(userID uint64, scoreData domain.ScoreData) (*domain.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(domain.Smoking); err != nil {
 		return nil, nil
 	}
 
@@ -142,8 +147,8 @@ func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData 
 		return nil, nil
 	}
 
-	user, err := s.users.GetByCriteria(models2.UserCriteria{
-		ID: &userID,
+	user, err := s.authClient.GetUser(context.TODO(), model.UserCriteria{
+		ID: userID,
 	})
 	if err != nil {
 		return nil, err
@@ -173,20 +178,20 @@ func (s *recommendationsService) smokingRecommendation(userID uint64, scoreData 
 		return nil, err
 	}
 
-	return &models2.Recommendation{
+	return &domain.Recommendation{
 		What: s.cfg.Smoking.What,
 		Why:  why,
 		How:  s.cfg.Smoking.How,
 	}, nil
 }
 
-func (s *recommendationsService) sbpLevelRecommendation(scoreData models2.ScoreData) (*models2.Recommendation, error) {
-	if err := scoreData.ValidateByRecommendation(models2.SBPLevel); err != nil {
+func (s *RecommendationsService) sbpLevelRecommendation(scoreData domain.ScoreData) (*domain.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(domain.SBPLevel); err != nil {
 		return nil, nil
 	}
 
 	if scoreData.SBPLevel >= 140 {
-		return &models2.Recommendation{
+		return &domain.Recommendation{
 			What: s.cfg.SBPLevel.What,
 			Why:  s.cfg.SBPLevel.Why,
 			How:  s.cfg.SBPLevel.How,
@@ -196,8 +201,8 @@ func (s *recommendationsService) sbpLevelRecommendation(scoreData models2.ScoreD
 	return nil, nil
 }
 
-func (s *recommendationsService) bmiRecommendation(scoreData models2.ScoreData, basicIndicators []*models2.BasicIndicators) (*models2.Recommendation, error) {
-	if err := scoreData.ValidateByRecommendation(models2.BMI); err != nil {
+func (s *RecommendationsService) bmiRecommendation(scoreData domain.ScoreData, basicIndicators []*domain.BasicIndicators) (*domain.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(domain.BMI); err != nil {
 		return nil, nil
 	}
 
@@ -229,15 +234,15 @@ func (s *recommendationsService) bmiRecommendation(scoreData models2.ScoreData, 
 		return nil, err
 	}
 
-	return &models2.Recommendation{
+	return &domain.Recommendation{
 		What: s.cfg.BMI.What,
 		Why:  why,
 		How:  s.cfg.BMI.How,
 	}, nil
 }
 
-func (s *recommendationsService) cholesterolLevelRecommendation(userID uint64, scoreData models2.ScoreData, basicIndicators []*models2.BasicIndicators) (*models2.Recommendation, error) {
-	if err := scoreData.ValidateByRecommendation(models2.CholesterolLevel); err != nil {
+func (s *RecommendationsService) cholesterolLevelRecommendation(userID uint64, scoreData domain.ScoreData, basicIndicators []*domain.BasicIndicators) (*domain.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(domain.CholesterolLevel); err != nil {
 		return nil, nil
 	}
 
@@ -309,14 +314,14 @@ func (s *recommendationsService) cholesterolLevelRecommendation(userID uint64, s
 		return nil, err
 	}
 
-	return &models2.Recommendation{
+	return &domain.Recommendation{
 		What: s.cfg.CholesterolLevel.What,
 		Why:  why,
 		How:  how,
 	}, nil
 }
 
-func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models2.Recommendation, error) {
+func (s *RecommendationsService) lifestyleRecommendation(userID uint64) (*domain.Recommendation, error) {
 	lifestyle, err := s.lifestyles.Get(userID)
 	if err != nil {
 		return nil, err
@@ -324,7 +329,7 @@ func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models
 
 	if lifestyle.EventsParticipation == common.EventsParticipationNotFrequently ||
 		lifestyle.PhysicalActivity == common.PhysicalActivityOneInWeek {
-		return &models2.Recommendation{
+		return &domain.Recommendation{
 			What: s.cfg.Lifestyle.What,
 			Why:  s.cfg.Lifestyle.Why,
 			How:  s.cfg.Lifestyle.How,
@@ -334,13 +339,13 @@ func (s *recommendationsService) lifestyleRecommendation(userID uint64) (*models
 	return nil, nil
 }
 
-func (s *recommendationsService) riskRecommendation(userID uint64, scoreData models2.ScoreData) (*models2.Recommendation, error) {
-	if err := scoreData.ValidateByRecommendation(models2.Risk); err != nil {
+func (s *RecommendationsService) riskRecommendation(userID uint64, scoreData domain.ScoreData) (*domain.Recommendation, error) {
+	if err := scoreData.ValidateByRecommendation(domain.Risk); err != nil {
 		return nil, nil
 	}
 
-	user, err := s.users.GetByCriteria(models2.UserCriteria{
-		ID: &userID,
+	user, err := s.authClient.GetUser(context.TODO(), model.UserCriteria{
+		ID: userID,
 	})
 	if err != nil {
 		return nil, err
@@ -373,7 +378,7 @@ func (s *recommendationsService) riskRecommendation(userID uint64, scoreData mod
 		return nil, err
 	}
 
-	return &models2.Recommendation{
+	return &domain.Recommendation{
 		What: s.cfg.Risk.What,
 		Why:  why,
 		How:  s.cfg.Risk.How,
@@ -394,7 +399,7 @@ func textTemplateToString(tmplName, tmplText string, tmplData map[string]interfa
 	return tmplBuffer.String(), nil
 }
 
-func extractBMIIndications(basicIndicators []*models2.BasicIndicators) (weight, height, waistSize, bodyMassIndex float64) {
+func extractBMIIndications(basicIndicators []*domain.BasicIndicators) (weight, height, waistSize, bodyMassIndex float64) {
 	for _, indicators := range basicIndicators {
 		if indicators.Weight != nil && weight == 0 {
 			weight = *indicators.Weight

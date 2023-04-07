@@ -1,13 +1,8 @@
 package storage
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 
-// LifestyleRepository TODO
 type LifestyleRepository interface {
-	// Update TODO
-	Update(lifestyleData models.Lifestyle) (err error)
-	// Get TODO
-	Get(userID uint64) (lifestyleData *models.Lifestyle, err error)
+	Update(lifestyleData domain.Lifestyle) (err error)
+	Get(userID uint64) (lifestyleData *domain.Lifestyle, err error)
 }

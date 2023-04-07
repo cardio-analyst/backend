@@ -1,15 +1,9 @@
 package service
 
-import (
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-)
+import domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 
-// BasicIndicatorsService TODO
 type BasicIndicatorsService interface {
-	// Create TODO
-	Create(basicIndicatorsData models.BasicIndicators) (err error)
-	// Update TODO
-	Update(basicIndicatorsData models.BasicIndicators) (err error)
-	// FindAll TODO
-	FindAll(userID uint64) (basicIndicatorsDataList []*models.BasicIndicators, err error)
+	Create(basicIndicatorsData domain.BasicIndicators) (err error)
+	Update(basicIndicatorsData domain.BasicIndicators) (err error)
+	FindAll(userID uint64) (basicIndicatorsDataList []*domain.BasicIndicators, err error)
 }

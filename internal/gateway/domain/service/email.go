@@ -3,10 +3,11 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/smtp"
 	"html/template"
+
+	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 const (
@@ -23,19 +24,19 @@ const (
 </html>`
 )
 
-var _ service.EmailService = (*emailService)(nil)
+var _ service.EmailService = (*EmailService)(nil)
 
-type emailService struct {
-	sender smtp.Client
+type EmailService struct {
+	sender client.SMTP
 }
 
-func NewEmailService(sender smtp.Client) *emailService {
-	return &emailService{
+func NewEmailService(sender client.SMTP) *EmailService {
+	return &EmailService{
 		sender: sender,
 	}
 }
 
-func (s *emailService) SendReport(receivers []string, reportPath string, userData models.User) error {
+func (s *EmailService) SendReport(receivers []string, reportPath string, userData model.User) error {
 	reportTemplate, err := template.New("report").Parse(reportHTMLBody)
 	if err != nil {
 		return err

@@ -3,31 +3,31 @@ package service
 import (
 	"database/sql"
 	"errors"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
-// check whether lifestyleService structure implements the service.LifestyleService interface
-var _ service.LifestyleService = (*lifestyleService)(nil)
+// check whether LifestyleService structure implements the service.LifestyleService interface
+var _ service.LifestyleService = (*LifestyleService)(nil)
 
-// lifestyleService implements service.LifestyleService interface.
-type lifestyleService struct {
+// LifestyleService implements service.LifestyleService interface.
+type LifestyleService struct {
 	lifestyles storage.LifestyleRepository
 }
 
-func NewLifestyleService(lifestyle storage.LifestyleRepository) *lifestyleService {
-	return &lifestyleService{
+func NewLifestyleService(lifestyle storage.LifestyleRepository) *LifestyleService {
+	return &LifestyleService{
 		lifestyles: lifestyle,
 	}
 }
 
-func (s *lifestyleService) Get(userID uint64) (*models.Lifestyle, error) {
+func (s *LifestyleService) Get(userID uint64) (*domain.Lifestyle, error) {
 	lifestyle, err := s.lifestyles.Get(userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, serviceErrors.ErrLifestyleNotFound
+			return nil, domain.ErrLifestyleNotFound
 		}
 		return nil, err
 	}
@@ -35,6 +35,6 @@ func (s *lifestyleService) Get(userID uint64) (*models.Lifestyle, error) {
 	return lifestyle, nil
 }
 
-func (s *lifestyleService) Update(lifestyleData models.Lifestyle) error {
+func (s *LifestyleService) Update(lifestyleData domain.Lifestyle) error {
 	return s.lifestyles.Update(lifestyleData)
 }

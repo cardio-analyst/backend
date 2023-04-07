@@ -1,14 +1,18 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	models2 "github.com/cardio-analyst/backend/internal/gateway/domain/models"
-	service2 "github.com/cardio-analyst/backend/internal/gateway/ports/service"
-	storage2 "github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 	"os"
 	"strconv"
 
 	"github.com/jung-kurt/gofpdf"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
+	"github.com/cardio-analyst/backend/pkg/model"
 )
 
 const reportPDFFileName = "report.pdf"
@@ -20,30 +24,32 @@ const (
 	reportUnicode = "cp1251"
 )
 
-var _ service2.ReportService = (*pdfReportService)(nil)
+var _ service.ReportService = (*PDFReportService)(nil)
 
-type pdfReportService struct {
-	recommendations service2.RecommendationsService
-	analyses        storage2.AnalysisRepository
-	basicIndicators storage2.BasicIndicatorsRepository
-	users           storage2.UserRepository
+type PDFReportService struct {
+	recommendations service.RecommendationsService
+
+	analyses        storage.AnalysisRepository
+	basicIndicators storage.BasicIndicatorsRepository
+
+	authClient client.Auth
 }
 
 func NewPDFReportService(
-	recommendations service2.RecommendationsService,
-	analyses storage2.AnalysisRepository,
-	basicIndicators storage2.BasicIndicatorsRepository,
-	users storage2.UserRepository,
-) *pdfReportService {
-	return &pdfReportService{
+	recommendations service.RecommendationsService,
+	analyses storage.AnalysisRepository,
+	basicIndicators storage.BasicIndicatorsRepository,
+	authClient client.Auth,
+) *PDFReportService {
+	return &PDFReportService{
 		recommendations: recommendations,
 		analyses:        analyses,
 		basicIndicators: basicIndicators,
-		users:           users,
+		authClient:      authClient,
 	}
 }
 
-func (s *pdfReportService) GenerateReport(userID uint64) (string, error) {
+func (s *PDFReportService) GenerateReport(userID uint64) (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -81,7 +87,7 @@ func (s *pdfReportService) GenerateReport(userID uint64) (string, error) {
 	return reportPDFFileName, nil
 }
 
-func (s *pdfReportService) generateReportByBasicIndicators(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
+func (s *PDFReportService) generateReportByBasicIndicators(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
 		return err
@@ -90,14 +96,14 @@ func (s *pdfReportService) generateReportByBasicIndicators(userID uint64, pdf *g
 		return nil
 	}
 
-	user, err := s.users.GetByCriteria(models2.UserCriteria{
-		ID: &userID,
+	user, err := s.authClient.GetUser(context.TODO(), model.UserCriteria{
+		ID: userID,
 	})
 	if err != nil {
 		return err
 	}
 
-	scoreData := models2.ExtractScoreDataFrom(basicIndicators)
+	scoreData := domain.ExtractScoreDataFrom(basicIndicators)
 	scoreData.Age = user.Age()
 
 	weight, height, waistSize, bodyMassIndex := extractBMIIndications(basicIndicators)
@@ -157,7 +163,7 @@ func (s *pdfReportService) generateReportByBasicIndicators(userID uint64, pdf *g
 	return nil
 }
 
-func (s *pdfReportService) generateReportByAnalyses(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
+func (s *PDFReportService) generateReportByAnalyses(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
 	analyses, err := s.analyses.FindAll(userID)
 	if err != nil {
 		return err
@@ -248,7 +254,7 @@ func generateRow(label string, value string, pdf *gofpdf.Fpdf, htmlWhite func(va
 	htmlWhite(fmt.Sprintf(`<p>%s</p><br></br><br></br>`, value))
 }
 
-func (s *pdfReportService) generateReportByRecommendations(userID uint64, pdf *gofpdf.Fpdf, htmlWrite func(value string)) error {
+func (s *PDFReportService) generateReportByRecommendations(userID uint64, pdf *gofpdf.Fpdf, htmlWrite func(value string)) error {
 	recommendations, err := s.recommendations.GetRecommendations(userID)
 	if err != nil {
 		return err

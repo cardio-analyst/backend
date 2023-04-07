@@ -3,12 +3,13 @@ package http
 import (
 	"context"
 	"errors"
-	"github.com/cardio-analyst/backend/internal/gateway/adapters/http/v1"
-	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/cardio-analyst/backend/internal/gateway/adapters/http/v1"
+	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 )
 
 type Server struct {

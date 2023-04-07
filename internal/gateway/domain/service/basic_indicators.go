@@ -3,27 +3,27 @@ package service
 import (
 	"database/sql"
 	"errors"
-	serviceErrors "github.com/cardio-analyst/backend/internal/gateway/domain/errors"
-	"github.com/cardio-analyst/backend/internal/gateway/domain/models"
+
+	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 )
 
-// check whether basicIndicatorsService structure implements the service.BasicIndicatorsService interface
-var _ service.BasicIndicatorsService = (*basicIndicatorsService)(nil)
+// check whether BasicIndicatorsService structure implements the service.BasicIndicatorsService interface
+var _ service.BasicIndicatorsService = (*BasicIndicatorsService)(nil)
 
-// basicIndicatorsService implements service.BasicIndicatorsService interface.
-type basicIndicatorsService struct {
+// BasicIndicatorsService implements service.BasicIndicatorsService interface.
+type BasicIndicatorsService struct {
 	basicIndicators storage.BasicIndicatorsRepository
 }
 
-func NewBasicIndicatorsService(basicIndicators storage.BasicIndicatorsRepository) *basicIndicatorsService {
-	return &basicIndicatorsService{
+func NewBasicIndicatorsService(basicIndicators storage.BasicIndicatorsRepository) *BasicIndicatorsService {
+	return &BasicIndicatorsService{
 		basicIndicators: basicIndicators,
 	}
 }
 
-func (s *basicIndicatorsService) Create(basicIndicatorsData models.BasicIndicators) error {
+func (s *BasicIndicatorsService) Create(basicIndicatorsData domain.BasicIndicators) error {
 	if err := basicIndicatorsData.Validate(false); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (s *basicIndicatorsService) Create(basicIndicatorsData models.BasicIndicato
 	return s.basicIndicators.Save(basicIndicatorsData)
 }
 
-func (s *basicIndicatorsService) Update(basicIndicatorsData models.BasicIndicators) error {
+func (s *BasicIndicatorsService) Update(basicIndicatorsData domain.BasicIndicators) error {
 	if err := basicIndicatorsData.Validate(true); err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (s *basicIndicatorsService) Update(basicIndicatorsData models.BasicIndicato
 	_, err := s.basicIndicators.Get(basicIndicatorsData.ID, basicIndicatorsData.UserID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return serviceErrors.ErrBasicIndicatorsRecordNotFound
+			return domain.ErrBasicIndicatorsRecordNotFound
 		}
 		return err
 	}
@@ -47,6 +47,6 @@ func (s *basicIndicatorsService) Update(basicIndicatorsData models.BasicIndicato
 	return s.basicIndicators.Save(basicIndicatorsData)
 }
 
-func (s *basicIndicatorsService) FindAll(userID uint64) ([]*models.BasicIndicators, error) {
+func (s *BasicIndicatorsService) FindAll(userID uint64) ([]*domain.BasicIndicators, error) {
 	return s.basicIndicators.FindAll(userID)
 }
