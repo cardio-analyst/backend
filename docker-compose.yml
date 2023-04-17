@@ -11,6 +11,17 @@ services:
       - gateway.env
     depends_on:
       - postgres
+      - auth
+  auth:
+    build:
+      context: .
+      dockerfile: docker/auth/Dockerfile
+    ports:
+      - "9000:9000"
+    env_file:
+      - auth.env
+    depends_on:
+      - mongodb
   postgres:
     image: postgres:13
     restart: always
@@ -20,6 +31,16 @@ services:
       - postgres.env
     volumes:
       - postgres_volume:/var/lib/postgresql/data
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    env_file:
+      - mongodb.env
+    volumes:
+      - mongodb_data_container:/data/db
 
 volumes:
   postgres_volume:
+  mongodb_data_container:

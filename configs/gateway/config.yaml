@@ -7,7 +7,7 @@ gateway:
     password: "tg9SXLxXZYShs6J10XhB"
 
 postgres:
-  dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+  uri: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
 
 recommendations:
   healthy_eating:
@@ -41,4 +41,4 @@ recommendations:
 
 services:
   auth:
-    grpc_address: ":9000"
+    grpc_address: "auth:9000"

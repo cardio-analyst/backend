@@ -40,7 +40,7 @@ func New(configPath string) *App {
 	}
 
 	var postgresMigrator *migrator.PostgresMigrator
-	postgresMigrator, err = migrator.NewPostgresMigrator(cfg.Postgres.DSN)
+	postgresMigrator, err = migrator.NewPostgresMigrator(cfg.Postgres.URI)
 	if err != nil {
 		log.Fatalf("failed to initialize postgres migrator: %v", err)
 	}
@@ -51,7 +51,7 @@ func New(configPath string) *App {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
-	storage, err := postgres.NewStorage(cfg.Postgres.DSN)
+	storage, err := postgres.NewStorage(cfg.Postgres.URI)
 	if err != nil {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}

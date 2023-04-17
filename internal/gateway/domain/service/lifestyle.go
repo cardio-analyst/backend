@@ -1,9 +1,6 @@
 package service
 
 import (
-	"database/sql"
-	"errors"
-
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
@@ -26,9 +23,6 @@ func NewLifestyleService(lifestyle storage.LifestyleRepository) *LifestyleServic
 func (s *LifestyleService) Get(userID uint64) (*domain.Lifestyle, error) {
 	lifestyle, err := s.lifestyles.Get(userID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrLifestyleNotFound
-		}
 		return nil, err
 	}
 

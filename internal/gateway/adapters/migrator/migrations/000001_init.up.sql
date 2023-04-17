@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS diseases
 (
-    user_id                    INTEGER PRIMARY KEY,
+    user_id                     INTEGER                 NOT NULL,
     cvd_predisposed            BOOLEAN NOT NULL DEFAULT FALSE,
     takes_statins              BOOLEAN NOT NULL DEFAULT FALSE,
     has_chronic_kidney_disease BOOLEAN NOT NULL DEFAULT FALSE,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS diseases
     has_type_two_diabetes      BOOLEAN NOT NULL DEFAULT FALSE,
     had_infarction_or_stroke   BOOLEAN NOT NULL DEFAULT FALSE,
     has_atherosclerosis        BOOLEAN NOT NULL DEFAULT FALSE,
-    has_other_cvd              BOOLEAN NOT NULL DEFAULT FALSE,
+    has_other_cvd              BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS analyses
@@ -24,12 +24,12 @@ CREATE TABLE IF NOT EXISTS analyses
     atherogenicity_coefficient          DECIMAL(4, 1),
     creatinine                          DECIMAL(4, 1),
     atherosclerotic_plaques_presence    BOOLEAN,
-    created_at                          TIMESTAMP DEFAULT NOW() NOT NULL,
+    created_at                          TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS lifestyles
 (
-    user_id                   INTEGER PRIMARY KEY,
+    user_id                   INTEGER                 NOT NULL,
     family_status             VARCHAR(255)  NOT NULL DEFAULT '',
     events_participation      VARCHAR(255)  NOT NULL DEFAULT '',
     physical_activity         VARCHAR(255)  NOT NULL DEFAULT '',
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS lifestyles
     angina_score              INTEGER       NOT NULL DEFAULT -1,
     adherence_drug_therapy    DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
     adherence_medical_support DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
-    adherence_lifestyle_mod   DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
+    adherence_lifestyle_mod   DECIMAL(4, 2) NOT NULL DEFAULT -1.0
 );
 
 CREATE TABLE IF NOT EXISTS basic_indicators
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS basic_indicators
     total_cholesterol_level         DECIMAL(4, 1),
     cv_events_risk_value            INTEGER,
     ideal_cardiovascular_ages_range VARCHAR(255),
-    created_at                      TIMESTAMP DEFAULT NOW() NOT NULL,
+    created_at                      TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS very_high_risk_female_not_smoking

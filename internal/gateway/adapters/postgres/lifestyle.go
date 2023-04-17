@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -101,9 +100,30 @@ func (r *LifestyleRepository) Get(userID uint64) (*model.Lifestyle, error) {
 		&lifestyleData.AdherenceLifestyleMod,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, sql.ErrNoRows
+			query = fmt.Sprintf(
+				`INSERT INTO %v (user_id) VALUES ($1) RETURNING *`,
+				lifestyleTable,
+			)
+
+			if err = r.storage.conn.QueryRow(queryCtx, query, userID).Scan(
+				&lifestyleData.UserID,
+				&lifestyleData.FamilyStatus,
+				&lifestyleData.EventsParticipation,
+				&lifestyleData.PhysicalActivity,
+				&lifestyleData.WorkStatus,
+				&lifestyleData.SignificantValueHigh,
+				&lifestyleData.SignificantValueMedium,
+				&lifestyleData.SignificantValueLow,
+				&lifestyleData.AnginaScore,
+				&lifestyleData.AdherenceDrugTherapy,
+				&lifestyleData.AdherenceMedicalSupport,
+				&lifestyleData.AdherenceLifestyleMod,
+			); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return &lifestyleData, nil

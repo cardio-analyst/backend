@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -36,7 +37,7 @@ func (s *ValidationService) ValidateUser(user model.User, checkPassword bool) er
 			}
 			return s.ValidateDate(date)
 		})),
-		validation.Field(&user.Login, validation.Required),
+		validation.Field(&user.Login, validation.Required, validation.Match(regexp.MustCompile("^[^@]+$"))),
 		validation.Field(&user.Email, validation.Required, is.Email),
 		validation.Field(&user.Password, validation.When(
 			checkPassword,
@@ -55,28 +56,28 @@ func (s *ValidationService) ValidateUser(user model.User, checkPassword bool) er
 			return err
 		}
 
-		if validationError, found := validationErrors["Role"]; found {
+		if validationError, found := validationErrors["role"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidFirstName, validationError)
 		}
-		if validationError, found := validationErrors["FirstName"]; found {
+		if validationError, found := validationErrors["firstName"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidFirstName, validationError)
 		}
-		if validationError, found := validationErrors["LastName"]; found {
+		if validationError, found := validationErrors["lastName"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidLastName, validationError)
 		}
-		if validationError, found := validationErrors["Region"]; found {
+		if validationError, found := validationErrors["region"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidRegion, validationError)
 		}
-		if validationError, found := validationErrors["BirthDate"]; found {
+		if validationError, found := validationErrors["birthDate"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidBirthDate, validationError)
 		}
-		if validationError, found := validationErrors["Login"]; found {
+		if validationError, found := validationErrors["login"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidLogin, validationError)
 		}
-		if validationError, found := validationErrors["Email"]; found {
+		if validationError, found := validationErrors["email"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidEmail, validationError)
 		}
-		if validationError, found := validationErrors["Password"]; found {
+		if validationError, found := validationErrors["password"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidPassword, validationError)
 		}
 
@@ -94,8 +95,8 @@ func (s *ValidationService) ValidateDate(date model.Date) error {
 
 func (s *ValidationService) ValidateCredentials(credentials model.Credentials) error {
 	return validation.ValidateStruct(&credentials,
-		validation.Field(&credentials.Login, validation.Required),
-		validation.Field(&credentials.Email, validation.Required, is.Email),
+		validation.Field(&credentials.Login, validation.When(credentials.Email == "", validation.Required)),
+		validation.Field(&credentials.Email, validation.When(credentials.Login == "", validation.Required, is.Email)),
 		validation.Field(&credentials.Password, validation.Required, validation.Length(minPasswordLength, maxPasswordLength)),
 	)
 }

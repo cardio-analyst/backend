@@ -2,12 +2,12 @@ auth:
   grpc_address: ":9000"
   access_token:
     signing_key: "UNyi3vWZeY0QHUJgI4Qv5qVcew9JnBwJ"
-    token_ttl_sec: 30
+    token_ttl_sec: 4000
   refresh_token:
     signing_key: "VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx"
     token_ttl_sec: 256000
 
 mongo:
-  uri: ""
-  db_name: ""
+  uri: "mongodb://qwerty:12345@mongodb:27017/"
+  db_name: "cardio-analyst"
 

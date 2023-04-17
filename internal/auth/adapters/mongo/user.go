@@ -85,26 +85,33 @@ func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.U
 	return users, nil
 }
 
-func userFilterFromCriteria(criteria model.UserCriteria) bson.D {
-	filter := make([]bson.D, 0)
+func userFilterFromCriteria(criteria model.UserCriteria) bson.M {
+	filter := make([]bson.M, 0)
 
 	if criteria.ID != 0 {
-		filter = append(filter, bson.D{{"id", criteria.ID}})
+		filter = append(filter, bson.M{"id": criteria.ID})
 	}
 	if criteria.Login != "" {
-		filter = append(filter, bson.D{{"login", criteria.Login}})
+		filter = append(filter, bson.M{"login": criteria.Login})
 	}
 	if criteria.Email != "" {
-		filter = append(filter, bson.D{{"email", criteria.Email}})
+		filter = append(filter, bson.M{"email": criteria.Email})
 	}
 	if criteria.PasswordHash != "" {
-		filter = append(filter, bson.D{{"password_hash", criteria.PasswordHash}})
+		filter = append(filter, bson.M{"password_hash": criteria.PasswordHash})
 	}
 
-	operator := "$and"
-	if criteria.CriteriaSeparator == model.CriteriaSeparatorOR {
-		operator = "$or"
-	}
+	switch len(filter) {
+	case 0:
+		return bson.M{}
+	case 1:
+		return filter[0]
+	default:
+		operator := "$and"
+		if criteria.CriteriaSeparator == model.CriteriaSeparatorOR {
+			operator = "$or"
+		}
 
-	return bson.D{{operator, bson.A{filter}}}
+		return bson.M{operator: filter}
+	}
 }

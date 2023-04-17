@@ -26,6 +26,7 @@ func NewServer(services service.Services) *Server {
 	e.Use(RequestsBodiesLogger())
 	e.Use(RequestsLogger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.GET("health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "healthy")

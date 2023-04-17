@@ -72,6 +72,7 @@ type response struct {
 	Result      string `json:"result,omitempty"`
 	Error       string `json:"error,omitempty"`
 	Description string `json:"description,omitempty"`
+	DevMessage  string `json:"devMessage,omitempty"`
 }
 
 func newResult(result string) *response {
@@ -89,5 +90,6 @@ func newError(c echo.Context, err error, error string) *response {
 	return &response{
 		Error:       error,
 		Description: errorDescriptions[error],
+		DevMessage:  err.Error(),
 	}
 }

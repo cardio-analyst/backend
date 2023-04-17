@@ -4,11 +4,12 @@ import (
 	"io"
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	postgresDSNEnvKey  = "DATABASE_URL"
+	databaseURLEnvKey  = "DATABASE_URL"
 	smtpPasswordEnvKey = "SMTP_PASSWORD"
 )
 
@@ -32,7 +33,7 @@ type SMTPConfig struct {
 }
 
 type PostgresConfig struct {
-	DSN string `yaml:"dsn"`
+	URI string `yaml:"uri"`
 }
 
 type RecommendationsConfig struct {
@@ -82,12 +83,14 @@ func Load(configPath string) (Config, error) {
 
 func (c *Config) loadFromEnv() {
 	// if dsn was set at the environment
-	if dsnFromEnv, exists := os.LookupEnv(postgresDSNEnvKey); exists {
-		c.Postgres.DSN = dsnFromEnv
+	if dsnFromEnv, exists := os.LookupEnv(databaseURLEnvKey); exists {
+		c.Postgres.URI = dsnFromEnv
+		log.Debug("database URI was set from environment")
 	}
 
 	// if smtp password was set at the environment
 	if smtpPassword, exists := os.LookupEnv(smtpPasswordEnvKey); exists {
 		c.Gateway.SMTP.Password = smtpPassword
+		log.Debug("SMTP password was set from environment")
 	}
 }

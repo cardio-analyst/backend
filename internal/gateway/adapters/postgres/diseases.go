@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -95,9 +94,28 @@ func (r *DiseasesRepository) Get(userID uint64) (*model.Diseases, error) {
 		&diseasesData.HasOtherCVD,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, sql.ErrNoRows
+			query = fmt.Sprintf(
+				`INSERT INTO %v (user_id) VALUES ($1) RETURNING *`,
+				diseasesTable,
+			)
+
+			if err = r.storage.conn.QueryRow(queryCtx, query, userID).Scan(
+				&diseasesData.UserID,
+				&diseasesData.CVDPredisposed,
+				&diseasesData.TakesStatins,
+				&diseasesData.HasChronicKidneyDisease,
+				&diseasesData.HasArterialHypertension,
+				&diseasesData.HasIschemicHeartDisease,
+				&diseasesData.HasTypeTwoDiabetes,
+				&diseasesData.HadInfarctionOrStroke,
+				&diseasesData.HasAtherosclerosis,
+				&diseasesData.HasOtherCVD,
+			); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return &diseasesData, nil

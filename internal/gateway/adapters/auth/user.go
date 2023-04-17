@@ -18,7 +18,7 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 	case model.UserRoleModerator:
 		role = pb.UserRole_MODERATOR
 	default:
-		return fmt.Errorf("unknown user role %q", role)
+		return fmt.Errorf("unknown user role %q", user.Role)
 	}
 
 	birthDate := timestamppb.New(user.BirthDate.Time)

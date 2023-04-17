@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 	"net/http"
+	"net/mail"
 
 	"github.com/labstack/echo/v4"
 
@@ -37,6 +38,8 @@ func (r *Router) signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
+	reqData.Role = model.UserRoleCustomer
+
 	if err := r.services.Auth().RegisterUser(c.Request().Context(), reqData); err != nil {
 		switch {
 		case errors.Is(err, model.ErrInvalidFirstName):
@@ -67,13 +70,29 @@ func (r *Router) signUp(c echo.Context) error {
 	return c.JSON(http.StatusOK, newResult(resultRegistered))
 }
 
+type signInRequest struct {
+	LoginOrEmail string `json:"loginOrEmail"`
+	Password     string `json:"password"`
+}
+
 func (r *Router) signIn(c echo.Context) error {
-	var reqData model.Credentials
+	var reqData signInRequest
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := r.services.Auth().GetTokens(c.Request().Context(), reqData, c.RealIP())
+	credentials := model.Credentials{
+		Password: reqData.Password,
+	}
+
+	_, err := mail.ParseAddress(reqData.LoginOrEmail)
+	if err == nil {
+		credentials.Email = reqData.LoginOrEmail
+	} else {
+		credentials.Login = reqData.LoginOrEmail
+	}
+
+	tokens, err := r.services.Auth().GetTokens(c.Request().Context(), credentials, c.RealIP())
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrInvalidCredentials):

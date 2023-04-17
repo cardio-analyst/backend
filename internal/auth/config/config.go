@@ -62,12 +62,12 @@ func Load(configPath string) (Config, error) {
 func (c *Config) loadFromEnv() {
 	// if signing keys were set at the environment
 	if signingKey, exists := os.LookupEnv(accessTokenSigningKeyEnvKey); exists {
-		log.Debug("access token signing key was set from environment")
 		c.Auth.AccessToken.SigningKey = signingKey
+		log.Debug("access token signing key was set from environment")
 	}
 	if signingKey, exists := os.LookupEnv(refreshTokenSigningKeyEnvKey); exists {
-		log.Debug("refresh token signing key was set from environment")
 		c.Auth.RefreshToken.SigningKey = signingKey
+		log.Debug("refresh token signing key was set from environment")
 	}
 
 	// if tokens ttl were set at the environment
