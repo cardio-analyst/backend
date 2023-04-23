@@ -27,7 +27,7 @@ func (r *SessionRepository) Save(ctx context.Context, session domain.Session) er
 	update := bson.D{{"$set", session}}
 	opts := options.Update().SetUpsert(true)
 
-	result, err := r.storage.users.UpdateOne(ctx, filter, update, opts)
+	result, err := r.storage.sessions.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (r *SessionRepository) GetOne(ctx context.Context, userID uint64) (domain.S
 	filter := bson.D{{"user_id", userID}}
 
 	var session domain.Session
-	if err := r.storage.users.FindOne(ctx, filter).Decode(&session); err != nil {
+	if err := r.storage.sessions.FindOne(ctx, filter).Decode(&session); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return session, domain.ErrSessionNotFound
 		}
@@ -59,7 +59,7 @@ func (r *SessionRepository) FindOne(ctx context.Context, userID uint64) (*domain
 	filter := bson.D{{"user_id", userID}}
 
 	var session domain.Session
-	if err := r.storage.users.FindOne(ctx, filter).Decode(&session); err != nil {
+	if err := r.storage.sessions.FindOne(ctx, filter).Decode(&session); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}

@@ -35,11 +35,7 @@ func (r *LifestyleRepository) Update(lifestyleData model.Lifestyle) error {
             work_status=$5,
             significant_value_high=$6,
             significant_value_medium=$7,
-            significant_value_low=$8,
-            angina_score=$9,
-            adherence_drug_therapy=$10,
-            adherence_medical_support=$11,
-            adherence_lifestyle_mod=$12
+            significant_value_low=$8
         WHERE user_id=$1`,
 		lifestyleTable,
 	)
@@ -54,10 +50,6 @@ func (r *LifestyleRepository) Update(lifestyleData model.Lifestyle) error {
 		lifestyleData.SignificantValueHigh,
 		lifestyleData.SignificantValueMedium,
 		lifestyleData.SignificantValueLow,
-		lifestyleData.AnginaScore,
-		lifestyleData.AdherenceDrugTherapy,
-		lifestyleData.AdherenceMedicalSupport,
-		lifestyleData.AdherenceLifestyleMod,
 	)
 	return err
 }
@@ -72,11 +64,7 @@ func (r *LifestyleRepository) Get(userID uint64) (*model.Lifestyle, error) {
 		       work_status,
 		       significant_value_high,
 		       significant_value_medium,
-		       significant_value_low,
-               angina_score,
-               adherence_drug_therapy,
-               adherence_medical_support,
-               adherence_lifestyle_mod
+		       significant_value_low
 		FROM %v WHERE user_id=$1`,
 		lifestyleTable,
 	)
@@ -94,10 +82,6 @@ func (r *LifestyleRepository) Get(userID uint64) (*model.Lifestyle, error) {
 		&lifestyleData.SignificantValueHigh,
 		&lifestyleData.SignificantValueMedium,
 		&lifestyleData.SignificantValueLow,
-		&lifestyleData.AnginaScore,
-		&lifestyleData.AdherenceDrugTherapy,
-		&lifestyleData.AdherenceMedicalSupport,
-		&lifestyleData.AdherenceLifestyleMod,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			query = fmt.Sprintf(
@@ -114,10 +98,6 @@ func (r *LifestyleRepository) Get(userID uint64) (*model.Lifestyle, error) {
 				&lifestyleData.SignificantValueHigh,
 				&lifestyleData.SignificantValueMedium,
 				&lifestyleData.SignificantValueLow,
-				&lifestyleData.AnginaScore,
-				&lifestyleData.AdherenceDrugTherapy,
-				&lifestyleData.AdherenceMedicalSupport,
-				&lifestyleData.AdherenceLifestyleMod,
 			); err != nil {
 				return nil, err
 			}

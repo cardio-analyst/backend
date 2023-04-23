@@ -13,10 +13,10 @@ var _ service.Services = (*Services)(nil)
 
 // Services implements service.Services interface.
 type Services struct {
-	cfg        config.Config
-	storage    storage.Storage
-	smtpClient client.SMTP
-	authClient client.Auth
+	cfg            config.Config
+	storage        storage.Storage
+	rabbitMQClient client.RabbitMQPublisher
+	authClient     client.Auth
 
 	userService            service.UserService
 	authService            service.AuthService
@@ -38,14 +38,14 @@ type ReportServices struct {
 func NewServices(
 	cfg config.Config,
 	storage storage.Storage,
-	smtpClient client.SMTP,
+	rabbitMQClient client.RabbitMQPublisher,
 	authClient client.Auth,
 ) *Services {
 	return &Services{
-		cfg:        cfg,
-		storage:    storage,
-		smtpClient: smtpClient,
-		authClient: authClient,
+		cfg:            cfg,
+		storage:        storage,
+		rabbitMQClient: rabbitMQClient,
+		authClient:     authClient,
 	}
 }
 
@@ -141,7 +141,7 @@ func (s *Services) Email() service.EmailService {
 		return s.emailService
 	}
 
-	s.emailService = NewEmailService(s.smtpClient)
+	s.emailService = NewEmailService(s.rabbitMQClient)
 
 	return s.emailService
 }

@@ -36,11 +36,7 @@ CREATE TABLE IF NOT EXISTS lifestyles
     work_status               VARCHAR(255)  NOT NULL DEFAULT '',
     significant_value_high    VARCHAR(255)  NOT NULL DEFAULT '',
     significant_value_medium  VARCHAR(255)  NOT NULL DEFAULT '',
-    significant_value_low     VARCHAR(255)  NOT NULL DEFAULT '',
-    angina_score              INTEGER       NOT NULL DEFAULT -1,
-    adherence_drug_therapy    DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
-    adherence_medical_support DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
-    adherence_lifestyle_mod   DECIMAL(4, 2) NOT NULL DEFAULT -1.0
+    significant_value_low     VARCHAR(255)  NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS basic_indicators

@@ -1,39 +1,58 @@
-version: "3.9"
-
 services:
   gateway:
     build:
       context: .
       dockerfile: docker/gateway/Dockerfile
+    container_name: gateway
+    restart: on-failure
     ports:
       - "8080:8080"
     env_file:
       - gateway.env
     depends_on:
+      - rabbitmq
       - postgres
       - auth
+
   auth:
     build:
       context: .
       dockerfile: docker/auth/Dockerfile
+    container_name: auth
+    restart: on-failure
     ports:
       - "9000:9000"
     env_file:
       - auth.env
     depends_on:
       - mongodb
+
+  email:
+    build:
+      context: .
+      dockerfile: docker/email/Dockerfile
+    container_name: email
+    restart: on-failure
+    env_file:
+      - email.env
+    depends_on:
+      - rabbitmq
+
   postgres:
     image: postgres:13
-    restart: always
+    container_name: postgres
+    restart: on-failure
     ports:
       - "5432:5432"
     env_file:
       - postgres.env
     volumes:
       - postgres_volume:/var/lib/postgresql/data
+
   mongodb:
     image: mongo
-    restart: always
+    container_name: mongodb
+    restart: on-failure
     ports:
       - "27017:27017"
     env_file:
@@ -41,6 +60,30 @@ services:
     volumes:
       - mongodb_data_container:/data/db
 
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    env_file:
+      - mongo-express.env
+    depends_on:
+      - mongodb
+
+  rabbitmq:
+    image: rabbitmq:3.11.13-management
+    container_name: rabbitmq
+    restart: on-failure
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file:
+      - rabbitmq.env
+    volumes:
+      - rabbitmq_volume:/var/lib/rabbitmq
+
 volumes:
   postgres_volume:
   mongodb_data_container:
+  rabbitmq_volume:

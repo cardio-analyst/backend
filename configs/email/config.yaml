@@ -1,0 +1,16 @@
+email:
+  smtp:
+    host: "smtp.mail.ru"
+    port: 465
+    username: "towbooat@mail.ru"
+    password: "tg9SXLxXZYShs6J10XhB"
+
+# describes RabbitMQ consumer configuration
+rabbitmq:
+  user: "guest"
+  password: "guest"
+  host: "rabbitmq"
+  port: 5672
+  exchange: "cardio-analyst"
+  routing_key: "emails"
+  queue: "emails"

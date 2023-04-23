@@ -60,7 +60,7 @@ func NewRecommendationsService(
 }
 
 func (s *RecommendationsService) GetRecommendations(userID uint64) ([]*domain.Recommendation, error) {
-	recommendations := make([]*domain.Recommendation, 0, 7)
+	recommendations := make([]*domain.Recommendation, 0)
 
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
@@ -71,11 +71,6 @@ func (s *RecommendationsService) GetRecommendations(userID uint64) ([]*domain.Re
 	if err != nil {
 		return nil, err
 	}
-	if recommendation != nil {
-		recommendations = append(recommendations, recommendation)
-	}
-
-	recommendation = s.healthyEatingRecommendation()
 	if recommendation != nil {
 		recommendations = append(recommendations, recommendation)
 	}
@@ -128,14 +123,6 @@ func (s *RecommendationsService) GetRecommendations(userID uint64) ([]*domain.Re
 	})
 
 	return recommendations, nil
-}
-
-func (s *RecommendationsService) healthyEatingRecommendation() *domain.Recommendation {
-	return &domain.Recommendation{
-		What: s.cfg.HealthyEating.What,
-		Why:  s.cfg.HealthyEating.Why,
-		How:  s.cfg.HealthyEating.How,
-	}
 }
 
 func (s *RecommendationsService) smokingRecommendation(userID uint64, scoreData domain.ScoreData) (*domain.Recommendation, error) {

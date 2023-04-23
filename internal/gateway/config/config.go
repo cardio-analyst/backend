@@ -9,31 +9,35 @@ import (
 )
 
 const (
-	databaseURLEnvKey  = "DATABASE_URL"
-	smtpPasswordEnvKey = "SMTP_PASSWORD"
+	databaseURLEnvKey = "DATABASE_URL"
+	rmqUserEnvKey     = "RMQ_USER"
+	rmqPasswordEnvKey = "RMQ_PASS"
 )
 
 type Config struct {
 	Gateway         GatewayConfig         `yaml:"gateway"`
 	Postgres        PostgresConfig        `yaml:"postgres"`
+	RabbitMQ        RabbitMQConfig        `yaml:"rabbitmq"`
 	Recommendations RecommendationsConfig `yaml:"recommendations"`
 	Services        ServicesConfig        `yaml:"services"`
 }
 
 type GatewayConfig struct {
-	HTTPAddress string     `yaml:"http_address"`
-	SMTP        SMTPConfig `yaml:"smtp"`
-}
-
-type SMTPConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	HTTPAddress string `yaml:"http_address"`
 }
 
 type PostgresConfig struct {
 	URI string `yaml:"uri"`
+}
+
+type RabbitMQConfig struct {
+	User       string `yaml:"user"`
+	Password   string `yaml:"password"`
+	Host       string `yaml:"host"`
+	Port       int    `yaml:"port"`
+	Exchange   string `yaml:"exchange"`
+	RoutingKey string `yaml:"routing_key"`
+	Queue      string `yaml:"queue"`
 }
 
 type RecommendationsConfig struct {
@@ -88,9 +92,15 @@ func (c *Config) loadFromEnv() {
 		log.Debug("database URI was set from environment")
 	}
 
-	// if smtp password was set at the environment
-	if smtpPassword, exists := os.LookupEnv(smtpPasswordEnvKey); exists {
-		c.Gateway.SMTP.Password = smtpPassword
-		log.Debug("SMTP password was set from environment")
+	// if RMQ user was set at the environment
+	if rmqUser, exists := os.LookupEnv(rmqUserEnvKey); exists {
+		c.RabbitMQ.User = rmqUser
+		log.Debug("RabbitMQ user was set from environment")
+	}
+
+	// if RMQ password was set at the environment
+	if rmqPassword, exists := os.LookupEnv(rmqPasswordEnvKey); exists {
+		c.RabbitMQ.Password = rmqPassword
+		log.Debug("RabbitMQ password was set from environment")
 	}
 }

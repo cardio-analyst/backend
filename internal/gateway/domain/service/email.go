@@ -2,8 +2,10 @@ package service
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"os"
 
 	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
@@ -27,16 +29,16 @@ const (
 var _ service.EmailService = (*EmailService)(nil)
 
 type EmailService struct {
-	sender client.SMTP
+	publisher client.RabbitMQPublisher
 }
 
-func NewEmailService(sender client.SMTP) *EmailService {
+func NewEmailService(publisher client.RabbitMQPublisher) *EmailService {
 	return &EmailService{
-		sender: sender,
+		publisher: publisher,
 	}
 }
 
-func (s *EmailService) SendReport(receivers []string, reportPath string, userData model.User) error {
+func (s *EmailService) SendReport(receivers []string, reportFilePath string, userData model.User) error {
 	reportTemplate, err := template.New("report").Parse(reportHTMLBody)
 	if err != nil {
 		return err
@@ -44,14 +46,30 @@ func (s *EmailService) SendReport(receivers []string, reportPath string, userDat
 
 	reportBodyBuffer := &bytes.Buffer{}
 	if err = reportTemplate.Execute(reportBodyBuffer, map[string]interface{}{
-		"title":      fmt.Sprintf("%v %v %v", reportSubject, userData.FirstName, userData.LastName),
-		"firstName":  userData.FirstName,
-		"lastName":   userData.LastName,
-		"birthDate":  userData.BirthDate.String(),
-		"reportPath": reportPath,
+		"title":     fmt.Sprintf("%v %v %v", reportSubject, userData.FirstName, userData.LastName),
+		"firstName": userData.FirstName,
+		"lastName":  userData.LastName,
+		"birthDate": userData.BirthDate.String(),
 	}); err != nil {
 		return err
 	}
 
-	return s.sender.SendFile(receivers, reportSubject, reportBodyBuffer.String(), reportPath)
+	file, err := os.ReadFile(reportFilePath)
+	if err != nil {
+		return fmt.Errorf("reading report file: %w", err)
+	}
+
+	message := &model.SendEmailMessage{
+		Subject:   reportSubject,
+		Receivers: receivers,
+		Body:      reportBodyBuffer.String(),
+		FileData:  file,
+	}
+
+	rmqMessageRaw, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("serializing RMQ publisher message: %v", err)
+	}
+
+	return s.publisher.Publish(rmqMessageRaw)
 }

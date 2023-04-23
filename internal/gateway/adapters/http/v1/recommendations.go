@@ -8,6 +8,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/pkg/model"
@@ -80,13 +81,17 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 		receivers = append(receivers, user.Email)
 	}
 
-	reportPath, err := r.services.Report(domain.PDF).GenerateReport(userID)
+	reportFilePath, err := r.services.Report(domain.PDF).GenerateReport(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
-	defer func() { _ = os.Remove(reportPath) }()
+	defer func() {
+		if err = os.Remove(reportFilePath); err != nil {
+			log.Warnf("removing report file %q: %v", reportFilePath, err)
+		}
+	}()
 
-	if err = r.services.Email().SendReport(receivers, reportPath, user); err != nil {
+	if err = r.services.Email().SendReport(receivers, reportFilePath, user); err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 

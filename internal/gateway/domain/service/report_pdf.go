@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/jung-kurt/gofpdf"
 
@@ -14,8 +15,6 @@ import (
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
 	"github.com/cardio-analyst/backend/pkg/model"
 )
-
-const reportPDFFileName = "report.pdf"
 
 const (
 	fontPath      = "/assets/font/"
@@ -80,11 +79,13 @@ func (s *PDFReportService) GenerateReport(userID uint64) (string, error) {
 		return "", err
 	}
 
-	if err = pdf.OutputFileAndClose(reportPDFFileName); err != nil {
+	pdfFileName := fmt.Sprintf("%v.pdf", time.Now().UTC().Unix())
+
+	if err = pdf.OutputFileAndClose(pdfFileName); err != nil {
 		return "", err
 	}
 
-	return reportPDFFileName, nil
+	return pdfFileName, nil
 }
 
 func (s *PDFReportService) generateReportByBasicIndicators(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {

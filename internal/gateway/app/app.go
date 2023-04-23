@@ -15,7 +15,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/http"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/migrator"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/postgres"
-	"github.com/cardio-analyst/backend/internal/gateway/adapters/smtp"
+	"github.com/cardio-analyst/backend/internal/gateway/adapters/rabbitmq"
 	"github.com/cardio-analyst/backend/internal/gateway/config"
 	"github.com/cardio-analyst/backend/internal/gateway/domain/service"
 )
@@ -39,6 +39,19 @@ func New(configPath string) *App {
 		log.Fatalf("failed to load config data: %v", err)
 	}
 
+	rabbitMQClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.Exchange,
+		RoutingKey:   cfg.RabbitMQ.RoutingKey,
+		QueueName:    cfg.RabbitMQ.Queue,
+	})
+	if err = rabbitMQClient.Connect(); err != nil {
+		log.Fatalf("connecting to RabbitMQ: %v", err)
+	}
+
 	var postgresMigrator *migrator.PostgresMigrator
 	postgresMigrator, err = migrator.NewPostgresMigrator(cfg.Postgres.URI)
 	if err != nil {
@@ -56,11 +69,6 @@ func New(configPath string) *App {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	smtpClient, err := smtp.NewClient(cfg.Gateway.SMTP.Host, cfg.Gateway.SMTP.Port, cfg.Gateway.SMTP.Username, cfg.Gateway.SMTP.Password)
-	if err != nil {
-		log.Fatalf("failed to create SMTP client: %v", err)
-	}
-
 	authGRPCConn, err := grpc.Dial(cfg.Services.Auth.GRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to connect to auth gRPC server: %v", err)
@@ -69,14 +77,14 @@ func New(configPath string) *App {
 
 	authClient := auth.NewClient(authGRPCClient)
 
-	services := service.NewServices(cfg, storage, smtpClient, authClient)
+	services := service.NewServices(cfg, storage, rabbitMQClient, authClient)
 
 	srv := http.NewServer(services)
 
 	return &App{
 		config:  cfg,
 		server:  srv,
-		closers: []io.Closer{srv, storage, smtpClient, authGRPCConn},
+		closers: []io.Closer{srv, storage, rabbitMQClient, authGRPCConn},
 	}
 }
 
