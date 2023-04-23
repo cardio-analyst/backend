@@ -5,6 +5,7 @@ type Storage interface {
 	Diseases() DiseasesRepository
 	Analyses() AnalysisRepository
 	Lifestyles() LifestyleRepository
+	Questionnaire() QuestionnaireRepository
 	BasicIndicators() BasicIndicatorsRepository
 	Score() ScoreRepository
 }

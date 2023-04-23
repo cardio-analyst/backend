@@ -23,6 +23,7 @@ type Services struct {
 	diseasesService        service.DiseasesService
 	analysisService        service.AnalysisService
 	lifestyleService       service.LifestyleService
+	questionnaireService   service.QuestionnaireService
 	basicIndicatorsService service.BasicIndicatorsService
 	scoreService           service.ScoreService
 	recommendationsService service.RecommendationsService
@@ -97,6 +98,16 @@ func (s *Services) Lifestyle() service.LifestyleService {
 	s.lifestyleService = NewLifestyleService(s.storage.Lifestyles())
 
 	return s.lifestyleService
+}
+
+func (s *Services) Questionnaire() service.QuestionnaireService {
+	if s.questionnaireService != nil {
+		return s.questionnaireService
+	}
+
+	s.questionnaireService = NewQuestionnaireService(s.storage.Questionnaire())
+
+	return s.questionnaireService
 }
 
 func (s *Services) BasicIndicators() service.BasicIndicatorsService {

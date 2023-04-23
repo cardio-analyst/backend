@@ -42,4 +42,7 @@ func (r *Router) InitRoutes() {
 
 	// /recommendations/*
 	r.initRecommendationsRoutes()
+
+	// /tests/*
+	r.initQuestionnaireRoutes()
 }

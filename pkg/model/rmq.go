@@ -1,6 +1,6 @@
 package model
 
-type SendEmailMessage struct {
+type MessageReportEmail struct {
 	Subject   string   `json:"subject"`
 	Receivers []string `json:"receivers"`
 	Body      string   `json:"body"`

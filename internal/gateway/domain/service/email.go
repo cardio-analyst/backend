@@ -59,7 +59,7 @@ func (s *EmailService) SendReport(receivers []string, reportFilePath string, use
 		return fmt.Errorf("reading report file: %w", err)
 	}
 
-	message := &model.SendEmailMessage{
+	message := &model.MessageReportEmail{
 		Subject:   reportSubject,
 		Receivers: receivers,
 		Body:      reportBodyBuffer.String(),

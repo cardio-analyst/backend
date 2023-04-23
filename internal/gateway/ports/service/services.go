@@ -9,6 +9,7 @@ type Services interface {
 	Diseases() DiseasesService
 	Analysis() AnalysisService
 	Lifestyle() LifestyleService
+	Questionnaire() QuestionnaireService
 	BasicIndicators() BasicIndicatorsService
 	Score() ScoreService
 	Recommendations() RecommendationsService

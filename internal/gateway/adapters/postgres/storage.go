@@ -18,6 +18,7 @@ type Storage struct {
 	diseasesRepository        storage.DiseasesRepository
 	analysisRepository        storage.AnalysisRepository
 	lifestyleRepository       storage.LifestyleRepository
+	questionnaireRepository   storage.QuestionnaireRepository
 	basicIndicatorsRepository storage.BasicIndicatorsRepository
 	scoreRepository           storage.ScoreRepository
 }
@@ -59,6 +60,16 @@ func (s *Storage) Lifestyles() storage.LifestyleRepository {
 	s.lifestyleRepository = NewLifestyleRepository(s)
 
 	return s.lifestyleRepository
+}
+
+func (s *Storage) Questionnaire() storage.QuestionnaireRepository {
+	if s.questionnaireRepository != nil {
+		return s.questionnaireRepository
+	}
+
+	s.questionnaireRepository = NewQuestionnaireRepository(s)
+
+	return s.questionnaireRepository
 }
 
 func (s *Storage) BasicIndicators() storage.BasicIndicatorsRepository {

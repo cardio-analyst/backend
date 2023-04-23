@@ -67,16 +67,27 @@ func (s *PDFReportService) GenerateReport(userID uint64) (string, error) {
 	title := "<h1>Отчёт о вашем сердечно-сосудистом здоровье</h1><br></br><br></br>"
 	writeToHTML(title)
 
-	if err = s.generateReportByBasicIndicators(userID, pdf, writeToHTML); err != nil {
+	var basicIndicatorsDataExists bool
+	basicIndicatorsDataExists, err = s.fillBasicIndicatorsReportData(userID, pdf, writeToHTML)
+	if err != nil {
 		return "", err
 	}
 
-	if err = s.generateReportByAnalyses(userID, pdf, writeToHTML); err != nil {
+	var analysesDataExists bool
+	analysesDataExists, err = s.fillAnalysesReportData(userID, pdf, writeToHTML)
+	if err != nil {
 		return "", err
 	}
 
-	if err = s.generateReportByRecommendations(userID, pdf, writeToHTML); err != nil {
+	var recommendationsDataExists bool
+	recommendationsDataExists, err = s.fillRecommendationsReportData(userID, pdf, writeToHTML)
+	if err != nil {
 		return "", err
+	}
+
+	if !basicIndicatorsDataExists && !analysesDataExists && !recommendationsDataExists {
+		pdf.Close()
+		return "", domain.ErrNotEnoughDataToCompileReport
 	}
 
 	pdfFileName := fmt.Sprintf("%v.pdf", time.Now().UTC().Unix())
@@ -88,20 +99,20 @@ func (s *PDFReportService) GenerateReport(userID uint64) (string, error) {
 	return pdfFileName, nil
 }
 
-func (s *PDFReportService) generateReportByBasicIndicators(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
+func (s *PDFReportService) fillBasicIndicatorsReportData(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) (bool, error) {
 	basicIndicators, err := s.basicIndicators.FindAll(userID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(basicIndicators) == 0 {
-		return nil
+		return false, nil
 	}
 
 	user, err := s.authClient.GetUser(context.TODO(), model.UserCriteria{
 		ID: userID,
 	})
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	scoreData := domain.ExtractScoreDataFrom(basicIndicators)
@@ -161,16 +172,16 @@ func (s *PDFReportService) generateReportByBasicIndicators(userID uint64, pdf *g
 
 	generateRow("Ваш «сердечно-сосудистый возраст»", idealCardiovascularAgesRange, pdf, writeToHTML)
 
-	return nil
+	return true, nil
 }
 
-func (s *PDFReportService) generateReportByAnalyses(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) error {
+func (s *PDFReportService) fillAnalysesReportData(userID uint64, pdf *gofpdf.Fpdf, writeToHTML func(value string)) (bool, error) {
 	analyses, err := s.analyses.FindAll(userID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(analyses) == 0 {
-		return nil
+		return false, nil
 	}
 
 	pdf.AddPage()
@@ -244,7 +255,7 @@ func (s *PDFReportService) generateReportByAnalyses(userID uint64, pdf *gofpdf.F
 		writeToHTML("<br></br><br></br>")
 	}
 
-	return nil
+	return true, nil
 }
 
 func generateRow(label string, value string, pdf *gofpdf.Fpdf, htmlWhite func(value string)) {
@@ -255,13 +266,13 @@ func generateRow(label string, value string, pdf *gofpdf.Fpdf, htmlWhite func(va
 	htmlWhite(fmt.Sprintf(`<p>%s</p><br></br><br></br>`, value))
 }
 
-func (s *PDFReportService) generateReportByRecommendations(userID uint64, pdf *gofpdf.Fpdf, htmlWrite func(value string)) error {
+func (s *PDFReportService) fillRecommendationsReportData(userID uint64, pdf *gofpdf.Fpdf, htmlWrite func(value string)) (bool, error) {
 	recommendations, err := s.recommendations.GetRecommendations(userID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(recommendations) == 0 {
-		return nil
+		return false, nil
 	}
 
 	pdf.AddPage()
@@ -294,7 +305,7 @@ func (s *PDFReportService) generateReportByRecommendations(userID uint64, pdf *g
 		htmlWrite(howStr)
 	}
 
-	return nil
+	return true, nil
 }
 
 func writeToHTMLWithUnicode(unicode string, pdf *gofpdf.Fpdf, html *gofpdf.HTMLBasicType) func(value string) {

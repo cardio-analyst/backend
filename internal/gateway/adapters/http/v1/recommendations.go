@@ -14,6 +14,11 @@ import (
 	"github.com/cardio-analyst/backend/pkg/model"
 )
 
+// possible recommendations errors designations
+const (
+	errorNotEnoughDataToCompileReport = "NotEnoughDataToCompileReport"
+)
+
 var errNoOneToSendReport = errors.New("there is no one to send report to")
 
 func (r *Router) initRecommendationsRoutes() {
@@ -83,6 +88,9 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 
 	reportFilePath, err := r.services.Report(domain.PDF).GenerateReport(userID)
 	if err != nil {
+		if errors.Is(err, domain.ErrNotEnoughDataToCompileReport) {
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorNotEnoughDataToCompileReport))
+		}
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 	defer func() {

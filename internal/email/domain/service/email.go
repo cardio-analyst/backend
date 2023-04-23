@@ -21,7 +21,7 @@ func NewEmailService(sender client.SMTP) *EmailService {
 
 func (s *EmailService) EmailMessagesHandler() func(data []byte) error {
 	return func(data []byte) error {
-		var message model.SendEmailMessage
+		var message model.MessageReportEmail
 		if err := json.Unmarshal(data, &message); err != nil {
 			log.Errorf("unmarshalling send email message body: %v", err)
 			return err

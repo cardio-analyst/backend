@@ -66,6 +66,8 @@ var errorDescriptions = map[string]string{
 	errorInvalidPassword:  "Некорректное значение пароля",
 	// score
 	errorInvalidAge: "Некорректное значение возраста",
+	// recommendations
+	errorNotEnoughDataToCompileReport: "Недостаточно данных в профиле для формирования и отправки отчёта",
 }
 
 type response struct {

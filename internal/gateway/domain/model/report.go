@@ -1,5 +1,9 @@
 package model
 
+import "errors"
+
+var ErrNotEnoughDataToCompileReport = errors.New("not enough data to compile a report")
+
 type ReportType int
 
 // possible report types

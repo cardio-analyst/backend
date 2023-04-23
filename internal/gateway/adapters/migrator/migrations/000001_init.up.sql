@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS lifestyles
     significant_value_low     VARCHAR(255)  NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS questionnaire
+(
+    user_id                   INTEGER                 NOT NULL,
+    angina_score              INTEGER       NOT NULL DEFAULT -1,
+    adherence_drug_therapy    DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
+    adherence_medical_support DECIMAL(4, 2) NOT NULL DEFAULT -1.0,
+    adherence_lifestyle_mod   DECIMAL(4, 2) NOT NULL DEFAULT -1.0
+);
+
 CREATE TABLE IF NOT EXISTS basic_indicators
 (
     id                              SERIAL PRIMARY KEY,
