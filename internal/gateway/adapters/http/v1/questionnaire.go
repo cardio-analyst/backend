@@ -8,8 +8,8 @@ import (
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 )
 
-func (r *Router) initQuestionnaireRoutes() {
-	tests := r.api.Group("/tests", r.identifyUser)
+func (r *Router) initQuestionnaireRoutes(customerAPI *echo.Group) {
+	tests := customerAPI.Group("/tests", r.identifyCustomer)
 
 	angina := tests.Group("/angina-rose")
 	angina.GET("/info", r.anginaRoseInfo)

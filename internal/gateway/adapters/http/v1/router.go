@@ -19,30 +19,37 @@ func NewRouter(api *echo.Group, services service.Services) *Router {
 }
 
 func (r *Router) InitRoutes() {
+	// /customer/*
+	r.initCustomerRoutes()
+}
+
+func (r *Router) initCustomerRoutes() {
+	customerAPI := r.api.Group("/customer")
+
 	// /auth/*
-	r.initAuthRoutes()
+	r.initCustomerAuthRoutes(customerAPI)
 
 	// /profile/*
-	r.initProfileRoutes()
+	r.initCustomerProfileRoutes(customerAPI)
 
 	// /diseases/*
-	r.initDiseasesRoutes()
+	r.initDiseasesRoutes(customerAPI)
 
 	// /analyses/*
-	r.initAnalysesRoutes()
+	r.initAnalysesRoutes(customerAPI)
 
 	// /lifestyles/*
-	r.initLifestylesRoutes()
+	r.initLifestylesRoutes(customerAPI)
 
 	// /basicIndicators/*
-	r.initBasicIndicatorsRoutes()
+	r.initBasicIndicatorsRoutes(customerAPI)
 
 	// /score/*
-	r.initScoreRoutes()
+	r.initScoreRoutes(customerAPI)
 
 	// /recommendations/*
-	r.initRecommendationsRoutes()
+	r.initRecommendationsRoutes(customerAPI)
 
 	// /tests/*
-	r.initQuestionnaireRoutes()
+	r.initQuestionnaireRoutes(customerAPI)
 }

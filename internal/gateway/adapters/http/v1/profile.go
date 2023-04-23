@@ -9,8 +9,8 @@ import (
 	"github.com/cardio-analyst/backend/pkg/model"
 )
 
-func (r *Router) initProfileRoutes() {
-	profile := r.api.Group("/profile", r.identifyUser)
+func (r *Router) initCustomerProfileRoutes(customerAPI *echo.Group) {
+	profile := customerAPI.Group("/profile", r.identifyCustomer)
 	profile.GET("/info", r.getProfileInfo)
 	profile.PUT("/edit", r.editProfileInfo)
 }

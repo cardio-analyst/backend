@@ -8,8 +8,8 @@ import (
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 )
 
-func (r *Router) initLifestylesRoutes() {
-	lifestyle := r.api.Group("/lifestyles", r.identifyUser)
+func (r *Router) initLifestylesRoutes(customerAPI *echo.Group) {
+	lifestyle := customerAPI.Group("/lifestyles", r.identifyCustomer)
 	lifestyle.GET("/info", r.getLifestyleInfo)
 	lifestyle.PUT("/edit", r.editLifestyleInfo)
 }

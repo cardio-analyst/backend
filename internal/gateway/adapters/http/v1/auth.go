@@ -25,14 +25,14 @@ const (
 	errorIPNotAllowed        = "IPNotAllowed"
 )
 
-func (r *Router) initAuthRoutes() {
-	auth := r.api.Group("/auth")
-	auth.POST("/signUp", r.signUp)
-	auth.POST("/signIn", r.signIn)
+func (r *Router) initCustomerAuthRoutes(customerAPI *echo.Group) {
+	auth := customerAPI.Group("/auth")
+	auth.POST("/signUp", r.signUpCustomer)
+	auth.POST("/signIn", r.signInCustomer)
 	auth.POST("/refreshTokens", r.refreshTokens)
 }
 
-func (r *Router) signUp(c echo.Context) error {
+func (r *Router) signUpCustomer(c echo.Context) error {
 	var reqData model.User
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
@@ -70,13 +70,13 @@ func (r *Router) signUp(c echo.Context) error {
 	return c.JSON(http.StatusOK, newResult(resultRegistered))
 }
 
-type signInRequest struct {
+type signInCustomerRequest struct {
 	LoginOrEmail string `json:"loginOrEmail"`
 	Password     string `json:"password"`
 }
 
-func (r *Router) signIn(c echo.Context) error {
-	var reqData signInRequest
+func (r *Router) signInCustomer(c echo.Context) error {
+	var reqData signInCustomerRequest
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}

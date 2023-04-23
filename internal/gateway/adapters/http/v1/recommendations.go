@@ -21,8 +21,8 @@ const (
 
 var errNoOneToSendReport = errors.New("there is no one to send report to")
 
-func (r *Router) initRecommendationsRoutes() {
-	recommendations := r.api.Group("/recommendations", r.identifyUser)
+func (r *Router) initRecommendationsRoutes(customerAPI *echo.Group) {
+	recommendations := customerAPI.Group("/recommendations", r.identifyCustomer)
 	recommendations.GET("", r.getRecommendations)
 	recommendations.POST("/send", r.sendRecommendations)
 }

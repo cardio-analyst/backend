@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,9 +28,10 @@ var (
 	errEmptyAuthHeader   = errors.New("empty auth header")
 	errInvalidAuthHeader = errors.New("invalid auth header")
 	errTokenIsEmpty      = errors.New("token is empty")
+	errForbiddenByRole   = errors.New("forbidden by role")
 )
 
-func (r *Router) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
+func (r *Router) identifyCustomer(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		header := c.Request().Header.Get(headerAuthorization)
 		if header == "" {
@@ -56,6 +58,11 @@ func (r *Router) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 			default:
 				return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 			}
+		}
+
+		if userRole != model.UserRoleCustomer {
+			err = fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongAccessToken))
 		}
 
 		c.Set(ctxKeyUserID, userID)

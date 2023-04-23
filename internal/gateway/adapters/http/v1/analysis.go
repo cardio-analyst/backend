@@ -25,8 +25,8 @@ const (
 	errorInvalidCreatinine                      = "InvalidCreatinine"
 )
 
-func (r *Router) initAnalysesRoutes() {
-	analyses := r.api.Group("/analyses", r.identifyUser)
+func (r *Router) initAnalysesRoutes(customerAPI *echo.Group) {
+	analyses := customerAPI.Group("/analyses", r.identifyCustomer)
 	analyses.GET("", r.getUserAnalyses)
 	analyses.POST("", r.createAnalysisRecord)
 	analyses.PUT(fmt.Sprintf("/:%v", analysisIDPathKey), r.updateAnalysisRecord)

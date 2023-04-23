@@ -28,8 +28,8 @@ const (
 	errorBasicIndicatorsRecordNotFound       = "BasicIndicatorsRecordNotFound"
 )
 
-func (r *Router) initBasicIndicatorsRoutes() {
-	basicIndicators := r.api.Group("/basicIndicators", r.identifyUser)
+func (r *Router) initBasicIndicatorsRoutes(customerAPI *echo.Group) {
+	basicIndicators := customerAPI.Group("/basicIndicators", r.identifyCustomer)
 	basicIndicators.GET("", r.getUserBasicIndicators)
 	basicIndicators.POST("", r.createBasicIndicatorsRecord)
 	basicIndicators.PUT(fmt.Sprintf("/:%v", basicIndicatorsIDPathKey), r.updateBasicIndicatorsRecord)

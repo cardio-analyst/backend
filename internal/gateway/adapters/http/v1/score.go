@@ -16,8 +16,8 @@ const (
 	errorNotEnoughInformation = "NotEnoughInformation"
 )
 
-func (r *Router) initScoreRoutes() {
-	score := r.api.Group("/score", r.identifyUser)
+func (r *Router) initScoreRoutes(customerAPI *echo.Group) {
+	score := customerAPI.Group("/score", r.identifyCustomer)
 	score.GET("/cveRisk", r.cveRisk)
 	score.GET("/idealAge", r.idealAge)
 }
