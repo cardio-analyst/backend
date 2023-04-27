@@ -22,7 +22,7 @@ const (
 var errNoOneToSendReport = errors.New("there is no one to send report to")
 
 func (r *Router) initRecommendationsRoutes(customerAPI *echo.Group) {
-	recommendations := customerAPI.Group("/recommendations", r.identifyCustomer)
+	recommendations := customerAPI.Group("/recommendations", r.identifyUser, r.verifyCustomer)
 	recommendations.GET("", r.getRecommendations)
 	recommendations.POST("/send", r.sendRecommendations)
 }

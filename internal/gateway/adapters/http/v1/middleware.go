@@ -11,10 +11,11 @@ import (
 	"github.com/cardio-analyst/backend/pkg/model"
 )
 
+const headerAuthorization = "Authorization"
+
 const (
-	headerAuthorization = "Authorization"
-	ctxKeyUserID        = "userID"
-	ctxKeyUserRole      = "userRole"
+	ctxKeyUserID   = "userID"
+	ctxKeyUserRole = "userRole"
 )
 
 // possible middleware error designations
@@ -22,6 +23,7 @@ const (
 	errorWrongAuthHeader    = "WrongAuthHeader"
 	errorAccessTokenExpired = "AccessTokenExpired"
 	errorWrongAccessToken   = "WrongAccessToken"
+	errorForbiddenByRole    = "ForbiddenByRole"
 )
 
 var (
@@ -31,7 +33,7 @@ var (
 	errForbiddenByRole   = errors.New("forbidden by role")
 )
 
-func (r *Router) identifyCustomer(next echo.HandlerFunc) echo.HandlerFunc {
+func (r *Router) identifyUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		header := c.Request().Header.Get(headerAuthorization)
 		if header == "" {
@@ -60,14 +62,42 @@ func (r *Router) identifyCustomer(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		if userRole != model.UserRoleCustomer {
-			err = fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongAccessToken))
-		}
-
 		c.Set(ctxKeyUserID, userID)
 		c.Set(ctxKeyUserRole, userRole)
 
+		return next(c)
+	}
+}
+
+func (r *Router) verifyCustomer(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userRole := c.Get(ctxKeyUserRole).(model.UserRole)
+		if userRole != model.UserRoleCustomer {
+			err := fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
+			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
+		}
+		return next(c)
+	}
+}
+
+func (r *Router) verifyModerator(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userRole := c.Get(ctxKeyUserRole).(model.UserRole)
+		if userRole != model.UserRoleModerator {
+			err := fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
+			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
+		}
+		return next(c)
+	}
+}
+
+func (r *Router) verifyAdministrator(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userRole := c.Get(ctxKeyUserRole).(model.UserRole)
+		if userRole != model.UserRoleAdministrator {
+			err := fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
+			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
+		}
 		return next(c)
 	}
 }

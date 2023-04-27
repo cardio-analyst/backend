@@ -34,6 +34,7 @@ func (s *Services) Auth() service.AuthService {
 		RefreshTokenTTLSeconds: s.cfg.RefreshToken.TokenTTLSec,
 		AccessTokenSigningKey:  s.cfg.AccessToken.SigningKey,
 		RefreshTokenSigningKey: s.cfg.RefreshToken.SigningKey,
+		SecretKeySigningKey:    s.cfg.SecretKeySigningKey,
 	}
 
 	s.authService = NewAuthService(opts)

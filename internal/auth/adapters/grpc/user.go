@@ -23,6 +23,7 @@ func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb
 		MiddleName: request.GetMiddleName(),
 		Region:     request.GetRegion(),
 		BirthDate:  model.Date{Time: request.BirthDate.AsTime()},
+		SecretKey:  request.GetSecretKey(),
 	}
 
 	var checkPassword bool
@@ -49,14 +50,24 @@ func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb
 			return saveUserErrorResponse(pb.ErrorCode_INVALID_EMAIL), nil
 		case errors.Is(err, model.ErrInvalidPassword):
 			return saveUserErrorResponse(pb.ErrorCode_INVALID_PASSWORD), nil
+		case errors.Is(err, model.ErrInvalidSecretKey):
+			return saveUserErrorResponse(pb.ErrorCode_INVALID_SECRET_KEY), nil
 		case errors.Is(err, model.ErrInvalidUserData):
 			return saveUserErrorResponse(pb.ErrorCode_INVALID_DATA), nil
 		}
 		return nil, err
 	}
 
-	if err := s.services.User().Create(ctx, user); err != nil {
-		log.Errorf("creating user: %v", err)
+	if err := s.services.Auth().VerifySecretKey(user); err != nil {
+		log.Errorf("verifying user secret key: %v", err)
+		if errors.Is(err, model.ErrWrongSecretKey) {
+			return saveUserErrorResponse(pb.ErrorCode_WRONG_SECRET_KEY), nil
+		}
+		return nil, err
+	}
+
+	if err := s.services.User().Save(ctx, user); err != nil {
+		log.Errorf("saving user: %v", err)
 		switch {
 		case errors.Is(err, model.ErrUserLoginAlreadyOccupied):
 			return saveUserErrorResponse(pb.ErrorCode_LOGIN_ALREADY_OCCUPIED), nil
@@ -66,7 +77,7 @@ func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb
 		return nil, err
 	}
 
-	log.Debugf("user with login %q and email %q successfully saved", user.Login, user.Email)
+	log.Debugf("user with login %q, email %q and role %q successfully created", user.Login, user.Email, user.Role)
 
 	return saveUserSuccessResponse(), nil
 }
@@ -114,9 +125,14 @@ func (s *Server) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.G
 }
 
 func getUserSuccessResponse(user model.User) *pb.GetUserResponse {
-	role := pb.UserRole_CUSTOMER
-	if user.Role == model.UserRoleModerator {
+	var role pb.UserRole
+	switch user.Role {
+	case model.UserRoleCustomer:
+		role = pb.UserRole_CUSTOMER
+	case model.UserRoleModerator:
 		role = pb.UserRole_MODERATOR
+	case model.UserRoleAdministrator:
+		role = pb.UserRole_ADMINISTRATOR
 	}
 
 	birthDate := timestamppb.New(user.BirthDate.Time)
@@ -170,9 +186,14 @@ func (s *Server) IdentifyUser(ctx context.Context, request *pb.IdentifyUserReque
 }
 
 func identifyUserSuccessResponse(userID uint64, userRole model.UserRole) *pb.IdentifyUserResponse {
-	role := pb.UserRole_CUSTOMER
-	if userRole == model.UserRoleModerator {
+	var role pb.UserRole
+	switch userRole {
+	case model.UserRoleCustomer:
+		role = pb.UserRole_CUSTOMER
+	case model.UserRoleModerator:
 		role = pb.UserRole_MODERATOR
+	case model.UserRoleAdministrator:
+		role = pb.UserRole_ADMINISTRATOR
 	}
 
 	return &pb.IdentifyUserResponse{

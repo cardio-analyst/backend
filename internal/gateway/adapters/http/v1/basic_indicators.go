@@ -29,7 +29,7 @@ const (
 )
 
 func (r *Router) initBasicIndicatorsRoutes(customerAPI *echo.Group) {
-	basicIndicators := customerAPI.Group("/basicIndicators", r.identifyCustomer)
+	basicIndicators := customerAPI.Group("/basicIndicators", r.identifyUser, r.verifyCustomer)
 	basicIndicators.GET("", r.getUserBasicIndicators)
 	basicIndicators.POST("", r.createBasicIndicatorsRecord)
 	basicIndicators.PUT(fmt.Sprintf("/:%v", basicIndicatorsIDPathKey), r.updateBasicIndicatorsRecord)

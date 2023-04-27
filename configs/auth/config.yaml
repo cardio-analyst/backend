@@ -6,6 +6,7 @@ auth:
   refresh_token:
     signing_key: "VZZ1pKNG1NTAfhtubq5sHbIHiaxTtflx"
     token_ttl_sec: 256000
+  secret_key_signing_key: "GAF7FvhA1NTmfht6bq5sHoLHiaxTkplZ"
 
 mongo:
   uri: "mongodb://qwerty:12345@mongodb:27017/"

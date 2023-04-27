@@ -25,8 +25,9 @@ var (
 type UserRole string
 
 const (
-	UserRoleCustomer  UserRole = "CUSTOMER"
-	UserRoleModerator UserRole = "MODERATOR"
+	UserRoleCustomer      UserRole = "CUSTOMER"
+	UserRoleModerator     UserRole = "MODERATOR"
+	UserRoleAdministrator UserRole = "ADMINISTRATOR"
 )
 
 type User struct {
@@ -37,9 +38,10 @@ type User struct {
 	FirstName  string   `bson:"first_name" json:"firstName"`
 	LastName   string   `bson:"last_name" json:"lastName"`
 	Password   string   `bson:"password_hash,omitempty" json:"password,omitempty"`
-	MiddleName string   `bson:"middle_name,omitempty" json:"middleName"`
-	Region     string   `bson:"region,omitempty" json:"region"`
-	BirthDate  Date     `bson:"birth_date,omitempty" json:"birthDate"`
+	MiddleName string   `bson:"middle_name,omitempty" json:"middleName,omitempty"`
+	Region     string   `bson:"region,omitempty" json:"region,omitempty"`
+	BirthDate  Date     `bson:"birth_date,omitempty" json:"birthDate,omitempty"`
+	SecretKey  string   `bson:"secret_key,omitempty" json:"secretKey,omitempty"`
 }
 
 func (u User) Age() int {

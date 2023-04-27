@@ -17,7 +17,7 @@ const (
 )
 
 func (r *Router) initScoreRoutes(customerAPI *echo.Group) {
-	score := customerAPI.Group("/score", r.identifyCustomer)
+	score := customerAPI.Group("/score", r.identifyUser, r.verifyCustomer)
 	score.GET("/cveRisk", r.cveRisk)
 	score.GET("/idealAge", r.idealAge)
 }

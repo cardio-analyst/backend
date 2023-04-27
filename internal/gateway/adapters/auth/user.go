@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -11,17 +12,30 @@ import (
 )
 
 func (c *Client) SaveUser(ctx context.Context, user model.User) error {
-	var role pb.UserRole
-	switch user.Role {
-	case model.UserRoleCustomer:
-		role = pb.UserRole_CUSTOMER
-	case model.UserRoleModerator:
-		role = pb.UserRole_MODERATOR
-	default:
-		return fmt.Errorf("unknown user role %q", user.Role)
+	role, err := userRolePB(user.Role)
+	if err != nil {
+		return err
+	}
+	if role == pb.UserRole_ADMINISTRATOR {
+		return errors.New("forbidden to create the administrator")
 	}
 
 	birthDate := timestamppb.New(user.BirthDate.Time)
+
+	var middleName *string
+	if user.MiddleName != "" {
+		middleName = &user.MiddleName
+	}
+
+	var region *string
+	if user.Region != "" {
+		region = &user.Region
+	}
+
+	var secretKey *string
+	if user.SecretKey != "" {
+		secretKey = &user.SecretKey
+	}
 
 	request := &pb.SaveUserRequest{
 		Role:       role,
@@ -30,9 +44,10 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 		Password:   user.Password,
 		FirstName:  user.FirstName,
 		LastName:   user.LastName,
-		MiddleName: &user.MiddleName,
-		Region:     &user.Region,
+		MiddleName: middleName,
+		Region:     region,
 		BirthDate:  birthDate,
+		SecretKey:  secretKey,
 	}
 
 	response, err := c.client.SaveUser(ctx, request)
@@ -64,6 +79,10 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 			return model.ErrUserLoginAlreadyOccupied
 		case pb.ErrorCode_EMAIL_ALREADY_OCCUPIED:
 			return model.ErrUserEmailAlreadyOccupied
+		case pb.ErrorCode_INVALID_SECRET_KEY:
+			return model.ErrInvalidSecretKey
+		case pb.ErrorCode_WRONG_SECRET_KEY:
+			return model.ErrWrongSecretKey
 		default:
 			return fmt.Errorf("unknown error code %v", errorResponse.GetErrorCode().String())
 		}
@@ -100,14 +119,9 @@ func (c *Client) GetUser(ctx context.Context, criteria model.UserCriteria) (mode
 
 	user := response.GetSuccessResponse().GetUser()
 
-	var role model.UserRole
-	switch user.Role {
-	case pb.UserRole_CUSTOMER:
-		role = model.UserRoleCustomer
-	case pb.UserRole_MODERATOR:
-		role = model.UserRoleModerator
-	default:
-		return model.User{}, fmt.Errorf("unknown user role %v", user.Role.String())
+	role, err := pbUserRole(user.GetRole())
+	if err != nil {
+		return model.User{}, err
 	}
 
 	return model.User{
@@ -147,15 +161,23 @@ func (c *Client) IdentifyUser(ctx context.Context, accessToken string) (uint64, 
 
 	successResponse := response.GetSuccessResponse()
 
-	var role model.UserRole
-	switch successResponse.GetRole() {
-	case pb.UserRole_CUSTOMER:
-		role = model.UserRoleCustomer
-	case pb.UserRole_MODERATOR:
-		role = model.UserRoleModerator
-	default:
-		return 0, "", fmt.Errorf("unknown user role %v", successResponse.GetRole().String())
+	role, err := pbUserRole(successResponse.GetRole())
+	if err != nil {
+		return 0, "", err
 	}
 
 	return successResponse.UserId, role, nil
+}
+
+func pbUserRole(userRolePB pb.UserRole) (model.UserRole, error) {
+	switch userRolePB {
+	case pb.UserRole_CUSTOMER:
+		return model.UserRoleCustomer, nil
+	case pb.UserRole_MODERATOR:
+		return model.UserRoleModerator, nil
+	case pb.UserRole_ADMINISTRATOR:
+		return model.UserRoleAdministrator, nil
+	default:
+		return "", fmt.Errorf("unknown user role: %q", userRolePB.String())
+	}
 }

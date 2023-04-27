@@ -17,7 +17,7 @@ func NewUserService(users storage.UserRepository) *UserService {
 	return &UserService{users: users}
 }
 
-func (s *UserService) Create(ctx context.Context, user model.User) error {
+func (s *UserService) Save(ctx context.Context, user model.User) error {
 	criteria := model.UserCriteria{
 		Login:             user.Login,
 		Email:             user.Email,

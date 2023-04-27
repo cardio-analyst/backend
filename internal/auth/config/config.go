@@ -13,6 +13,8 @@ const (
 	accessTokenSigningKeyEnvKey  = "ACCESS_TOKEN_SIGNING_KEY"
 	refreshTokenSigningKeyEnvKey = "REFRESH_TOKEN_SIGNING_KEY"
 
+	secretKeySigningKeyEnvKey = "SECRET_KEY_SIGNING_KEY"
+
 	accessTokenTTLEnvKey  = "ACCESS_TOKEN_TTL_SEC"
 	refreshTokenTTLEnvKey = "REFRESH_TOKEN_TTL_SEC"
 )
@@ -23,9 +25,10 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	GRPCAddress  string      `yaml:"grpc_address"`
-	AccessToken  TokenConfig `yaml:"access_token"`
-	RefreshToken TokenConfig `yaml:"refresh_token"`
+	GRPCAddress         string      `yaml:"grpc_address"`
+	AccessToken         TokenConfig `yaml:"access_token"`
+	RefreshToken        TokenConfig `yaml:"refresh_token"`
+	SecretKeySigningKey string      `yaml:"secret_key_signing_key"`
 }
 
 type TokenConfig struct {
@@ -68,6 +71,10 @@ func (c *Config) loadFromEnv() {
 	if signingKey, exists := os.LookupEnv(refreshTokenSigningKeyEnvKey); exists {
 		c.Auth.RefreshToken.SigningKey = signingKey
 		log.Debug("refresh token signing key was set from environment")
+	}
+	if signingKey, exists := os.LookupEnv(secretKeySigningKeyEnvKey); exists {
+		c.Auth.SecretKeySigningKey = signingKey
+		log.Debug("secret key signing key was set from environment")
 	}
 
 	// if tokens ttl were set at the environment

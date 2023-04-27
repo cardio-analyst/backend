@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
@@ -23,11 +24,19 @@ func (s *Server) GetTokens(ctx context.Context, request *pb.GetTokensRequest) (*
 		return tokensErrorResponse(pb.ErrorCode_INVALID_DATA), nil
 	}
 
-	tokens, err := s.services.Auth().GetTokens(ctx, credentials, request.GetIp())
+	userRole, err := pbUserRole(request.GetUserRole())
+	if err != nil {
+		return nil, err
+	}
+
+	tokens, err := s.services.Auth().GetTokens(ctx, credentials, request.GetIp(), userRole)
 	if err != nil {
 		log.Errorf("receiving tokens from auth service: %v", err)
-		if errors.Is(err, model.ErrWrongCredentials) {
+		switch {
+		case errors.Is(err, model.ErrWrongCredentials):
 			return tokensErrorResponse(pb.ErrorCode_WRONG_CREDENTIALS), nil
+		case errors.Is(err, model.ErrForbiddenByRole):
+			return tokensErrorResponse(pb.ErrorCode_FORBIDDEN_BY_ROLE), nil
 		}
 		return nil, err
 	}
@@ -38,7 +47,12 @@ func (s *Server) GetTokens(ctx context.Context, request *pb.GetTokensRequest) (*
 }
 
 func (s *Server) RefreshTokens(ctx context.Context, request *pb.RefreshTokensRequest) (*pb.TokensResponse, error) {
-	tokens, err := s.services.Auth().RefreshTokens(ctx, request.GetRefreshToken(), request.GetIp())
+	userRole, err := pbUserRole(request.GetUserRole())
+	if err != nil {
+		return nil, err
+	}
+
+	tokens, err := s.services.Auth().RefreshTokens(ctx, request.GetRefreshToken(), request.GetIp(), userRole)
 	if err != nil {
 		log.Errorf("refreshing tokens in auth service: %v", err)
 		switch {
@@ -48,6 +62,8 @@ func (s *Server) RefreshTokens(ctx context.Context, request *pb.RefreshTokensReq
 			return tokensErrorResponse(pb.ErrorCode_REFRESH_TOKEN_EXPIRED), nil
 		case errors.Is(err, model.ErrIPIsNotInWhitelist):
 			return tokensErrorResponse(pb.ErrorCode_IP_NOT_ALLOWED), nil
+		case errors.Is(err, model.ErrForbiddenByRole):
+			return tokensErrorResponse(pb.ErrorCode_FORBIDDEN_BY_ROLE), nil
 		}
 		return nil, err
 	}
@@ -75,5 +91,18 @@ func tokensErrorResponse(errorCode pb.ErrorCode) *pb.TokensResponse {
 				ErrorCode: errorCode,
 			},
 		},
+	}
+}
+
+func pbUserRole(userRolePB pb.UserRole) (model.UserRole, error) {
+	switch userRolePB {
+	case pb.UserRole_CUSTOMER:
+		return model.UserRoleCustomer, nil
+	case pb.UserRole_MODERATOR:
+		return model.UserRoleModerator, nil
+	case pb.UserRole_ADMINISTRATOR:
+		return model.UserRoleAdministrator, nil
+	default:
+		return "", fmt.Errorf("unknown user role: %q", userRolePB.String())
 	}
 }

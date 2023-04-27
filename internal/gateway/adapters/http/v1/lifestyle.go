@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Router) initLifestylesRoutes(customerAPI *echo.Group) {
-	lifestyle := customerAPI.Group("/lifestyles", r.identifyCustomer)
+	lifestyle := customerAPI.Group("/lifestyles", r.identifyUser, r.verifyCustomer)
 	lifestyle.GET("/info", r.getLifestyleInfo)
 	lifestyle.PUT("/edit", r.editLifestyleInfo)
 }

@@ -38,6 +38,9 @@ var errorDescriptions = map[string]string{
 	errorAnalysisRecordNotFound:        "Запись о лабораторных исследованиях не найдена",
 	errorBasicIndicatorsRecordNotFound: "Запись о базовых показателях не найдена",
 	errorNotEnoughInformation:          "Недостаточно данных для выполнения запроса",
+	errorInvalidSecretKey:              "Некорректный секретный ключ",
+	errorWrongSecretKey:                "Некорректный секретный ключ",
+	errorForbiddenByRole:               "Недостаточно прав доступа для выполнения запроса",
 	// analysis
 	errorInvalidHighDensityCholesterol:          "Некорректное значение холестерина высокой плотности (ЛПВП)",
 	errorInvalidLowDensityCholesterol:           "Некорректное значение холестерина низкой плотности (ЛПНП)",

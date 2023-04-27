@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Router) initQuestionnaireRoutes(customerAPI *echo.Group) {
-	tests := customerAPI.Group("/tests", r.identifyCustomer)
+	tests := customerAPI.Group("/tests", r.identifyUser, r.verifyCustomer)
 
 	angina := tests.Group("/angina-rose")
 	angina.GET("/info", r.anginaRoseInfo)

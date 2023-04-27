@@ -11,13 +11,17 @@ service AuthService {
   rpc SaveUser(SaveUserRequest) returns (SaveUserResponse);
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc IdentifyUser(IdentifyUserRequest) returns (IdentifyUserResponse);
+
   rpc GetTokens(GetTokensRequest) returns (TokensResponse);
   rpc RefreshTokens(RefreshTokensRequest) returns (TokensResponse);
+
+  rpc GenerateSecretKey(GenerateSecretKeyRequest) returns (GenerateSecretKeyResponse);
 }
 
 enum UserRole {
   CUSTOMER = 0;
   MODERATOR = 1;
+  ADMINISTRATOR = 2;
 }
 
 message SaveUserRequest {
@@ -30,6 +34,7 @@ message SaveUserRequest {
   optional string middle_name = 7;
   optional string region = 8;
   optional google.protobuf.Timestamp birth_date = 9;
+  optional string secret_key = 10;
 }
 
 enum ErrorCode {
@@ -51,6 +56,9 @@ enum ErrorCode {
   IP_NOT_ALLOWED = 15;
   WRONG_CREDENTIALS = 16;
   USER_NOT_FOUND = 17;
+  INVALID_SECRET_KEY = 18;
+  WRONG_SECRET_KEY = 19;
+  FORBIDDEN_BY_ROLE = 20;
 }
 
 message ErrorResponse {
@@ -99,11 +107,13 @@ message GetTokensRequest {
   optional string email = 2;
   string password = 3;
   string ip = 4;
+  UserRole user_role = 5;
 }
 
 message RefreshTokensRequest {
   string refresh_token = 1;
   string ip = 2;
+  UserRole user_role = 3;
 }
 
 message TokensSuccessResponse {
@@ -132,4 +142,13 @@ message IdentifyUserResponse {
     IdentifyUserSuccessResponse success_response = 1;
     ErrorResponse error_response = 2;
   }
+}
+
+message GenerateSecretKeyRequest {
+  string user_login = 1;
+  string user_email = 2;
+}
+
+message GenerateSecretKeyResponse {
+  string secret_key = 1;
 }

@@ -7,6 +7,6 @@ import (
 )
 
 type UserService interface {
-	Create(ctx context.Context, user model.User) (err error)
+	Save(ctx context.Context, user model.User) (err error)
 	GetOne(ctx context.Context, criteria model.UserCriteria) (user model.User, err error)
 }

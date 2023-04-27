@@ -19,18 +19,24 @@ func NewRouter(api *echo.Group, services service.Services) *Router {
 }
 
 func (r *Router) InitRoutes() {
+	// /:userRole/auth/*
+	r.initAuthRoutes()
+
 	// /customer/*
 	r.initCustomerRoutes()
+
+	// /moderator/*
+	r.initModeratorRoutes()
+
+	// /administrator/*
+	r.initAdministratorRoutes()
 }
 
 func (r *Router) initCustomerRoutes() {
 	customerAPI := r.api.Group("/customer")
 
-	// /auth/*
-	r.initCustomerAuthRoutes(customerAPI)
-
 	// /profile/*
-	r.initCustomerProfileRoutes(customerAPI)
+	r.initProfileRoutes(customerAPI)
 
 	// /diseases/*
 	r.initDiseasesRoutes(customerAPI)
@@ -52,4 +58,12 @@ func (r *Router) initCustomerRoutes() {
 
 	// /tests/*
 	r.initQuestionnaireRoutes(customerAPI)
+}
+
+func (r *Router) initModeratorRoutes() {}
+
+func (r *Router) initAdministratorRoutes() {
+	adminAPI := r.api.Group("/administrator")
+
+	adminAPI.POST("/secretKey", r.generateSecretKey, r.identifyUser, r.verifyAdministrator)
 }

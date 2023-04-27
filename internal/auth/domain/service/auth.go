@@ -24,6 +24,7 @@ type AuthService struct {
 
 	accessTokenSigningKey  string
 	refreshTokenSigningKey string
+	secretKeySigningKey    string
 }
 
 type AuthServiceOptions struct {
@@ -35,6 +36,7 @@ type AuthServiceOptions struct {
 
 	AccessTokenSigningKey  string
 	RefreshTokenSigningKey string
+	SecretKeySigningKey    string
 }
 
 func NewAuthService(opts AuthServiceOptions) *AuthService {
@@ -45,10 +47,11 @@ func NewAuthService(opts AuthServiceOptions) *AuthService {
 		refreshTokenTTL:        time.Duration(opts.RefreshTokenTTLSeconds) * time.Second,
 		accessTokenSigningKey:  opts.AccessTokenSigningKey,
 		refreshTokenSigningKey: opts.RefreshTokenSigningKey,
+		secretKeySigningKey:    opts.SecretKeySigningKey,
 	}
 }
 
-func (s *AuthService) GetTokens(ctx context.Context, credentials model.Credentials, userIP string) (model.Tokens, error) {
+func (s *AuthService) GetTokens(ctx context.Context, credentials model.Credentials, userIP string, role model.UserRole) (model.Tokens, error) {
 	// since we do not know what exactly we are dealing with (login or email), we are looking for two fields
 	criteria := model.UserCriteria{
 		Login:             credentials.Login,
@@ -62,6 +65,10 @@ func (s *AuthService) GetTokens(ctx context.Context, credentials model.Credentia
 			return model.Tokens{}, model.ErrWrongCredentials
 		}
 		return model.Tokens{}, err
+	}
+
+	if user.Role != role {
+		return model.Tokens{}, model.ErrForbiddenByRole
 	}
 
 	match, err := comparePasswordAndHash(credentials.Password, user.Password)
@@ -104,10 +111,14 @@ func (s *AuthService) GetTokens(ctx context.Context, credentials model.Credentia
 	return tokens, nil
 }
 
-func (s *AuthService) RefreshTokens(ctx context.Context, refreshToken, userIP string) (model.Tokens, error) {
+func (s *AuthService) RefreshTokens(ctx context.Context, refreshToken, userIP string, role model.UserRole) (model.Tokens, error) {
 	userID, userRole, err := s.validateToken(refreshToken, s.refreshTokenSigningKey)
 	if err != nil {
 		return model.Tokens{}, err
+	}
+
+	if userRole != role {
+		return model.Tokens{}, model.ErrForbiddenByRole
 	}
 
 	session, err := s.sessions.GetOne(ctx, userID)

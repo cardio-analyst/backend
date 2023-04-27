@@ -29,20 +29,21 @@ func (s *ValidationService) ValidateUser(user model.User, checkPassword bool) er
 		validation.Field(&user.Role, validation.Required, validation.In(model.UserRoleCustomer, model.UserRoleModerator)),
 		validation.Field(&user.FirstName, validation.Required),
 		validation.Field(&user.LastName, validation.Required),
-		validation.Field(&user.Region, validation.Required),
-		validation.Field(&user.BirthDate, validation.By(func(value any) error {
+		validation.Field(&user.Region, validation.When(user.Role == model.UserRoleCustomer, validation.Required)),
+		validation.Field(&user.BirthDate, validation.When(user.Role == model.UserRoleCustomer, validation.By(func(value any) error {
 			date, ok := value.(model.Date)
 			if !ok {
 				return errors.New("cannot cast to date")
 			}
 			return s.ValidateDate(date)
-		})),
+		}))),
 		validation.Field(&user.Login, validation.Required, validation.Match(regexp.MustCompile("^[^@]+$"))),
 		validation.Field(&user.Email, validation.Required, is.Email),
 		validation.Field(&user.Password, validation.When(
 			checkPassword,
 			validation.Required, validation.Length(minPasswordLength, maxPasswordLength)),
 		),
+		validation.Field(&user.SecretKey, validation.When(user.Role == model.UserRoleModerator, validation.Required)),
 	)
 	if err != nil {
 		var errBytes []byte
@@ -79,6 +80,9 @@ func (s *ValidationService) ValidateUser(user model.User, checkPassword bool) er
 		}
 		if validationError, found := validationErrors["password"]; found {
 			return fmt.Errorf("%w: %v", model.ErrInvalidPassword, validationError)
+		}
+		if validationError, found := validationErrors["secretKey"]; found {
+			return fmt.Errorf("%w: %v", model.ErrInvalidSecretKey, validationError)
 		}
 
 		return model.ErrInvalidUserData

@@ -2,12 +2,20 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/mail"
 
 	"github.com/labstack/echo/v4"
 
 	"github.com/cardio-analyst/backend/pkg/model"
+)
+
+const (
+	userRolePathKey                   = "userRole"
+	userRoleCustomerPathParamKey      = "customer"
+	userRoleModeratorPathParamKey     = "moderator"
+	userRoleAdministratorPathParamKey = "administrator"
 )
 
 // possible auth errors designations
@@ -23,22 +31,52 @@ const (
 	errorWrongRefreshToken   = "WrongRefreshToken"
 	errorWrongCredentials    = "WrongCredentials"
 	errorIPNotAllowed        = "IPNotAllowed"
+	errorInvalidSecretKey    = "InvalidSecretKey"
+	errorWrongSecretKey      = "WrongSecretKey"
 )
 
-func (r *Router) initCustomerAuthRoutes(customerAPI *echo.Group) {
-	auth := customerAPI.Group("/auth")
-	auth.POST("/signUp", r.signUpCustomer)
-	auth.POST("/signIn", r.signInCustomer)
+func (r *Router) initAuthRoutes() {
+	auth := r.api.Group(fmt.Sprintf("/:%v/auth", userRolePathKey), r.parseUserRole)
+	auth.POST("/signUp", r.signUp)
+	auth.POST("/signIn", r.signIn)
 	auth.POST("/refreshTokens", r.refreshTokens)
 }
 
-func (r *Router) signUpCustomer(c echo.Context) error {
+func (r *Router) parseUserRole(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var userRole model.UserRole
+
+		userRoleStr := c.Param(userRolePathKey)
+		switch userRoleStr {
+		case userRoleCustomerPathParamKey:
+			userRole = model.UserRoleCustomer
+		case userRoleModeratorPathParamKey:
+			userRole = model.UserRoleModerator
+		case userRoleAdministratorPathParamKey:
+			userRole = model.UserRoleAdministrator
+		default:
+			err := fmt.Errorf("undefined user role: %q", userRoleStr)
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+		}
+
+		c.Set(ctxKeyUserRole, userRole)
+
+		return next(c)
+	}
+}
+
+func (r *Router) signUp(c echo.Context) error {
 	var reqData model.User
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	reqData.Role = model.UserRoleCustomer
+	userRole := c.Get(userRolePathKey).(model.UserRole)
+	if userRole == model.UserRoleAdministrator {
+		err := errors.New("forbidden to create the administrator")
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+	reqData.Role = userRole
 
 	if err := r.services.Auth().RegisterUser(c.Request().Context(), reqData); err != nil {
 		switch {
@@ -62,6 +100,10 @@ func (r *Router) signUpCustomer(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorLoginAlreadyOccupied))
 		case errors.Is(err, model.ErrUserEmailAlreadyOccupied):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorEmailAlreadyOccupied))
+		case errors.Is(err, model.ErrInvalidSecretKey):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidSecretKey))
+		case errors.Is(err, model.ErrWrongSecretKey):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongSecretKey))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}
@@ -70,13 +112,13 @@ func (r *Router) signUpCustomer(c echo.Context) error {
 	return c.JSON(http.StatusOK, newResult(resultRegistered))
 }
 
-type signInCustomerRequest struct {
+type signInRequest struct {
 	LoginOrEmail string `json:"loginOrEmail"`
 	Password     string `json:"password"`
 }
 
-func (r *Router) signInCustomer(c echo.Context) error {
-	var reqData signInCustomerRequest
+func (r *Router) signIn(c echo.Context) error {
+	var reqData signInRequest
 	if err := c.Bind(&reqData); err != nil {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
@@ -92,13 +134,17 @@ func (r *Router) signInCustomer(c echo.Context) error {
 		credentials.Login = reqData.LoginOrEmail
 	}
 
-	tokens, err := r.services.Auth().GetTokens(c.Request().Context(), credentials, c.RealIP())
+	userRole := c.Get(userRolePathKey).(model.UserRole)
+
+	tokens, err := r.services.Auth().GetTokens(c.Request().Context(), credentials, c.RealIP(), userRole)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrInvalidCredentials):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
 		case errors.Is(err, model.ErrWrongCredentials):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongCredentials))
+		case errors.Is(err, model.ErrForbiddenByRole):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorForbiddenByRole))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}
@@ -117,7 +163,9 @@ func (r *Router) refreshTokens(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
-	tokens, err := r.services.Auth().RefreshTokens(c.Request().Context(), reqData.RefreshToken, c.RealIP())
+	userRole := c.Get(userRolePathKey).(model.UserRole)
+
+	tokens, err := r.services.Auth().RefreshTokens(c.Request().Context(), reqData.RefreshToken, c.RealIP(), userRole)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrWrongToken):
@@ -126,10 +174,39 @@ func (r *Router) refreshTokens(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorRefreshTokenExpired))
 		case errors.Is(err, model.ErrIPIsNotInWhitelist):
 			return c.JSON(http.StatusForbidden, newError(c, err, errorIPNotAllowed))
+		case errors.Is(err, model.ErrForbiddenByRole):
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorForbiddenByRole))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}
 	}
 
 	return c.JSON(http.StatusOK, tokens)
+}
+
+type generateSecretKeyRequest struct {
+	UserLogin string `json:"userLogin"`
+	UserEmail string `json:"userEmail"`
+}
+
+type generateSecretKeyResponse struct {
+	SecretKey string `json:"secretKey"`
+}
+
+func (r *Router) generateSecretKey(c echo.Context) error {
+	var reqData generateSecretKeyRequest
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+
+	secretKey, err := r.services.Auth().GenerateSecretKey(c.Request().Context(), reqData.UserLogin, reqData.UserEmail)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+	}
+
+	resp := &generateSecretKeyResponse{
+		SecretKey: secretKey,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

@@ -8,10 +8,16 @@ import (
 	"github.com/cardio-analyst/backend/pkg/model"
 )
 
-func (c *Client) GetTokens(ctx context.Context, credentials model.Credentials, userIP string) (model.Tokens, error) {
+func (c *Client) GetTokens(ctx context.Context, credentials model.Credentials, userIP string, userRole model.UserRole) (model.Tokens, error) {
+	role, err := userRolePB(userRole)
+	if err != nil {
+		return model.Tokens{}, err
+	}
+
 	request := &pb.GetTokensRequest{
 		Password: credentials.Password,
 		Ip:       userIP,
+		UserRole: role,
 	}
 
 	if credentials.Login != "" {
@@ -32,6 +38,8 @@ func (c *Client) GetTokens(ctx context.Context, credentials model.Credentials, u
 			return model.Tokens{}, model.ErrInvalidCredentials
 		case pb.ErrorCode_WRONG_CREDENTIALS:
 			return model.Tokens{}, model.ErrWrongCredentials
+		case pb.ErrorCode_FORBIDDEN_BY_ROLE:
+			return model.Tokens{}, model.ErrForbiddenByRole
 		default:
 			return model.Tokens{}, fmt.Errorf("unknown error code %v", errorResponse.GetErrorCode().String())
 		}
@@ -45,10 +53,16 @@ func (c *Client) GetTokens(ctx context.Context, credentials model.Credentials, u
 	}, nil
 }
 
-func (c *Client) RefreshTokens(ctx context.Context, refreshToken, userIP string) (model.Tokens, error) {
+func (c *Client) RefreshTokens(ctx context.Context, refreshToken, userIP string, userRole model.UserRole) (model.Tokens, error) {
+	role, err := userRolePB(userRole)
+	if err != nil {
+		return model.Tokens{}, err
+	}
+
 	request := &pb.RefreshTokensRequest{
 		RefreshToken: refreshToken,
 		Ip:           userIP,
+		UserRole:     role,
 	}
 
 	response, err := c.client.RefreshTokens(ctx, request)
@@ -64,6 +78,8 @@ func (c *Client) RefreshTokens(ctx context.Context, refreshToken, userIP string)
 			return model.Tokens{}, model.ErrTokenIsExpired
 		case pb.ErrorCode_IP_NOT_ALLOWED:
 			return model.Tokens{}, model.ErrIPIsNotInWhitelist
+		case pb.ErrorCode_FORBIDDEN_BY_ROLE:
+			return model.Tokens{}, model.ErrForbiddenByRole
 		default:
 			return model.Tokens{}, fmt.Errorf("unknown error code %v", errorResponse.GetErrorCode().String())
 		}
@@ -75,4 +91,17 @@ func (c *Client) RefreshTokens(ctx context.Context, refreshToken, userIP string)
 		AccessToken:  successResponse.GetAccessToken(),
 		RefreshToken: successResponse.GetRefreshToken(),
 	}, nil
+}
+
+func userRolePB(role model.UserRole) (pb.UserRole, error) {
+	switch role {
+	case model.UserRoleCustomer:
+		return pb.UserRole_CUSTOMER, nil
+	case model.UserRoleModerator:
+		return pb.UserRole_MODERATOR, nil
+	case model.UserRoleAdministrator:
+		return pb.UserRole_ADMINISTRATOR, nil
+	default:
+		return pb.UserRole(-1), fmt.Errorf("undefined user role: %q", role)
+	}
 }
