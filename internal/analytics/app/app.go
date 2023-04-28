@@ -9,8 +9,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cardio-analyst/backend/internal/analytics/adapters/migrator"
+	"github.com/cardio-analyst/backend/internal/analytics/adapters/postgres"
 	"github.com/cardio-analyst/backend/internal/analytics/adapters/rabbitmq"
 	"github.com/cardio-analyst/backend/internal/analytics/config"
+	"github.com/cardio-analyst/backend/internal/analytics/domain/service"
 )
 
 func init() {
@@ -43,6 +45,13 @@ func New(configPath string) *App {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
+	storage, err := postgres.NewStorage(cfg.Postgres.URI)
+	if err != nil {
+		log.Fatalf("failed to create postgres storage: %v", err)
+	}
+
+	services := service.NewServices(storage)
+
 	rabbitmqClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
 		User:            cfg.RabbitMQ.User,
 		Password:        cfg.RabbitMQ.Password,
@@ -51,7 +60,7 @@ func New(configPath string) *App {
 		ExchangeName:    cfg.RabbitMQ.Exchange,
 		RoutingKey:      cfg.RabbitMQ.RoutingKey,
 		QueueName:       cfg.RabbitMQ.Queue,
-		MessagesHandler: nil,
+		MessagesHandler: services.Feedback().MessagesHandler(),
 	})
 	if err = rabbitmqClient.Connect(); err != nil {
 		log.Fatalf("initializing RabbitMQ client: %v", err)
@@ -59,7 +68,7 @@ func New(configPath string) *App {
 
 	return &App{
 		rabbitMQClient: rabbitmqClient,
-		closers:        []io.Closer{rabbitmqClient},
+		closers:        []io.Closer{rabbitmqClient, storage},
 	}
 }
 
