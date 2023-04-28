@@ -1,0 +1,12 @@
+postgres:
+  uri: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+
+# describes RabbitMQ consumer configuration
+rabbitmq:
+  user: "guest"
+  password: "guest"
+  host: "rabbitmq"
+  port: 5672
+  exchange: "cardio-analyst"
+  routing_key: "feedback"
+  queue: "feedback"

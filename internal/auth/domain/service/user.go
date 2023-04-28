@@ -50,10 +50,18 @@ func (s *UserService) Save(ctx context.Context, user model.User) error {
 	return s.users.Save(ctx, user)
 }
 
-func generateHash(password string) (string, error) {
-	return argon2id.CreateHash(password, argon2id.DefaultParams)
+func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (model.User, error) {
+	user, err := s.users.GetOneByCriteria(ctx, criteria)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	// we don't show passwords to anyone
+	user.Password = ""
+
+	return user, nil
 }
 
-func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (model.User, error) {
-	return s.users.GetOneByCriteria(ctx, criteria)
+func generateHash(password string) (string, error) {
+	return argon2id.CreateHash(password, argon2id.DefaultParams)
 }
