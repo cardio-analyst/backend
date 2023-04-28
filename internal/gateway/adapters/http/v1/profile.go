@@ -27,7 +27,7 @@ func (r *Router) getProfileInfo(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusOK, &user)
 }
 
 func (r *Router) editProfileInfo(c echo.Context) error {
@@ -37,6 +37,7 @@ func (r *Router) editProfileInfo(c echo.Context) error {
 	}
 
 	reqData.ID = c.Get(ctxKeyUserID).(uint64)
+	reqData.Role = c.Get(ctxKeyUserRole).(model.UserRole)
 
 	if err := r.services.User().Update(c.Request().Context(), reqData); err != nil {
 		switch {
