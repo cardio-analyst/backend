@@ -26,12 +26,7 @@ func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb
 		SecretKey:  request.GetSecretKey(),
 	}
 
-	var checkPassword bool
-	if user.Password != "" {
-		checkPassword = true
-	}
-
-	if err := s.services.Validation().ValidateUser(user, checkPassword); err != nil {
+	if err := s.services.Validation().ValidateUser(user); err != nil {
 		log.Errorf("validating user data: %v", err)
 		switch {
 		case errors.Is(err, model.ErrInvalidRole):

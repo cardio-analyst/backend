@@ -32,20 +32,29 @@ func (s *UserService) Save(ctx context.Context, user model.User) error {
 	// check if there are no users with a username or email that the actor wants to occupy
 	if len(users) > 0 {
 		for _, u := range users {
+			if u.ID == user.ID {
+				continue
+			}
+
 			if u.Login == user.Login {
 				return model.ErrUserLoginAlreadyOccupied
-			} else {
+			} else if u.Email == user.Email {
 				return model.ErrUserEmailAlreadyOccupied
 			}
 		}
 	}
 
-	passwordHash, err := generateHash(user.Password)
-	if err != nil {
-		return err
-	}
+	if user.Password != "" {
+		var passwordHash string
+		passwordHash, err = generateHash(user.Password)
+		if err != nil {
+			return err
+		}
 
-	user.Password = passwordHash
+		user.Password = passwordHash
+	} else {
+		user.Password = users[0].Password
+	}
 
 	return s.users.Save(ctx, user)
 }
@@ -56,7 +65,7 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 		return model.User{}, err
 	}
 
-	// we don't show passwords to anyone
+	// we don't show password to anyone
 	user.Password = ""
 
 	return user, nil

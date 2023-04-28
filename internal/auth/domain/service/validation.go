@@ -24,7 +24,12 @@ func NewValidationService() *ValidationService {
 	return &ValidationService{}
 }
 
-func (s *ValidationService) ValidateUser(user model.User, checkPassword bool) error {
+func (s *ValidationService) ValidateUser(user model.User) error {
+	var checkPassword bool
+	if user.Password != "" {
+		checkPassword = true
+	}
+
 	err := validation.ValidateStruct(&user,
 		validation.Field(&user.Role, validation.Required, validation.In(model.UserRoleCustomer, model.UserRoleModerator)),
 		validation.Field(&user.FirstName, validation.Required),
