@@ -12,7 +12,7 @@ import (
 
 	domain "github.com/cardio-analyst/backend/internal/auth/domain/model"
 	"github.com/cardio-analyst/backend/internal/auth/port/storage"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 type AuthService struct {

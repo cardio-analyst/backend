@@ -10,14 +10,19 @@ import (
 
 func (r *Router) initQuestionnaireRoutes(customerAPI *echo.Group) {
 	tests := customerAPI.Group("/tests", r.identifyUser, r.verifyCustomer)
+	{
+		angina := tests.Group("/angina-rose")
+		{
+			angina.GET("/info", r.anginaRoseInfo)
+			angina.PUT("/edit", r.anginaRoseEdit)
+		}
 
-	angina := tests.Group("/angina-rose")
-	angina.GET("/info", r.anginaRoseInfo)
-	angina.PUT("/edit", r.anginaRoseEdit)
-
-	adherence := tests.Group("/treatment-adherence")
-	adherence.GET("/info", r.treatmentAdherenceInfo)
-	adherence.PUT("/edit", r.treatmentAdherenceEdit)
+		adherence := tests.Group("/treatment-adherence")
+		{
+			adherence.GET("/info", r.treatmentAdherenceInfo)
+			adherence.PUT("/edit", r.treatmentAdherenceEdit)
+		}
+	}
 }
 
 type anginaRoseInfoResponse struct {

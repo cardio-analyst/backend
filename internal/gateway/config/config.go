@@ -31,10 +31,16 @@ type PostgresConfig struct {
 }
 
 type RabbitMQConfig struct {
-	User       string `yaml:"user"`
-	Password   string `yaml:"password"`
-	Host       string `yaml:"host"`
-	Port       int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+
+	EmailsQueue   RabbitMQQueueConfig `yaml:"emails"`
+	FeedbackQueue RabbitMQQueueConfig `yaml:"feedback"`
+}
+
+type RabbitMQQueueConfig struct {
 	Exchange   string `yaml:"exchange"`
 	RoutingKey string `yaml:"routing_key"`
 	Queue      string `yaml:"queue"`
@@ -57,7 +63,8 @@ type RecommendationConfig struct {
 }
 
 type ServicesConfig struct {
-	Auth ServiceConfig `yaml:"auth"`
+	Auth      ServiceConfig `yaml:"auth"`
+	Analytics ServiceConfig `yaml:"analytics"`
 }
 
 type ServiceConfig struct {

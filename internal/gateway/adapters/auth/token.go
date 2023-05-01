@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
-	"github.com/cardio-analyst/backend/pkg/model"
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (c *Client) GetTokens(ctx context.Context, credentials model.Credentials, userIP string, userRole model.UserRole) (model.Tokens, error) {

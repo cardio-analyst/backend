@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
 )
 
 func (s *Server) GenerateSecretKey(_ context.Context, request *pb.GenerateSecretKeyRequest) (*pb.GenerateSecretKeyResponse, error) {

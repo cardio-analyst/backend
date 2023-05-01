@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -21,17 +22,17 @@ var (
 )
 
 type Analysis struct {
-	ID                              uint64   `json:"id,omitempty" db:"id"`
-	UserID                          uint64   `json:"-" db:"user_id"`
-	HighDensityCholesterol          *float64 `json:"highDensityCholesterol" db:"high_density_cholesterol"`
-	LowDensityCholesterol           *float64 `json:"lowDensityCholesterol" db:"low_density_cholesterol"`
-	Triglycerides                   *float64 `json:"triglycerides" db:"triglycerides"`
-	Lipoprotein                     *float64 `json:"lipoprotein" db:"lipoprotein"`
-	HighlySensitiveCReactiveProtein *float64 `json:"highlySensitiveCReactiveProtein" db:"highly_sensitive_c_reactive_protein"`
-	AtherogenicityCoefficient       *float64 `json:"atherogenicityCoefficient" db:"atherogenicity_coefficient"`
-	Creatinine                      *float64 `json:"creatinine" db:"creatinine"`
-	AtheroscleroticPlaquesPresence  *bool    `json:"atheroscleroticPlaquesPresence" db:"atherosclerotic_plaques_presence"`
-	CreatedAt                       Datetime `json:"createdAt" db:"created_at"`
+	ID                              uint64         `json:"id,omitempty" db:"id"`
+	UserID                          uint64         `json:"-" db:"user_id"`
+	HighDensityCholesterol          *float64       `json:"highDensityCholesterol" db:"high_density_cholesterol"`
+	LowDensityCholesterol           *float64       `json:"lowDensityCholesterol" db:"low_density_cholesterol"`
+	Triglycerides                   *float64       `json:"triglycerides" db:"triglycerides"`
+	Lipoprotein                     *float64       `json:"lipoprotein" db:"lipoprotein"`
+	HighlySensitiveCReactiveProtein *float64       `json:"highlySensitiveCReactiveProtein" db:"highly_sensitive_c_reactive_protein"`
+	AtherogenicityCoefficient       *float64       `json:"atherogenicityCoefficient" db:"atherogenicity_coefficient"`
+	Creatinine                      *float64       `json:"creatinine" db:"creatinine"`
+	AtheroscleroticPlaquesPresence  *bool          `json:"atheroscleroticPlaquesPresence" db:"atherosclerotic_plaques_presence"`
+	CreatedAt                       model.Datetime `json:"createdAt" db:"created_at"`
 }
 
 func (a Analysis) Validate(updating bool) error {

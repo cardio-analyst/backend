@@ -15,7 +15,7 @@ import (
 	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 // recommendation titles

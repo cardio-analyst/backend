@@ -2,9 +2,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/cardio-analyst/backend/internal/analytics/domain/model"
+	"github.com/jackc/pgx/v4"
+
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 const feedbackTable = "feedback"
@@ -47,4 +50,61 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 		feedback.Message,
 	)
 	return err
+}
+
+func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
+	queryCtx := context.Background()
+
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			user_id,
+			user_first_name,
+			user_last_name,
+			user_middle_name,
+			user_login,
+			user_email,
+			mark,
+			message,
+			created_at
+		FROM %v`,
+		feedbackTable,
+	)
+
+	rows, err := r.storage.conn.Query(queryCtx, query)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	feedbacks := make([]model.Feedback, 0)
+	for rows.Next() {
+		var feedback model.Feedback
+
+		if err = rows.Scan(
+			&feedback.ID,
+			&feedback.UserID,
+			&feedback.UserFirstName,
+			&feedback.UserLastName,
+			&feedback.UserMiddleName,
+			&feedback.UserLogin,
+			&feedback.UserEmail,
+			&feedback.Mark,
+			&feedback.Message,
+			&feedback.CreatedAt.Time,
+		); err != nil {
+			return nil, err
+		}
+
+		feedbacks = append(feedbacks, feedback)
+	}
+
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return feedbacks, nil
 }

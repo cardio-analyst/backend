@@ -3,16 +3,21 @@ package app
 import (
 	"context"
 	"io"
+	"net"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
+	pb "github.com/cardio-analyst/backend/api/proto/analytics"
+	grpcserver "github.com/cardio-analyst/backend/internal/analytics/adapters/grpc"
 	"github.com/cardio-analyst/backend/internal/analytics/adapters/migrator"
 	"github.com/cardio-analyst/backend/internal/analytics/adapters/postgres"
-	"github.com/cardio-analyst/backend/internal/analytics/adapters/rabbitmq"
 	"github.com/cardio-analyst/backend/internal/analytics/config"
-	"github.com/cardio-analyst/backend/internal/analytics/domain/service"
+	domain "github.com/cardio-analyst/backend/internal/analytics/domain/service"
+	"github.com/cardio-analyst/backend/internal/analytics/ports/service"
+	"github.com/cardio-analyst/backend/internal/pkg/rabbitmq"
 )
 
 func init() {
@@ -23,8 +28,9 @@ func init() {
 }
 
 type App struct {
-	rabbitMQClient *rabbitmq.Client
-	closers        []io.Closer
+	server   *grpcserver.Server
+	services service.Services
+	closers  []io.Closer
 }
 
 func New(configPath string) *App {
@@ -45,40 +51,54 @@ func New(configPath string) *App {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
+	rabbitmqClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.Exchange,
+		RoutingKey:   cfg.RabbitMQ.RoutingKey,
+		QueueName:    cfg.RabbitMQ.Queue,
+	})
+	if err = rabbitmqClient.Connect(); err != nil {
+		log.Fatalf("connecting to RabbitMQ: %v", err)
+	}
+
 	storage, err := postgres.NewStorage(cfg.Postgres.URI)
 	if err != nil {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	services := service.NewServices(storage)
+	services := domain.NewServices(storage, rabbitmqClient)
 
-	rabbitmqClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
-		User:            cfg.RabbitMQ.User,
-		Password:        cfg.RabbitMQ.Password,
-		Host:            cfg.RabbitMQ.Host,
-		Port:            cfg.RabbitMQ.Port,
-		ExchangeName:    cfg.RabbitMQ.Exchange,
-		RoutingKey:      cfg.RabbitMQ.RoutingKey,
-		QueueName:       cfg.RabbitMQ.Queue,
-		MessagesHandler: services.Feedback().MessagesHandler(),
-	})
-	if err = rabbitmqClient.Connect(); err != nil {
-		log.Fatalf("initializing RabbitMQ client: %v", err)
+	grpcListener, err := net.Listen("tcp", cfg.Analytics.GRPCAddress)
+	if err != nil {
+		log.Fatalf("failed to listen tcp on %v: %v", cfg.Analytics.GRPCAddress, err)
 	}
 
+	grpcServer := grpc.NewServer()
+	server := grpcserver.NewServer(grpcServer, grpcListener, services)
+	pb.RegisterAnalyticsServiceServer(grpcServer, server)
+
 	return &App{
-		rabbitMQClient: rabbitmqClient,
-		closers:        []io.Closer{rabbitmqClient, storage},
+		server:   server,
+		services: services,
+		closers:  []io.Closer{server, rabbitmqClient, storage},
 	}
 }
 
 func (a *App) Start() {
-	log.Info("the app is running")
-
 	var group errgroup.Group
+
 	group.Go(func() error {
-		return a.rabbitMQClient.Consume()
+		return a.services.Feedback().ListenToFeedbackMessages()
 	})
+
+	group.Go(func() error {
+		return a.server.Serve()
+	})
+
+	log.Info("the app is running")
 
 	if err := group.Wait(); err != nil {
 		log.Fatalf("app: %v", err)

@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 // possible recommendations errors designations
@@ -23,8 +23,10 @@ var errNoOneToSendReport = errors.New("there is no one to send report to")
 
 func (r *Router) initRecommendationsRoutes(customerAPI *echo.Group) {
 	recommendations := customerAPI.Group("/recommendations", r.identifyUser, r.verifyCustomer)
-	recommendations.GET("", r.getRecommendations)
-	recommendations.POST("/send", r.sendRecommendations)
+	{
+		recommendations.GET("", r.getRecommendations)
+		recommendations.POST("/send", r.sendRecommendations)
+	}
 }
 
 type getRecommendationsResponse struct {
@@ -87,7 +89,7 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 		receivers = append(receivers, user.Email)
 	}
 
-	reportFilePath, err := r.services.Report(domain.PDF).GenerateReport(userID)
+	reportFilePath, err := r.services.Report().GenerateReport(userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotEnoughDataToCompileReport) {
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorNotEnoughDataToCompileReport))
@@ -104,5 +106,5 @@ func (r *Router) sendRecommendations(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
-	return c.JSON(http.StatusOK, newResult(resultEmailSent))
+	return c.JSON(http.StatusOK, newResult(resultSent))
 }

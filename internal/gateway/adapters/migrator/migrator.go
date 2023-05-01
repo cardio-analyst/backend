@@ -7,8 +7,6 @@ import (
 	"github.com/Boostport/migration"
 	"github.com/Boostport/migration/driver/postgres"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/cardio-analyst/backend/internal/gateway/ports/migrator"
 )
 
 const migrationsDir = "migrations"
@@ -17,8 +15,6 @@ const migrationsDir = "migrations"
 //
 //go:embed migrations
 var embedFS embed.FS
-
-var _ migrator.Migrator = (*PostgresMigrator)(nil)
 
 type PostgresMigrator struct {
 	driver migration.Driver

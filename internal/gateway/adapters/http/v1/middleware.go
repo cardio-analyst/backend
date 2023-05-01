@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 const headerAuthorization = "Authorization"
@@ -16,6 +16,13 @@ const headerAuthorization = "Authorization"
 const (
 	ctxKeyUserID   = "userID"
 	ctxKeyUserRole = "userRole"
+)
+
+const (
+	userRolePathKey                   = "userRole"
+	userRoleCustomerPathParamKey      = "customer"
+	userRoleModeratorPathParamKey     = "moderator"
+	userRoleAdministratorPathParamKey = "administrator"
 )
 
 // possible middleware error designations
@@ -98,6 +105,36 @@ func (r *Router) verifyAdministrator(next echo.HandlerFunc) echo.HandlerFunc {
 			err := fmt.Errorf("%w: %q", errForbiddenByRole, userRole)
 			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
 		}
+		return next(c)
+	}
+}
+
+func (r *Router) parseUserRole(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var role model.UserRole
+
+		roleStr := c.Param(userRolePathKey)
+		switch roleStr {
+		case userRoleCustomerPathParamKey:
+			role = model.UserRoleCustomer
+		case userRoleModeratorPathParamKey:
+			role = model.UserRoleModerator
+		case userRoleAdministratorPathParamKey:
+			role = model.UserRoleAdministrator
+		default:
+			err := fmt.Errorf("undefined user role: %q", roleStr)
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+		}
+
+		userRole, ok := c.Get(ctxKeyUserRole).(model.UserRole)
+		if ok {
+			if userRole != role {
+				return c.JSON(http.StatusForbidden, newError(c, model.ErrForbiddenByRole, errorForbiddenByRole))
+			}
+		} else {
+			c.Set(ctxKeyUserRole, role)
+		}
+
 		return next(c)
 	}
 }

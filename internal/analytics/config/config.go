@@ -15,8 +15,13 @@ const (
 )
 
 type Config struct {
-	Postgres PostgresConfig `yaml:"postgres"`
-	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
+	Analytics AnalyticsConfig `yaml:"analytics"`
+	Postgres  PostgresConfig  `yaml:"postgres"`
+	RabbitMQ  RabbitMQConfig  `yaml:"rabbitmq"`
+}
+
+type AnalyticsConfig struct {
+	GRPCAddress string `yaml:"grpc_address"`
 }
 
 type PostgresConfig struct {

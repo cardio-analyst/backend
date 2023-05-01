@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 // possible score errors designations
@@ -18,8 +18,10 @@ const (
 
 func (r *Router) initScoreRoutes(customerAPI *echo.Group) {
 	score := customerAPI.Group("/score", r.identifyUser, r.verifyCustomer)
-	score.GET("/cveRisk", r.cveRisk)
-	score.GET("/idealAge", r.idealAge)
+	{
+		score.GET("/cveRisk", r.cveRisk)
+		score.GET("/idealAge", r.idealAge)
+	}
 }
 
 type getCVERiskResponse struct {

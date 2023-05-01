@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
 )
 
 func (c *Client) GenerateSecretKey(ctx context.Context, userLogin, userEmail string) (string, error) {

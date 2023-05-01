@@ -2,25 +2,38 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
-	domain "github.com/cardio-analyst/backend/internal/analytics/domain/model"
+	"github.com/cardio-analyst/backend/internal/analytics/ports/client"
 	"github.com/cardio-analyst/backend/internal/analytics/ports/storage"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 type FeedbackService struct {
 	repository storage.FeedbackRepository
+	consumer   client.FeedbackConsumer
 }
 
-func NewFeedbackService(repository storage.FeedbackRepository) *FeedbackService {
+func NewFeedbackService(repository storage.FeedbackRepository, consumer client.FeedbackConsumer) *FeedbackService {
 	return &FeedbackService{
 		repository: repository,
+		consumer:   consumer,
 	}
 }
 
-func (s *FeedbackService) MessagesHandler() func(data []byte) error {
+func (s *FeedbackService) ListenToFeedbackMessages() error {
+	handler := s.feedbackMessagesHandler()
+
+	if err := s.consumer.Consume(handler); err != nil {
+		return fmt.Errorf("consuming feedback messages: %w", err)
+	}
+
+	return nil
+}
+
+func (s *FeedbackService) feedbackMessagesHandler() func(data []byte) error {
 	return func(data []byte) error {
 		var message model.MessageFeedback
 		if err := json.Unmarshal(data, &message); err != nil {
@@ -28,7 +41,7 @@ func (s *FeedbackService) MessagesHandler() func(data []byte) error {
 			return err
 		}
 
-		feedback := domain.Feedback{
+		feedback := model.Feedback{
 			UserID:         message.UserID,
 			UserFirstName:  message.UserFirstName,
 			UserLastName:   message.UserLastName,
@@ -46,4 +59,8 @@ func (s *FeedbackService) MessagesHandler() func(data []byte) error {
 
 		return nil
 	}
+}
+
+func (s *FeedbackService) FindAll() ([]model.Feedback, error) {
+	return s.repository.FindAll()
 }

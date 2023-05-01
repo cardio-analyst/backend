@@ -6,7 +6,7 @@ import (
 	"github.com/alexedwards/argon2id"
 
 	"github.com/cardio-analyst/backend/internal/auth/port/storage"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 type UserService struct {

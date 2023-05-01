@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 // UserRepository encapsulates the logic of manipulations on the entity "User" in the database.

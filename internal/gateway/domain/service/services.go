@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/cardio-analyst/backend/internal/gateway/config"
-	domain "github.com/cardio-analyst/backend/internal/gateway/domain/model"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/storage"
@@ -13,10 +12,14 @@ var _ service.Services = (*Services)(nil)
 
 // Services implements service.Services interface.
 type Services struct {
-	cfg            config.Config
-	storage        storage.Storage
-	rabbitMQClient client.RabbitMQPublisher
-	authClient     client.Auth
+	cfg     config.Config
+	storage storage.Storage
+
+	emailPublisher    client.EmailPublisher
+	feedbackPublisher client.FeedbackPublisher
+
+	authClient      client.Auth
+	analyticsClient client.Analytics
 
 	userService            service.UserService
 	authService            service.AuthService
@@ -28,25 +31,27 @@ type Services struct {
 	scoreService           service.ScoreService
 	recommendationsService service.RecommendationsService
 	emailService           service.EmailService
-
-	reportServices ReportServices
+	feedbackService        service.FeedbackService
+	reportService          service.ReportService
 }
 
-type ReportServices struct {
-	PDF service.ReportService
+type ServicesOptions struct {
+	Config            config.Config
+	Storage           storage.Storage
+	EmailPublisher    client.EmailPublisher
+	FeedbackPublisher client.FeedbackPublisher
+	AuthClient        client.Auth
+	AnalyticsClient   client.Analytics
 }
 
-func NewServices(
-	cfg config.Config,
-	storage storage.Storage,
-	rabbitMQClient client.RabbitMQPublisher,
-	authClient client.Auth,
-) *Services {
+func NewServices(opts ServicesOptions) *Services {
 	return &Services{
-		cfg:            cfg,
-		storage:        storage,
-		rabbitMQClient: rabbitMQClient,
-		authClient:     authClient,
+		cfg:               opts.Config,
+		storage:           opts.Storage,
+		emailPublisher:    opts.EmailPublisher,
+		feedbackPublisher: opts.FeedbackPublisher,
+		authClient:        opts.AuthClient,
+		analyticsClient:   opts.AnalyticsClient,
 	}
 }
 
@@ -152,27 +157,32 @@ func (s *Services) Email() service.EmailService {
 		return s.emailService
 	}
 
-	s.emailService = NewEmailService(s.rabbitMQClient)
+	s.emailService = NewEmailService(s.emailPublisher)
 
 	return s.emailService
 }
 
-func (s *Services) Report(reportType domain.ReportType) service.ReportService {
-	switch reportType {
-	case domain.PDF:
-		if s.reportServices.PDF != nil {
-			return s.reportServices.PDF
-		}
-
-		s.reportServices.PDF = NewPDFReportService(
-			s.Recommendations(),
-			s.storage.Analyses(),
-			s.storage.BasicIndicators(),
-			s.authClient,
-		)
-
-		return s.reportServices.PDF
-	default:
-		return nil
+func (s *Services) Feedback() service.FeedbackService {
+	if s.feedbackService != nil {
+		return s.feedbackService
 	}
+
+	s.feedbackService = NewFeedbackService(s.feedbackPublisher, s.analyticsClient)
+
+	return s.feedbackService
+}
+
+func (s *Services) Report() service.ReportService {
+	if s.reportService != nil {
+		return s.reportService
+	}
+
+	s.reportService = NewPDFReportService(
+		s.Recommendations(),
+		s.storage.Analyses(),
+		s.storage.BasicIndicators(),
+		s.authClient,
+	)
+
+	return s.reportService
 }

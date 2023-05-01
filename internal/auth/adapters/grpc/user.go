@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
-	"github.com/cardio-analyst/backend/pkg/model"
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb.SaveUserResponse, error) {

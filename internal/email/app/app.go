@@ -8,10 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/cardio-analyst/backend/internal/email/adapters/rabbitmq"
 	"github.com/cardio-analyst/backend/internal/email/adapters/smtp"
 	"github.com/cardio-analyst/backend/internal/email/config"
-	"github.com/cardio-analyst/backend/internal/email/domain/service"
+	domain "github.com/cardio-analyst/backend/internal/email/domain/service"
+	"github.com/cardio-analyst/backend/internal/email/ports/service"
+	"github.com/cardio-analyst/backend/internal/pkg/rabbitmq"
 )
 
 func init() {
@@ -22,8 +23,8 @@ func init() {
 }
 
 type App struct {
-	rabbitMQClient *rabbitmq.Client
-	closers        []io.Closer
+	emailService service.Email
+	closers      []io.Closer
 }
 
 func New(configPath string) *App {
@@ -37,26 +38,24 @@ func New(configPath string) *App {
 		log.Fatalf("connecting to SMTP server: %v", err)
 	}
 
-	emailService := service.NewEmailService(smtpClient)
-	rmqMessagesHandler := emailService.EmailMessagesHandler()
-
 	rabbitmqClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
-		User:            cfg.RabbitMQ.User,
-		Password:        cfg.RabbitMQ.Password,
-		Host:            cfg.RabbitMQ.Host,
-		Port:            cfg.RabbitMQ.Port,
-		ExchangeName:    cfg.RabbitMQ.Exchange,
-		RoutingKey:      cfg.RabbitMQ.RoutingKey,
-		QueueName:       cfg.RabbitMQ.Queue,
-		MessagesHandler: rmqMessagesHandler,
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.Exchange,
+		RoutingKey:   cfg.RabbitMQ.RoutingKey,
+		QueueName:    cfg.RabbitMQ.Queue,
 	})
 	if err = rabbitmqClient.Connect(); err != nil {
-		log.Fatalf("initializing RabbitMQ client: %v", err)
+		log.Fatalf("connecting to RabbitMQ: %v", err)
 	}
 
+	emailService := domain.NewEmailService(smtpClient, rabbitmqClient)
+
 	return &App{
-		rabbitMQClient: rabbitmqClient,
-		closers:        []io.Closer{rabbitmqClient, smtpClient},
+		emailService: emailService,
+		closers:      []io.Closer{rabbitmqClient, smtpClient},
 	}
 }
 
@@ -65,7 +64,7 @@ func (a *App) Start() {
 
 	var group errgroup.Group
 	group.Go(func() error {
-		return a.rabbitMQClient.Consume()
+		return a.emailService.ListenToEmailMessages()
 	})
 
 	if err := group.Wait(); err != nil {

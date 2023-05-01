@@ -1,5 +1,8 @@
 package service
 
+import "github.com/cardio-analyst/backend/internal/pkg/model"
+
 type FeedbackService interface {
-	MessagesHandler() func(data []byte) error
+	ListenToFeedbackMessages() error
+	FindAll() ([]model.Feedback, error)
 }
