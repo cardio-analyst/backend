@@ -1,6 +1,6 @@
 .PHONY: compose-up
 compose-up:
-	docker-compose up
+	docker-compose -f deployments/docker-compose.yml up
 
 .PHONY: tidy
 tidy:
@@ -8,9 +8,13 @@ tidy:
 
 .PHONY: proto-auth
 proto-auth:
-	protoc -I pkg/api/proto/auth --go_out=pkg/api/proto/auth --go-grpc_out=pkg/api/proto/auth pkg/api/proto/auth/*.proto
+	protoc -I api/proto/auth --go_out=api/proto/auth --go-grpc_out=api/proto/auth api/proto/auth/*.proto
+
+.PHONY: proto-analytics
+proto-analytics:
+	protoc -I api/proto/analytics --go_out=api/proto/analytics --go-grpc_out=api/proto/analytics api/proto/analytics/*.proto
 
 .PHONY: proto
-proto: proto-auth
+proto: proto-auth proto-analytics
 
 .DEFAULT_GOAL := compose-up

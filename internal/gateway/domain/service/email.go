@@ -9,7 +9,7 @@ import (
 
 	"github.com/cardio-analyst/backend/internal/gateway/ports/client"
 	"github.com/cardio-analyst/backend/internal/gateway/ports/service"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 const (
@@ -29,10 +29,10 @@ const (
 var _ service.EmailService = (*EmailService)(nil)
 
 type EmailService struct {
-	publisher client.RabbitMQPublisher
+	publisher client.EmailPublisher
 }
 
-func NewEmailService(publisher client.RabbitMQPublisher) *EmailService {
+func NewEmailService(publisher client.EmailPublisher) *EmailService {
 	return &EmailService{
 		publisher: publisher,
 	}
@@ -68,7 +68,7 @@ func (s *EmailService) SendReport(receivers []string, reportFilePath string, use
 
 	rmqMessageRaw, err := json.Marshal(message)
 	if err != nil {
-		return fmt.Errorf("serializing RMQ publisher message: %v", err)
+		return fmt.Errorf("serializing RMQ message: %v", err)
 	}
 
 	return s.publisher.Publish(rmqMessageRaw)

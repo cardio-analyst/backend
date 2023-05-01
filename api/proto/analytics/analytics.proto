@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package analytics;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "./;analytics";
+
+service AnalyticsService {
+  rpc FindAllFeedbacks(google.protobuf.Empty) returns (FindAllFeedbacksResponse);
+}
+
+message Feedback {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  string user_first_name = 3;
+  string user_last_name = 4;
+  optional string user_middle_name = 5;
+  string user_login = 6;
+  string user_email = 7;
+  int32 mark = 8;
+  optional string message = 9;
+  optional google.protobuf.Timestamp created_at = 10;
+}
+
+message FindAllFeedbacksResponse {
+  repeated Feedback feedbacks = 1;
+}

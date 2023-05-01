@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
-	"github.com/cardio-analyst/backend/pkg/model"
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (c *Client) SaveUser(ctx context.Context, user model.User) error {

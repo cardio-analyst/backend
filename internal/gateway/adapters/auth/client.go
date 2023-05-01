@@ -1,6 +1,8 @@
 package auth
 
-import pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
+import (
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
+)
 
 type Client struct {
 	client pb.AuthServiceClient

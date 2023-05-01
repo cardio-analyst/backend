@@ -27,9 +27,11 @@ const (
 
 func (r *Router) initAnalysesRoutes(customerAPI *echo.Group) {
 	analyses := customerAPI.Group("/analyses", r.identifyUser, r.verifyCustomer)
-	analyses.GET("", r.getUserAnalyses)
-	analyses.POST("", r.createAnalysisRecord)
-	analyses.PUT(fmt.Sprintf("/:%v", analysisIDPathKey), r.updateAnalysisRecord)
+	{
+		analyses.GET("", r.getUserAnalyses)
+		analyses.POST("", r.createAnalysisRecord)
+		analyses.PUT(fmt.Sprintf("/:%v", analysisIDPathKey), r.updateAnalysisRecord)
+	}
 }
 
 type getUserAnalysesResponse struct {

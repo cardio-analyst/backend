@@ -1,0 +1,115 @@
+services:
+  gateway:
+    build:
+      context: ..
+      dockerfile: build/gateway/Dockerfile
+    container_name: gateway
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    env_file:
+      - gateway.env
+    depends_on:
+      - rabbitmq
+      - recommendations-db
+      - auth
+
+  auth:
+    build:
+      context: ..
+      dockerfile: build/auth/Dockerfile
+    container_name: auth
+    restart: on-failure
+    ports:
+      - "9000:9000"
+    env_file:
+      - auth.env
+    depends_on:
+      - auth-db
+
+  analytics:
+    build:
+      context: ..
+      dockerfile: build/analytics/Dockerfile
+    container_name: analytics
+    restart: on-failure
+    ports:
+      - "9001:9001"
+    env_file:
+      - analytics.env
+    depends_on:
+      - rabbitmq
+      - analytics-db
+
+  email:
+    build:
+      context: ..
+      dockerfile: build/email/Dockerfile
+    container_name: email
+    restart: on-failure
+    env_file:
+      - email.env
+    depends_on:
+      - rabbitmq
+
+  recommendations-db:
+    image: postgres
+    container_name: recommendations-db
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    env_file:
+      - recommendations-db.env
+    volumes:
+      - recommendations-db_volume:/var/lib/postgresql/data
+
+  analytics-db:
+    image: postgres
+    container_name: analytics-db
+    restart: on-failure
+    ports:
+      - "5433:5433"
+    env_file:
+      - analytics-db.env
+    volumes:
+      - analytics-db_volume:/var/lib/postgresql/data
+
+  auth-db:
+    image: mongo
+    container_name: auth-db
+    restart: on-failure
+    ports:
+      - "27017:27017"
+    env_file:
+      - auth-db.env
+    volumes:
+      - auth-db_volume:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    env_file:
+      - mongo-express.env
+    depends_on:
+      - auth-db
+
+  rabbitmq:
+    image: rabbitmq:3.11.13-management
+    container_name: rabbitmq
+    restart: on-failure
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file:
+      - rabbitmq.env
+    volumes:
+      - rabbitmq_volume:/var/lib/rabbitmq
+
+volumes:
+  recommendations-db_volume:
+  analytics-db_volume:
+  auth-db_volume:
+  rabbitmq_volume:

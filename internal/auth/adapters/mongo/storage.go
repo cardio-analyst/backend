@@ -70,6 +70,6 @@ func (s *Storage) Sessions() storage.SessionRepository {
 	return s.sessionRepository
 }
 
-func (s *Storage) Close(ctx context.Context) error {
-	return s.counters.Database().Client().Disconnect(ctx)
+func (s *Storage) Close() error {
+	return s.counters.Database().Client().Disconnect(context.Background())
 }

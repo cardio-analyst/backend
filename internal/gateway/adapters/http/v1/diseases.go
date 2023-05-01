@@ -10,8 +10,10 @@ import (
 
 func (r *Router) initDiseasesRoutes(customerAPI *echo.Group) {
 	diseases := customerAPI.Group("/diseases", r.identifyUser, r.verifyCustomer)
-	diseases.GET("/info", r.getDiseasesInfo)
-	diseases.PUT("/edit", r.editDiseasesInfo)
+	{
+		diseases.GET("/info", r.getDiseasesInfo)
+		diseases.PUT("/edit", r.editDiseasesInfo)
+	}
 }
 
 func (r *Router) getDiseasesInfo(c echo.Context) error {

@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
 	domain "github.com/cardio-analyst/backend/internal/auth/domain/model"
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (s *Server) GetTokens(ctx context.Context, request *pb.GetTokensRequest) (*pb.TokensResponse, error) {

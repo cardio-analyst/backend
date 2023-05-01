@@ -22,11 +22,14 @@ func (r *Router) InitRoutes() {
 	// /:userRole/auth/*
 	r.initAuthRoutes()
 
+	// /:userRole/profile/*
+	r.initProfileRoutes()
+
+	// /:userRole/feedback/*
+	r.initFeedbackRoutes()
+
 	// /customer/*
 	r.initCustomerRoutes()
-
-	// /moderator/*
-	r.initModeratorRoutes()
 
 	// /administrator/*
 	r.initAdministratorRoutes()
@@ -34,36 +37,33 @@ func (r *Router) InitRoutes() {
 
 func (r *Router) initCustomerRoutes() {
 	customerAPI := r.api.Group("/customer")
+	{
+		// /diseases/*
+		r.initDiseasesRoutes(customerAPI)
 
-	// /profile/*
-	r.initProfileRoutes(customerAPI)
+		// /analyses/*
+		r.initAnalysesRoutes(customerAPI)
 
-	// /diseases/*
-	r.initDiseasesRoutes(customerAPI)
+		// /lifestyles/*
+		r.initLifestylesRoutes(customerAPI)
 
-	// /analyses/*
-	r.initAnalysesRoutes(customerAPI)
+		// /basicIndicators/*
+		r.initBasicIndicatorsRoutes(customerAPI)
 
-	// /lifestyles/*
-	r.initLifestylesRoutes(customerAPI)
+		// /score/*
+		r.initScoreRoutes(customerAPI)
 
-	// /basicIndicators/*
-	r.initBasicIndicatorsRoutes(customerAPI)
+		// /recommendations/*
+		r.initRecommendationsRoutes(customerAPI)
 
-	// /score/*
-	r.initScoreRoutes(customerAPI)
-
-	// /recommendations/*
-	r.initRecommendationsRoutes(customerAPI)
-
-	// /tests/*
-	r.initQuestionnaireRoutes(customerAPI)
+		// /tests/*
+		r.initQuestionnaireRoutes(customerAPI)
+	}
 }
-
-func (r *Router) initModeratorRoutes() {}
 
 func (r *Router) initAdministratorRoutes() {
 	adminAPI := r.api.Group("/administrator")
-
-	adminAPI.POST("/secretKey", r.generateSecretKey, r.identifyUser, r.verifyAdministrator)
+	{
+		adminAPI.POST("/secretKey", r.generateSecretKey, r.identifyUser, r.verifyAdministrator)
+	}
 }

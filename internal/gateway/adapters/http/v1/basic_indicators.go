@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	common "github.com/cardio-analyst/backend/internal/gateway/domain/model"
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 const basicIndicatorsIDPathKey = "basicIndicatorsID"
@@ -30,9 +30,11 @@ const (
 
 func (r *Router) initBasicIndicatorsRoutes(customerAPI *echo.Group) {
 	basicIndicators := customerAPI.Group("/basicIndicators", r.identifyUser, r.verifyCustomer)
-	basicIndicators.GET("", r.getUserBasicIndicators)
-	basicIndicators.POST("", r.createBasicIndicatorsRecord)
-	basicIndicators.PUT(fmt.Sprintf("/:%v", basicIndicatorsIDPathKey), r.updateBasicIndicatorsRecord)
+	{
+		basicIndicators.GET("", r.getUserBasicIndicators)
+		basicIndicators.POST("", r.createBasicIndicatorsRecord)
+		basicIndicators.PUT(fmt.Sprintf("/:%v", basicIndicatorsIDPathKey), r.updateBasicIndicatorsRecord)
+	}
 }
 
 type getUserBasicIndicatorsResponse struct {

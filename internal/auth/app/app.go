@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"io"
 	"net"
 	"os"
 
@@ -9,11 +10,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
+	pb "github.com/cardio-analyst/backend/api/proto/auth"
 	grpcserver "github.com/cardio-analyst/backend/internal/auth/adapters/grpc"
 	"github.com/cardio-analyst/backend/internal/auth/adapters/mongo"
 	"github.com/cardio-analyst/backend/internal/auth/config"
 	"github.com/cardio-analyst/backend/internal/auth/domain/service"
-	pb "github.com/cardio-analyst/backend/pkg/api/proto/auth"
 )
 
 func init() {
@@ -24,8 +25,8 @@ func init() {
 }
 
 type App struct {
-	storage *mongo.Storage
 	server  *grpcserver.Server
+	closers []io.Closer
 }
 
 func New(configPath string) *App {
@@ -51,8 +52,8 @@ func New(configPath string) *App {
 	pb.RegisterAuthServiceServer(grpcServer, server)
 
 	return &App{
-		storage: storage,
 		server:  server,
+		closers: []io.Closer{server, storage},
 	}
 }
 
@@ -65,16 +66,16 @@ func (a *App) Start() {
 	log.Info("the app is running")
 
 	if err := group.Wait(); err != nil {
-		log.Fatalf("grpc server: %v", err)
+		log.Fatalf("app: %v", err)
 	}
 }
 
-func (a *App) Stop(ctx context.Context) {
-	if err := a.server.Close(); err != nil {
-		log.Warnf("failed to stop grpc server: %v", err)
+func (a *App) Stop(_ context.Context) {
+	for _, closer := range a.closers {
+		if err := closer.Close(); err != nil {
+			log.Warnf("failed to stop the closer: %T: %v", closer, err)
+		}
 	}
-	if err := a.storage.Close(ctx); err != nil {
-		log.Warnf("failed to close mongodb connection: %v", err)
-	}
+
 	log.Info("the app has been stopped")
 }

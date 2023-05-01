@@ -8,14 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cardio-analyst/backend/pkg/model"
-)
-
-const (
-	userRolePathKey                   = "userRole"
-	userRoleCustomerPathParamKey      = "customer"
-	userRoleModeratorPathParamKey     = "moderator"
-	userRoleAdministratorPathParamKey = "administrator"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 // possible auth errors designations
@@ -37,31 +30,10 @@ const (
 
 func (r *Router) initAuthRoutes() {
 	auth := r.api.Group(fmt.Sprintf("/:%v/auth", userRolePathKey), r.parseUserRole)
-	auth.POST("/signUp", r.signUp)
-	auth.POST("/signIn", r.signIn)
-	auth.POST("/refreshTokens", r.refreshTokens)
-}
-
-func (r *Router) parseUserRole(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var userRole model.UserRole
-
-		userRoleStr := c.Param(userRolePathKey)
-		switch userRoleStr {
-		case userRoleCustomerPathParamKey:
-			userRole = model.UserRoleCustomer
-		case userRoleModeratorPathParamKey:
-			userRole = model.UserRoleModerator
-		case userRoleAdministratorPathParamKey:
-			userRole = model.UserRoleAdministrator
-		default:
-			err := fmt.Errorf("undefined user role: %q", userRoleStr)
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
-		}
-
-		c.Set(ctxKeyUserRole, userRole)
-
-		return next(c)
+	{
+		auth.POST("/signUp", r.signUp)
+		auth.POST("/signIn", r.signIn)
+		auth.POST("/refreshTokens", r.refreshTokens)
 	}
 }
 
@@ -144,7 +116,7 @@ func (r *Router) signIn(c echo.Context) error {
 		case errors.Is(err, model.ErrWrongCredentials):
 			return c.JSON(http.StatusBadRequest, newError(c, err, errorWrongCredentials))
 		case errors.Is(err, model.ErrForbiddenByRole):
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorForbiddenByRole))
+			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}
@@ -175,7 +147,7 @@ func (r *Router) refreshTokens(c echo.Context) error {
 		case errors.Is(err, model.ErrIPIsNotInWhitelist):
 			return c.JSON(http.StatusForbidden, newError(c, err, errorIPNotAllowed))
 		case errors.Is(err, model.ErrForbiddenByRole):
-			return c.JSON(http.StatusBadRequest, newError(c, err, errorForbiddenByRole))
+			return c.JSON(http.StatusForbidden, newError(c, err, errorForbiddenByRole))
 		default:
 			return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 		}

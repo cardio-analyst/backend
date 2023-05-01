@@ -1,0 +1,15 @@
+analytics:
+  grpc_address: ":9001"
+
+postgres:
+  uri: "postgres://analytics-db/postgres?sslmode=disable&user=postgres&password=qwerty"
+
+# describes RabbitMQ consumer configuration
+rabbitmq:
+  user: "rmuser"
+  password: "rmpassword"
+  host: "rabbitmq"
+  port: 5672
+  exchange: "cardio-analyst"
+  routing_key: "feedback"
+  queue: "feedback"

@@ -10,7 +10,7 @@ const (
 	resultRegistered = "Registered"
 	resultCreated    = "Created"
 	resultUpdated    = "Updated"
-	resultEmailSent  = "Sent"
+	resultSent       = "Sent"
 )
 
 // possible errors designations

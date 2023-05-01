@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 type AuthService interface {

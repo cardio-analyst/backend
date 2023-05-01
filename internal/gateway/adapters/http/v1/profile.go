@@ -2,17 +2,20 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cardio-analyst/backend/pkg/model"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
-func (r *Router) initProfileRoutes(customerAPI *echo.Group) {
-	profile := customerAPI.Group("/profile", r.identifyUser, r.verifyCustomer)
-	profile.GET("/info", r.getProfileInfo)
-	profile.PUT("/edit", r.editProfileInfo)
+func (r *Router) initProfileRoutes() {
+	profile := r.api.Group(fmt.Sprintf("/:%v/profile", userRolePathKey), r.identifyUser, r.parseUserRole)
+	{
+		profile.GET("/info", r.getProfileInfo)
+		profile.PUT("/edit", r.editProfileInfo)
+	}
 }
 
 func (r *Router) getProfileInfo(c echo.Context) error {

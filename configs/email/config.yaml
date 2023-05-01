@@ -7,8 +7,8 @@ email:
 
 # describes RabbitMQ consumer configuration
 rabbitmq:
-  user: "guest"
-  password: "guest"
+  user: "rmuser"
+  password: "rmpassword"
   host: "rabbitmq"
   port: 5672
   exchange: "cardio-analyst"

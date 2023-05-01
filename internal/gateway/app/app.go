@@ -5,19 +5,21 @@ import (
 	"io"
 	"os"
 
-	pbauth "github.com/cardio-analyst/backend/pkg/api/proto/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	pbanalytics "github.com/cardio-analyst/backend/api/proto/analytics"
+	pbauth "github.com/cardio-analyst/backend/api/proto/auth"
+	"github.com/cardio-analyst/backend/internal/gateway/adapters/analytics"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/auth"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/http"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/migrator"
 	"github.com/cardio-analyst/backend/internal/gateway/adapters/postgres"
-	"github.com/cardio-analyst/backend/internal/gateway/adapters/rabbitmq"
 	"github.com/cardio-analyst/backend/internal/gateway/config"
 	"github.com/cardio-analyst/backend/internal/gateway/domain/service"
+	"github.com/cardio-analyst/backend/internal/pkg/rabbitmq"
 )
 
 func init() {
@@ -39,17 +41,30 @@ func New(configPath string) *App {
 		log.Fatalf("failed to load config data: %v", err)
 	}
 
-	rabbitMQClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
+	emailPublisher := rabbitmq.NewClient(rabbitmq.ClientOptions{
 		User:         cfg.RabbitMQ.User,
 		Password:     cfg.RabbitMQ.Password,
 		Host:         cfg.RabbitMQ.Host,
 		Port:         cfg.RabbitMQ.Port,
-		ExchangeName: cfg.RabbitMQ.Exchange,
-		RoutingKey:   cfg.RabbitMQ.RoutingKey,
-		QueueName:    cfg.RabbitMQ.Queue,
+		ExchangeName: cfg.RabbitMQ.EmailsQueue.Exchange,
+		RoutingKey:   cfg.RabbitMQ.EmailsQueue.RoutingKey,
+		QueueName:    cfg.RabbitMQ.EmailsQueue.Queue,
 	})
-	if err = rabbitMQClient.Connect(); err != nil {
-		log.Fatalf("connecting to RabbitMQ: %v", err)
+	if err = emailPublisher.Connect(); err != nil {
+		log.Fatalf("emails publisher: connecting to RabbitMQ: %v", err)
+	}
+
+	feedbackPublisher := rabbitmq.NewClient(rabbitmq.ClientOptions{
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.FeedbackQueue.Exchange,
+		RoutingKey:   cfg.RabbitMQ.FeedbackQueue.RoutingKey,
+		QueueName:    cfg.RabbitMQ.FeedbackQueue.Queue,
+	})
+	if err = feedbackPublisher.Connect(); err != nil {
+		log.Fatalf("feedback publisher: connecting to RabbitMQ: %v", err)
 	}
 
 	var postgresMigrator *migrator.PostgresMigrator
@@ -75,16 +90,30 @@ func New(configPath string) *App {
 	}
 	authGRPCClient := pbauth.NewAuthServiceClient(authGRPCConn)
 
-	authClient := auth.NewClient(authGRPCClient)
+	analyticsGRPCConn, err := grpc.Dial(cfg.Services.Analytics.GRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to connect to analytics gRPC server: %v", err)
+	}
+	analyticsGRPCClient := pbanalytics.NewAnalyticsServiceClient(analyticsGRPCConn)
 
-	services := service.NewServices(cfg, storage, rabbitMQClient, authClient)
+	authClient := auth.NewClient(authGRPCClient)
+	analyticsClient := analytics.NewClient(analyticsGRPCClient)
+
+	services := service.NewServices(service.ServicesOptions{
+		Config:            cfg,
+		Storage:           storage,
+		EmailPublisher:    emailPublisher,
+		FeedbackPublisher: feedbackPublisher,
+		AuthClient:        authClient,
+		AnalyticsClient:   analyticsClient,
+	})
 
 	srv := http.NewServer(services)
 
 	return &App{
 		config:  cfg,
 		server:  srv,
-		closers: []io.Closer{srv, storage, rabbitMQClient, authGRPCConn},
+		closers: []io.Closer{srv, emailPublisher, feedbackPublisher, authGRPCConn, analyticsGRPCConn, storage},
 	}
 }
 

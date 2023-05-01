@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/cardio-analyst/backend/internal/gateway/domain/common"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -24,20 +25,20 @@ var (
 )
 
 type BasicIndicators struct {
-	ID                           uint64   `json:"id,omitempty" db:"id"`
-	UserID                       uint64   `json:"-" db:"user_id"`
-	Weight                       *float64 `json:"weight" db:"weight"`
-	Height                       *float64 `json:"height" db:"height"`
-	BodyMassIndex                *float64 `json:"bodyMassIndex" db:"body_mass_index"`
-	WaistSize                    *float64 `json:"waistSize" db:"waist_size"`
-	Gender                       *string  `json:"gender" db:"gender"`
-	SBPLevel                     *float64 `json:"sbpLevel" db:"sbp_level"`
-	Smoking                      *bool    `json:"smoking" db:"smoking"`
-	TotalCholesterolLevel        *float64 `json:"totalCholesterolLevel" db:"total_cholesterol_level"`
-	CVEventsRiskValue            *int64   `json:"cvEventsRiskValue" db:"cv_events_risk_value"`
-	IdealCardiovascularAgesRange *string  `json:"idealCardiovascularAgesRange" db:"ideal_cardiovascular_ages_range"`
-	Scale                        string   `json:"scale" db:"-"`
-	CreatedAt                    Datetime `json:"createdAt" db:"created_at"`
+	ID                           uint64         `json:"id,omitempty" db:"id"`
+	UserID                       uint64         `json:"-" db:"user_id"`
+	Weight                       *float64       `json:"weight" db:"weight"`
+	Height                       *float64       `json:"height" db:"height"`
+	BodyMassIndex                *float64       `json:"bodyMassIndex" db:"body_mass_index"`
+	WaistSize                    *float64       `json:"waistSize" db:"waist_size"`
+	Gender                       *string        `json:"gender" db:"gender"`
+	SBPLevel                     *float64       `json:"sbpLevel" db:"sbp_level"`
+	Smoking                      *bool          `json:"smoking" db:"smoking"`
+	TotalCholesterolLevel        *float64       `json:"totalCholesterolLevel" db:"total_cholesterol_level"`
+	CVEventsRiskValue            *int64         `json:"cvEventsRiskValue" db:"cv_events_risk_value"`
+	IdealCardiovascularAgesRange *string        `json:"idealCardiovascularAgesRange" db:"ideal_cardiovascular_ages_range"`
+	Scale                        string         `json:"scale" db:"-"`
+	CreatedAt                    model.Datetime `json:"createdAt" db:"created_at"`
 }
 
 func (a BasicIndicators) Validate(updating bool) error {

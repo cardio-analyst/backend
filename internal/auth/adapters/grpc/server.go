@@ -5,8 +5,8 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/cardio-analyst/backend/api/proto/auth"
 	"github.com/cardio-analyst/backend/internal/auth/port/service"
-	"github.com/cardio-analyst/backend/pkg/api/proto/auth"
 )
 
 type Server struct {

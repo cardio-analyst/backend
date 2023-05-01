@@ -1,6 +1,6 @@
 package service
 
-import "github.com/cardio-analyst/backend/pkg/model"
+import "github.com/cardio-analyst/backend/internal/pkg/model"
 
 type ValidationService interface {
 	ValidateUser(user model.User) error
