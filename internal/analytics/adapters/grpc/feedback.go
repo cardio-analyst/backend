@@ -18,13 +18,13 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 	result := make([]*pb.Feedback, 0, len(feedbacks))
 	for _, feedback := range feedbacks {
 		var userMiddleName *string
-		if feedback.UserMiddleName != "" {
-			userMiddleName = &feedback.UserMiddleName
+		if middleName := feedback.UserMiddleName; middleName != "" {
+			userMiddleName = &middleName
 		}
 
-		var message *string
-		if feedback.Message != "" {
-			message = &feedback.Message
+		var textMessage *string
+		if message := feedback.Message; message != "" {
+			textMessage = &message
 		}
 
 		createdAt := timestamppb.New(feedback.CreatedAt.Time)
@@ -38,7 +38,7 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 			UserLogin:      feedback.UserLogin,
 			UserEmail:      feedback.UserEmail,
 			Mark:           int32(feedback.Mark),
-			Message:        message,
+			Message:        textMessage,
 			CreatedAt:      createdAt,
 		})
 	}
