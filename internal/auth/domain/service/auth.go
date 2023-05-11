@@ -200,13 +200,10 @@ func (s *AuthService) validateToken(token, signingKey string) (uint64, model.Use
 		return []byte(signingKey), nil
 	})
 	if err != nil {
-		if strings.Contains(err.Error(), "signature is invalid") {
-			return 0, "", model.ErrWrongToken
-		}
 		if strings.Contains(err.Error(), "token is expired by") {
 			return 0, "", model.ErrTokenIsExpired
 		}
-		return 0, "", err
+		return 0, "", model.ErrWrongToken
 	}
 
 	claims, ok := parsed.Claims.(*tokenClaims)

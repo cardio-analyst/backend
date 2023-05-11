@@ -14,6 +14,7 @@ import (
 
 func (s *Server) SaveUser(ctx context.Context, request *pb.SaveUserRequest) (*pb.SaveUserResponse, error) {
 	user := model.User{
+		ID:         request.GetId(),
 		Role:       model.UserRole(request.GetRole().String()),
 		Login:      request.GetLogin(),
 		Email:      request.GetEmail(),

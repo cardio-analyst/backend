@@ -38,6 +38,7 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 	}
 
 	request := &pb.SaveUserRequest{
+		Id:         user.ID,
 		Role:       role,
 		Login:      user.Login,
 		Email:      user.Email,
