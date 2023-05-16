@@ -34,6 +34,20 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 	return user, nil
 }
 
+func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
+	users, hasNextPage, err := s.authClient.GetUsers(ctx, criteria)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, user := range users {
+		// we don't show passwords to anyone
+		user.Password = ""
+	}
+
+	return users, hasNextPage, nil
+}
+
 func (s *UserService) Update(ctx context.Context, user model.User) error {
 	return s.authClient.SaveUser(ctx, user)
 }

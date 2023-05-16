@@ -71,6 +71,28 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 	return user, nil
 }
 
+func (s *UserService) GetList(ctx context.Context, limit, page int64) ([]model.User, bool, error) {
+	criteria := model.UserCriteria{
+		Limit: limit,
+		Page:  page,
+	}
+
+	users, err := s.users.FindAllByCriteria(ctx, criteria)
+	if err != nil {
+		return nil, false, err
+	}
+
+	var hasNextPage bool
+	if limit > 0 {
+		if len(users) == int(limit+1) {
+			users = users[:limit]
+			hasNextPage = true
+		}
+	}
+
+	return users, hasNextPage, nil
+}
+
 func generateHash(password string) (string, error) {
 	return argon2id.CreateHash(password, argon2id.DefaultParams)
 }

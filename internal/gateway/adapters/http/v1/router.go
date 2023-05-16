@@ -31,6 +31,9 @@ func (r *Router) InitRoutes() {
 	// /customer/*
 	r.initCustomerRoutes()
 
+	// /moderator/*
+	r.initModeratorRoutes()
+
 	// /administrator/*
 	r.initAdministratorRoutes()
 }
@@ -58,6 +61,14 @@ func (r *Router) initCustomerRoutes() {
 
 		// /tests/*
 		r.initQuestionnaireRoutes(customerAPI)
+	}
+}
+
+func (r *Router) initModeratorRoutes() {
+	moderatorAPI := r.api.Group("/moderator")
+	{
+		// /users/*
+		r.initUsersRoutes(moderatorAPI)
 	}
 }
 

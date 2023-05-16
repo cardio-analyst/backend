@@ -8,5 +8,6 @@ import (
 
 type UserService interface {
 	GetOne(ctx context.Context, criteria model.UserCriteria) (user model.User, err error)
+	GetList(ctx context.Context, criteria model.UserCriteria) (users []model.User, hasNextPage bool, err error)
 	Update(ctx context.Context, userData model.User) (err error)
 }

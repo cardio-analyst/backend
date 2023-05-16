@@ -10,6 +10,7 @@ option go_package = "./;auth";
 service AuthService {
   rpc SaveUser(SaveUserRequest) returns (SaveUserResponse);
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
   rpc IdentifyUser(IdentifyUserRequest) returns (IdentifyUserResponse);
 
   rpc GetTokens(GetTokensRequest) returns (TokensResponse);
@@ -101,6 +102,16 @@ message GetUserResponse {
     GetUserSuccessResponse success_response = 1;
     ErrorResponse error_response = 2;
   }
+}
+
+message GetUsersRequest {
+  int64 limit = 1;
+  int64 page = 2;
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+  bool has_next_page = 2;
 }
 
 message GetTokensRequest {

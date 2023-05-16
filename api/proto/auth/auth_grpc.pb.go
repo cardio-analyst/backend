@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	AuthService_SaveUser_FullMethodName          = "/auth.AuthService/SaveUser"
 	AuthService_GetUser_FullMethodName           = "/auth.AuthService/GetUser"
+	AuthService_GetUsers_FullMethodName          = "/auth.AuthService/GetUsers"
 	AuthService_IdentifyUser_FullMethodName      = "/auth.AuthService/IdentifyUser"
 	AuthService_GetTokens_FullMethodName         = "/auth.AuthService/GetTokens"
 	AuthService_RefreshTokens_FullMethodName     = "/auth.AuthService/RefreshTokens"
@@ -33,6 +34,7 @@ const (
 type AuthServiceClient interface {
 	SaveUser(ctx context.Context, in *SaveUserRequest, opts ...grpc.CallOption) (*SaveUserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	IdentifyUser(ctx context.Context, in *IdentifyUserRequest, opts ...grpc.CallOption) (*IdentifyUserResponse, error)
 	GetTokens(ctx context.Context, in *GetTokensRequest, opts ...grpc.CallOption) (*TokensResponse, error)
 	RefreshTokens(ctx context.Context, in *RefreshTokensRequest, opts ...grpc.CallOption) (*TokensResponse, error)
@@ -59,6 +61,15 @@ func (c *authServiceClient) SaveUser(ctx context.Context, in *SaveUserRequest, o
 func (c *authServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
 	out := new(GetUserResponse)
 	err := c.cc.Invoke(ctx, AuthService_GetUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
+	out := new(GetUsersResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetUsers_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +118,7 @@ func (c *authServiceClient) GenerateSecretKey(ctx context.Context, in *GenerateS
 type AuthServiceServer interface {
 	SaveUser(context.Context, *SaveUserRequest) (*SaveUserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	IdentifyUser(context.Context, *IdentifyUserRequest) (*IdentifyUserResponse, error)
 	GetTokens(context.Context, *GetTokensRequest) (*TokensResponse, error)
 	RefreshTokens(context.Context, *RefreshTokensRequest) (*TokensResponse, error)
@@ -123,6 +135,9 @@ func (UnimplementedAuthServiceServer) SaveUser(context.Context, *SaveUserRequest
 }
 func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedAuthServiceServer) IdentifyUser(context.Context, *IdentifyUserRequest) (*IdentifyUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IdentifyUser not implemented")
@@ -181,6 +196,24 @@ func _AuthService_GetUser_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUsers(ctx, req.(*GetUsersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -271,6 +304,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUser",
 			Handler:    _AuthService_GetUser_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _AuthService_GetUsers_Handler,
 		},
 		{
 			MethodName: "IdentifyUser",

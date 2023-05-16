@@ -119,24 +119,32 @@ func (c *Client) GetUser(ctx context.Context, criteria model.UserCriteria) (mode
 	}
 
 	user := response.GetSuccessResponse().GetUser()
+	return pbUser(user)
+}
 
-	role, err := pbUserRole(user.GetRole())
-	if err != nil {
-		return model.User{}, err
+func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
+	request := &pb.GetUsersRequest{
+		Limit: criteria.Limit,
+		Page:  criteria.Page,
 	}
 
-	return model.User{
-		ID:         user.GetId(),
-		Role:       role,
-		Login:      user.GetLogin(),
-		Email:      user.GetEmail(),
-		FirstName:  user.GetFirstName(),
-		LastName:   user.GetLastName(),
-		Password:   user.PasswordHash,
-		MiddleName: user.GetMiddleName(),
-		Region:     user.GetRegion(),
-		BirthDate:  model.Date{Time: user.GetBirthDate().AsTime()},
-	}, nil
+	response, err := c.client.GetUsers(ctx, request)
+	if err != nil {
+		return nil, false, err
+	}
+
+	users := make([]model.User, 0, len(response.GetUsers()))
+	for _, userPB := range response.GetUsers() {
+		var user model.User
+		user, err = pbUser(userPB)
+		if err != nil {
+			return nil, false, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, response.GetHasNextPage(), nil
 }
 
 func (c *Client) IdentifyUser(ctx context.Context, accessToken string) (uint64, model.UserRole, error) {
@@ -168,6 +176,26 @@ func (c *Client) IdentifyUser(ctx context.Context, accessToken string) (uint64, 
 	}
 
 	return successResponse.UserId, role, nil
+}
+
+func pbUser(user *pb.User) (model.User, error) {
+	role, err := pbUserRole(user.GetRole())
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return model.User{
+		ID:         user.GetId(),
+		Role:       role,
+		Login:      user.GetLogin(),
+		Email:      user.GetEmail(),
+		FirstName:  user.GetFirstName(),
+		LastName:   user.GetLastName(),
+		Password:   user.PasswordHash,
+		MiddleName: user.GetMiddleName(),
+		Region:     user.GetRegion(),
+		BirthDate:  model.Date{Time: user.GetBirthDate().AsTime()},
+	}, nil
 }
 
 func pbUserRole(userRolePB pb.UserRole) (model.UserRole, error) {

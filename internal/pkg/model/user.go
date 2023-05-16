@@ -80,5 +80,7 @@ type UserCriteria struct {
 	Login             string
 	Email             string
 	PasswordHash      string
+	Limit             int64
+	Page              int64
 	CriteriaSeparator CriteriaSeparator // required, takes value of CriteriaSeparatorAND or CriteriaSeparatorOR
 }

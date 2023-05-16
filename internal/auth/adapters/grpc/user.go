@@ -121,6 +121,16 @@ func (s *Server) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.G
 }
 
 func getUserSuccessResponse(user model.User) *pb.GetUserResponse {
+	return &pb.GetUserResponse{
+		Response: &pb.GetUserResponse_SuccessResponse{
+			SuccessResponse: &pb.GetUserSuccessResponse{
+				User: userPB(user),
+			},
+		},
+	}
+}
+
+func userPB(user model.User) *pb.User {
 	var role pb.UserRole
 	switch user.Role {
 	case model.UserRoleCustomer:
@@ -133,23 +143,17 @@ func getUserSuccessResponse(user model.User) *pb.GetUserResponse {
 
 	birthDate := timestamppb.New(user.BirthDate.Time)
 
-	return &pb.GetUserResponse{
-		Response: &pb.GetUserResponse_SuccessResponse{
-			SuccessResponse: &pb.GetUserSuccessResponse{
-				User: &pb.User{
-					Id:           user.ID,
-					Role:         role,
-					Login:        user.Login,
-					Email:        user.Email,
-					FirstName:    user.FirstName,
-					LastName:     user.LastName,
-					PasswordHash: user.Password,
-					MiddleName:   &user.MiddleName,
-					Region:       &user.Region,
-					BirthDate:    birthDate,
-				},
-			},
-		},
+	return &pb.User{
+		Id:           user.ID,
+		Role:         role,
+		Login:        user.Login,
+		Email:        user.Email,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		PasswordHash: user.Password,
+		MiddleName:   &user.MiddleName,
+		Region:       &user.Region,
+		BirthDate:    birthDate,
 	}
 }
 
@@ -161,6 +165,27 @@ func getUserErrorResponse(errorCode pb.ErrorCode) *pb.GetUserResponse {
 			},
 		},
 	}
+}
+
+func (s *Server) GetUsers(ctx context.Context, request *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
+	limit := request.GetLimit()
+	page := request.GetPage()
+
+	users, hasNextPage, err := s.services.User().GetList(ctx, limit, page)
+	if err != nil {
+		log.Errorf("receiving users with limit %v and page %v: %v", limit, page, err)
+		return nil, err
+	}
+
+	responseUsers := make([]*pb.User, 0, len(users))
+	for _, user := range users {
+		responseUsers = append(responseUsers, userPB(user))
+	}
+
+	return &pb.GetUsersResponse{
+		Users:       responseUsers,
+		HasNextPage: hasNextPage,
+	}, nil
 }
 
 func (s *Server) IdentifyUser(ctx context.Context, request *pb.IdentifyUserRequest) (*pb.IdentifyUserResponse, error) {

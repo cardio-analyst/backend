@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -72,7 +71,22 @@ func (r *UserRepository) GetOneByCriteria(ctx context.Context, criteria model.Us
 func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.UserCriteria) ([]model.User, error) {
 	filter := userFilterFromCriteria(criteria)
 
-	cursor, err := r.storage.users.Find(ctx, filter)
+	var findOpts *options.FindOptions
+	if criteria.Limit > 0 {
+		if criteria.Page == 0 {
+			criteria.Page = 1
+		}
+
+		skip := (criteria.Page - 1) * criteria.Limit
+		limit := criteria.Limit + 1
+
+		findOpts = &options.FindOptions{
+			Skip:  &skip,
+			Limit: &limit,
+		}
+	}
+
+	cursor, err := r.storage.users.Find(ctx, filter, findOpts)
 	if err != nil {
 		return nil, err
 	}
