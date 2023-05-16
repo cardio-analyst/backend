@@ -168,12 +168,18 @@ func getUserErrorResponse(errorCode pb.ErrorCode) *pb.GetUserResponse {
 }
 
 func (s *Server) GetUsers(ctx context.Context, request *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
-	limit := request.GetLimit()
-	page := request.GetPage()
+	criteria := model.UserCriteria{
+		CriteriaSeparator: model.CriteriaSeparatorAND,
+		Region:            request.GetRegion(),
+		BirthDateFrom:     model.Date{Time: request.GetBirthDateFrom().AsTime()},
+		BirthDateTo:       model.Date{Time: request.GetBirthDateTo().AsTime()},
+		Limit:             request.GetLimit(),
+		Page:              request.GetPage(),
+	}
 
-	users, hasNextPage, err := s.services.User().GetList(ctx, limit, page)
+	users, hasNextPage, err := s.services.User().GetList(ctx, criteria)
 	if err != nil {
-		log.Errorf("receiving users with limit %v and page %v: %v", limit, page, err)
+		log.Errorf("receiving users with criteria %+v: %v", criteria, err)
 		return nil, err
 	}
 

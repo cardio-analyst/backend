@@ -20,8 +20,6 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 		return errors.New("forbidden to create the administrator")
 	}
 
-	birthDate := timestamppb.New(user.BirthDate.Time)
-
 	var middleName *string
 	if user.MiddleName != "" {
 		middleName = &user.MiddleName
@@ -47,7 +45,7 @@ func (c *Client) SaveUser(ctx context.Context, user model.User) error {
 		LastName:   user.LastName,
 		MiddleName: middleName,
 		Region:     region,
-		BirthDate:  birthDate,
+		BirthDate:  timestamppb.New(user.BirthDate.Time),
 		SecretKey:  secretKey,
 	}
 
@@ -124,8 +122,11 @@ func (c *Client) GetUser(ctx context.Context, criteria model.UserCriteria) (mode
 
 func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
 	request := &pb.GetUsersRequest{
-		Limit: criteria.Limit,
-		Page:  criteria.Page,
+		Limit:         criteria.Limit,
+		Page:          criteria.Page,
+		Region:        criteria.Region,
+		BirthDateFrom: timestamppb.New(criteria.BirthDateFrom.Time),
+		BirthDateTo:   timestamppb.New(criteria.BirthDateTo.Time),
 	}
 
 	response, err := c.client.GetUsers(ctx, request)

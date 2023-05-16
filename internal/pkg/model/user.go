@@ -76,11 +76,14 @@ const (
 )
 
 type UserCriteria struct {
-	ID                uint64
+	CriteriaSeparator CriteriaSeparator // required, takes value of CriteriaSeparatorAND or CriteriaSeparatorOR
 	Login             string
 	Email             string
 	PasswordHash      string
+	Region            string
+	BirthDateFrom     Date
+	BirthDateTo       Date
+	ID                uint64
 	Limit             int64
 	Page              int64
-	CriteriaSeparator CriteriaSeparator // required, takes value of CriteriaSeparatorAND or CriteriaSeparatorOR
 }

@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -91,9 +92,23 @@ func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.U
 		return nil, err
 	}
 
-	var users []model.User
-	if err = cursor.All(ctx, &users); err != nil {
+	var resultUsers []model.User
+	if err = cursor.All(ctx, &resultUsers); err != nil {
 		return nil, err
+	}
+
+	// FIXME: move this to userFilterFromCriteria as filters by birth date
+	var users []model.User
+	if len(resultUsers) > 0 {
+		for _, resultUser := range resultUsers {
+			if !criteria.BirthDateFrom.IsZero() && resultUser.BirthDate.Before(criteria.BirthDateFrom.Time) {
+				continue
+			}
+			if !criteria.BirthDateTo.IsZero() && resultUser.BirthDate.After(criteria.BirthDateTo.Time) {
+				continue
+			}
+			users = append(users, resultUser)
+		}
 	}
 
 	return users, nil
@@ -113,6 +128,9 @@ func userFilterFromCriteria(criteria model.UserCriteria) bson.M {
 	}
 	if criteria.PasswordHash != "" {
 		filter = append(filter, bson.M{"password_hash": criteria.PasswordHash})
+	}
+	if criteria.Region != "" {
+		filter = append(filter, bson.M{"region": criteria.Region})
 	}
 
 	switch len(filter) {
