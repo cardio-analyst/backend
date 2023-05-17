@@ -10,5 +10,6 @@ type Feedback struct {
 	UserEmail      string   `json:"userEmail" db:"user_email"`
 	Mark           int16    `json:"mark" db:"mark"`
 	Message        string   `json:"message,omitempty" db:"message,omitempty"`
+	Version        string   `json:"version" db:"version"`
 	CreatedAt      Datetime `json:"createdAt" db:"created_at"`
 }

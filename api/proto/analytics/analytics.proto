@@ -20,8 +20,9 @@ message Feedback {
   string user_login = 6;
   string user_email = 7;
   int32 mark = 8;
-  optional string message = 9;
-  optional google.protobuf.Timestamp created_at = 10;
+  string version = 9;
+  optional string message = 10;
+  optional google.protobuf.Timestamp created_at = 11;
 }
 
 message FindAllFeedbacksResponse {

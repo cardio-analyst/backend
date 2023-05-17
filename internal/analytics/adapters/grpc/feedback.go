@@ -39,6 +39,7 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 			UserEmail:      feedback.UserEmail,
 			Mark:           int32(feedback.Mark),
 			Message:        textMessage,
+			Version:        feedback.Version,
 			CreatedAt:      createdAt,
 		})
 	}

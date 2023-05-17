@@ -50,6 +50,7 @@ func (s *FeedbackService) feedbackMessagesHandler() func(data []byte) error {
 			UserEmail:      message.UserEmail,
 			Mark:           message.Mark,
 			Message:        message.Message,
+			Version:        message.Version,
 		}
 
 		if err := s.repository.Create(feedback); err != nil {

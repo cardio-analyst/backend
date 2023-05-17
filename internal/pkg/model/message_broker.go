@@ -16,4 +16,5 @@ type MessageFeedback struct {
 	UserEmail      string `json:"user_email"`
 	Mark           int16  `json:"mark"`
 	Message        string `json:"message,omitempty"`
+	Version        string `json:"version"`
 }

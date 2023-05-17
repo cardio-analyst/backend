@@ -21,7 +21,7 @@ func NewFeedbackService(publisher client.FeedbackPublisher, analyticsClient clie
 	}
 }
 
-func (s *FeedbackService) Send(mark int16, text string, user model.User) error {
+func (s *FeedbackService) Send(mark int16, text, version string, user model.User) error {
 	message := &model.MessageFeedback{
 		UserID:         user.ID,
 		UserFirstName:  user.FirstName,
@@ -31,6 +31,7 @@ func (s *FeedbackService) Send(mark int16, text string, user model.User) error {
 		UserEmail:      user.Email,
 		Mark:           mark,
 		Message:        text,
+		Version:        version,
 	}
 
 	rmqMessageRaw, err := json.Marshal(message)

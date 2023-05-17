@@ -9,5 +9,6 @@ CREATE TABLE IF NOT EXISTS feedback
     user_email       VARCHAR(255)            NOT NULL,
     mark             SMALLINT                NOT NULL,
     message          TEXT,
+    version          VARCHAR(255)            NOT NULL,
     created_at       TIMESTAMP DEFAULT NOW() NOT NULL
 );

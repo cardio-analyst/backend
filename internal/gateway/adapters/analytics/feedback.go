@@ -28,6 +28,7 @@ func (c *Client) FindAllFeedbacks(ctx context.Context) ([]model.Feedback, error)
 			UserEmail:      feedback.GetUserEmail(),
 			Mark:           int16(feedback.GetMark()),
 			Message:        feedback.GetMessage(),
+			Version:        feedback.GetVersion(),
 			CreatedAt: model.Datetime{
 				Time: feedback.GetCreatedAt().AsTime(),
 			},

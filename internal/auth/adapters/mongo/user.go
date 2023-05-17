@@ -97,7 +97,7 @@ func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.U
 		return nil, err
 	}
 
-	// FIXME: move this to userFilterFromCriteria as filters by birth date
+	// FIXME: move this to userFilterFromCriteria as filters by birthdate
 	var users []model.User
 	if len(resultUsers) > 0 {
 		for _, resultUser := range resultUsers {

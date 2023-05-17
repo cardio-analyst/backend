@@ -34,8 +34,9 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 						user_login,
 						user_email,
 						mark,
-						message)
-		VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)`,
+						message,
+						version)
+		VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		feedbackTable,
 	)
 
@@ -48,6 +49,7 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 		feedback.UserEmail,
 		feedback.Mark,
 		feedback.Message,
+		feedback.Version,
 	)
 	return err
 }
@@ -66,6 +68,7 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 			user_email,
 			mark,
 			message,
+            version,
 			created_at
 		FROM %v`,
 		feedbackTable,
@@ -94,6 +97,7 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 			&feedback.UserEmail,
 			&feedback.Mark,
 			&feedback.Message,
+			&feedback.Version,
 			&feedback.CreatedAt.Time,
 		); err != nil {
 			return nil, err
