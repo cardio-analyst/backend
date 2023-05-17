@@ -1,7 +1,11 @@
 package model
 
+import "errors"
+
+var ErrFeedbackNotFound = errors.New("feedback not found")
+
 type Feedback struct {
-	ID             uint64   `json:"-" db:"id"`
+	ID             uint64   `json:"id" db:"id"`
 	UserID         uint64   `json:"userId" db:"user_id"`
 	UserFirstName  string   `json:"userFirstName" db:"user_first_name"`
 	UserLastName   string   `json:"userLastName" db:"user_last_name"`
@@ -11,5 +15,23 @@ type Feedback struct {
 	Mark           int16    `json:"mark" db:"mark"`
 	Message        string   `json:"message,omitempty" db:"message,omitempty"`
 	Version        string   `json:"version" db:"version"`
+	Viewed         bool     `json:"viewed" db:"viewed"`
 	CreatedAt      Datetime `json:"createdAt" db:"created_at"`
+}
+
+type OrderingType int64
+
+const (
+	OrderingTypeDisabled OrderingType = iota
+	OrderingTypeASC
+	OrderingTypeDESC
+)
+
+type FeedbackCriteria struct {
+	MarkOrdering    OrderingType
+	VersionOrdering OrderingType
+	OnlyViewed      bool
+	OnlyUnViewed    bool
+	Limit           int64
+	Page            int64
 }

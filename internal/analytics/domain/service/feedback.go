@@ -1,7 +1,9 @@
 package service
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -64,4 +66,16 @@ func (s *FeedbackService) feedbackMessagesHandler() func(data []byte) error {
 
 func (s *FeedbackService) FindAll() ([]model.Feedback, error) {
 	return s.repository.FindAll()
+}
+
+func (s *FeedbackService) ToggleFeedbackViewed(id uint64) error {
+	feedback, err := s.repository.One(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return model.ErrFeedbackNotFound
+		}
+		return err
+	}
+
+	return s.repository.UpdateViewed(feedback.ID, !feedback.Viewed)
 }

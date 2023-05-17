@@ -2,9 +2,11 @@ package analytics
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	pb "github.com/cardio-analyst/backend/api/proto/analytics"
 	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
@@ -29,6 +31,7 @@ func (c *Client) FindAllFeedbacks(ctx context.Context) ([]model.Feedback, error)
 			Mark:           int16(feedback.GetMark()),
 			Message:        feedback.GetMessage(),
 			Version:        feedback.GetVersion(),
+			Viewed:         feedback.GetViewed(),
 			CreatedAt: model.Datetime{
 				Time: feedback.GetCreatedAt().AsTime(),
 			},
@@ -36,4 +39,26 @@ func (c *Client) FindAllFeedbacks(ctx context.Context) ([]model.Feedback, error)
 	}
 
 	return feedbacks, nil
+}
+
+func (c *Client) ToggleFeedbackViewed(ctx context.Context, id uint64) error {
+	request := &pb.ToggleFeedbackViewedRequest{
+		Id: id,
+	}
+
+	response, err := c.client.ToggleFeedbackViewed(ctx, request)
+	if err != nil {
+		return err
+	}
+
+	if errorResponse := response.GetErrorResponse(); errorResponse != nil {
+		switch errorResponse.GetErrorCode() {
+		case pb.ErrorCode_FEEDBACK_NOT_FOUND:
+			return model.ErrFeedbackNotFound
+		default:
+			return fmt.Errorf("unknown error code %v", errorResponse.GetErrorCode().String())
+		}
+	}
+
+	return nil
 }

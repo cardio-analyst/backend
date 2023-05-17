@@ -1,20 +1,28 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"net/http"
+	"strconv"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
 
 	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
+const feedbackIDPathKey = "feedbackID"
+
+const errorFeedbackNotFound = "FeedbackNotFound"
+
 func (r *Router) initFeedbackRoutes() {
 	feedback := r.api.Group(fmt.Sprintf("/:%v/feedback", userRolePathKey), r.identifyUser, r.parseUserRole)
 	{
-		feedback.GET("", r.getFeedbacks, r.verifyModerator)
 		feedback.POST("/send", r.sendFeedback, r.verifyCustomer)
+
+		feedback.GET("", r.getFeedbacks, r.verifyModerator)
+		feedback.PUT(fmt.Sprintf("/:%v", feedbackIDPathKey), r.toggleFeedbackViewed, r.verifyModerator)
 	}
 }
 
@@ -67,4 +75,20 @@ func (r *Router) sendFeedback(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, newResult(resultSent))
+}
+
+func (r *Router) toggleFeedbackViewed(c echo.Context) error {
+	feedbackID, err := strconv.ParseUint(c.Param(feedbackIDPathKey), 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorInvalidRequestData))
+	}
+
+	if err = r.services.Feedback().ToggleFeedbackViewed(feedbackID); err != nil {
+		if errors.Is(err, model.ErrFeedbackNotFound) {
+			return c.JSON(http.StatusBadRequest, newError(c, err, errorFeedbackNotFound))
+		}
+		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
+	}
+
+	return c.JSON(http.StatusOK, newResult(resultUpdated))
 }

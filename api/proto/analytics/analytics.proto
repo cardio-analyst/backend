@@ -9,6 +9,7 @@ option go_package = "./;analytics";
 
 service AnalyticsService {
   rpc FindAllFeedbacks(google.protobuf.Empty) returns (FindAllFeedbacksResponse);
+  rpc ToggleFeedbackViewed(ToggleFeedbackViewedRequest) returns (ToggleFeedbackViewedResponse);
 }
 
 message Feedback {
@@ -21,10 +22,30 @@ message Feedback {
   string user_email = 7;
   int32 mark = 8;
   string version = 9;
-  optional string message = 10;
-  optional google.protobuf.Timestamp created_at = 11;
+  bool viewed = 10;
+  optional string message = 11;
+  optional google.protobuf.Timestamp created_at = 12;
 }
 
 message FindAllFeedbacksResponse {
   repeated Feedback feedbacks = 1;
+}
+
+enum ErrorCode {
+  FEEDBACK_NOT_FOUND = 0;
+}
+
+message ErrorResponse {
+  ErrorCode error_code = 1;
+}
+
+message ToggleFeedbackViewedRequest {
+  uint64 id = 1;
+}
+
+message ToggleFeedbackViewedResponse {
+  oneof response {
+    google.protobuf.Empty success_response = 1;
+    ErrorResponse error_response = 2;
+  }
 }

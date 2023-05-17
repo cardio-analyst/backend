@@ -71,6 +71,8 @@ var errorDescriptions = map[string]string{
 	errorInvalidAge: "Некорректное значение возраста",
 	// recommendations
 	errorNotEnoughDataToCompileReport: "Недостаточно данных в профиле для формирования и отправки отчёта",
+	// feedback
+	errorFeedbackNotFound: "Отзыв не найден",
 }
 
 type response struct {

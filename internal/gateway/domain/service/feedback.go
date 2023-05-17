@@ -45,3 +45,7 @@ func (s *FeedbackService) Send(mark int16, text, version string, user model.User
 func (s *FeedbackService) FindAll() ([]model.Feedback, error) {
 	return s.analyticsClient.FindAllFeedbacks(context.TODO())
 }
+
+func (s *FeedbackService) ToggleFeedbackViewed(id uint64) error {
+	return s.analyticsClient.ToggleFeedbackViewed(context.TODO(), id)
+}

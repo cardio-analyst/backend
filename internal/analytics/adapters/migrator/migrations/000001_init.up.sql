@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS feedback
     mark             SMALLINT                NOT NULL,
     message          TEXT,
     version          VARCHAR(255)            NOT NULL,
+    viewed           BOOLEAN   DEFAULT FALSE NOT NULL,
     created_at       TIMESTAMP DEFAULT NOW() NOT NULL
 );

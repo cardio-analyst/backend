@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -26,8 +27,7 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 	queryCtx := context.Background()
 
 	query := fmt.Sprintf(`
-		INSERT INTO %[1]v (id,
-		                user_id,
+		INSERT INTO %[1]v (user_id,
 						user_first_name,
 						user_last_name,
 						user_middle_name,
@@ -36,7 +36,7 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 						mark,
 						message,
 						version)
-		VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		feedbackTable,
 	)
 
@@ -69,6 +69,7 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 			mark,
 			message,
             version,
+            viewed,
 			created_at
 		FROM %v`,
 		feedbackTable,
@@ -98,6 +99,7 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 			&feedback.Mark,
 			&feedback.Message,
 			&feedback.Version,
+			&feedback.Viewed,
 			&feedback.CreatedAt.Time,
 		); err != nil {
 			return nil, err
@@ -111,4 +113,63 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 	}
 
 	return feedbacks, nil
+}
+
+func (r *FeedbackRepository) One(id uint64) (*model.Feedback, error) {
+	queryCtx := context.Background()
+
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			user_id,
+			user_first_name,
+			user_last_name,
+			user_middle_name,
+			user_login,
+			user_email,
+			mark,
+			message,
+            version,
+            viewed,
+			created_at
+		FROM %v 
+		WHERE id=$1`,
+		feedbackTable,
+	)
+
+	var feedback model.Feedback
+	if err := r.storage.conn.QueryRow(
+		queryCtx, query, id,
+	).Scan(
+		&feedback.ID,
+		&feedback.UserID,
+		&feedback.UserFirstName,
+		&feedback.UserLastName,
+		&feedback.UserMiddleName,
+		&feedback.UserLogin,
+		&feedback.UserEmail,
+		&feedback.Mark,
+		&feedback.Message,
+		&feedback.Version,
+		&feedback.Viewed,
+		&feedback.CreatedAt.Time,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, sql.ErrNoRows
+		}
+		return nil, err
+	}
+
+	return &feedback, nil
+}
+
+func (r *FeedbackRepository) UpdateViewed(id uint64, viewed bool) error {
+	query := fmt.Sprintf(`
+		UPDATE %v SET viewed=$2 WHERE id=$1`,
+		feedbackTable,
+	)
+	queryCtx := context.Background()
+
+	_, err := r.storage.conn.Exec(queryCtx, query, id, viewed)
+	return err
 }

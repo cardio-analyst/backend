@@ -2,11 +2,13 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/cardio-analyst/backend/api/proto/analytics"
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.FindAllFeedbacksResponse, error) {
@@ -40,6 +42,7 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 			Mark:           int32(feedback.Mark),
 			Message:        textMessage,
 			Version:        feedback.Version,
+			Viewed:         feedback.Viewed,
 			CreatedAt:      createdAt,
 		})
 	}
@@ -47,4 +50,32 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 	return &pb.FindAllFeedbacksResponse{
 		Feedbacks: result,
 	}, nil
+}
+
+func (s *Server) ToggleFeedbackViewed(_ context.Context, request *pb.ToggleFeedbackViewedRequest) (*pb.ToggleFeedbackViewedResponse, error) {
+	if err := s.services.Feedback().ToggleFeedbackViewed(request.GetId()); err != nil {
+		if errors.Is(err, model.ErrFeedbackNotFound) {
+			return toggleFeedbackViewedErrorResponse(pb.ErrorCode_FEEDBACK_NOT_FOUND), nil
+		}
+		return nil, err
+	}
+	return toggleFeedbackViewedSuccessResponse(), nil
+}
+
+func toggleFeedbackViewedSuccessResponse() *pb.ToggleFeedbackViewedResponse {
+	return &pb.ToggleFeedbackViewedResponse{
+		Response: &pb.ToggleFeedbackViewedResponse_SuccessResponse{
+			SuccessResponse: &emptypb.Empty{},
+		},
+	}
+}
+
+func toggleFeedbackViewedErrorResponse(errorCode pb.ErrorCode) *pb.ToggleFeedbackViewedResponse {
+	return &pb.ToggleFeedbackViewedResponse{
+		Response: &pb.ToggleFeedbackViewedResponse_ErrorResponse{
+			ErrorResponse: &pb.ErrorResponse{
+				ErrorCode: errorCode,
+			},
+		},
+	}
 }
