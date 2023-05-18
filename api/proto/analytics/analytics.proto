@@ -8,8 +8,13 @@ import "google/protobuf/empty.proto";
 option go_package = "./;analytics";
 
 service AnalyticsService {
-  rpc FindAllFeedbacks(google.protobuf.Empty) returns (FindAllFeedbacksResponse);
+  rpc FindAllFeedbacks(FindAllFeedbacksRequest) returns (FindAllFeedbacksResponse);
   rpc ToggleFeedbackViewed(ToggleFeedbackViewedRequest) returns (ToggleFeedbackViewedResponse);
+}
+
+message FindAllFeedbacksRequest {
+  int64 limit = 1;
+  int64 page = 2;
 }
 
 message Feedback {
@@ -29,6 +34,7 @@ message Feedback {
 
 message FindAllFeedbacksResponse {
   repeated Feedback feedbacks = 1;
+  int64 total_pages = 2;
 }
 
 enum ErrorCode {

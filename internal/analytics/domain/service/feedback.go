@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 
 	log "github.com/sirupsen/logrus"
 
@@ -64,8 +65,25 @@ func (s *FeedbackService) feedbackMessagesHandler() func(data []byte) error {
 	}
 }
 
-func (s *FeedbackService) FindAll() ([]model.Feedback, error) {
-	return s.repository.FindAll()
+func (s *FeedbackService) FindAll(criteria model.FeedbackCriteria) ([]model.Feedback, int64, error) {
+	feedbacks, err := s.repository.FindAll(criteria)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	feedbacksNum, err := s.repository.Count(criteria)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var totalPages int64
+	if criteria.Limit > 0 {
+		limitFloat := float64(criteria.Limit)
+		feedbacksNumFloat := float64(feedbacksNum)
+		totalPages = int64(math.Ceil(feedbacksNumFloat / limitFloat))
+	}
+
+	return feedbacks, totalPages, nil
 }
 
 func (s *FeedbackService) ToggleFeedbackViewed(id uint64) error {

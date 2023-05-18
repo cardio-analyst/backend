@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	pb "github.com/cardio-analyst/backend/api/proto/analytics"
 	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
-func (c *Client) FindAllFeedbacks(ctx context.Context) ([]model.Feedback, error) {
-	request := &emptypb.Empty{}
+func (c *Client) FindAllFeedbacks(ctx context.Context, criteria model.FeedbackCriteria) ([]model.Feedback, int64, error) {
+	request := &pb.FindAllFeedbacksRequest{
+		Limit: criteria.Limit,
+		Page:  criteria.Page,
+	}
 
 	response, err := c.client.FindAllFeedbacks(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	feedbacks := make([]model.Feedback, 0, len(response.GetFeedbacks()))
@@ -38,7 +39,7 @@ func (c *Client) FindAllFeedbacks(ctx context.Context) ([]model.Feedback, error)
 		})
 	}
 
-	return feedbacks, nil
+	return feedbacks, response.GetTotalPages(), nil
 }
 
 func (c *Client) ToggleFeedbackViewed(ctx context.Context, id uint64) error {

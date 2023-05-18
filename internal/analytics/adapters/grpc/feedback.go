@@ -11,8 +11,17 @@ import (
 	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
-func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.FindAllFeedbacksResponse, error) {
-	feedbacks, err := s.services.Feedback().FindAll()
+func (s *Server) FindAllFeedbacks(_ context.Context, request *pb.FindAllFeedbacksRequest) (*pb.FindAllFeedbacksResponse, error) {
+	criteria := model.FeedbackCriteria{
+		MarkOrdering:    model.OrderingTypeDisabled,
+		VersionOrdering: model.OrderingTypeDisabled,
+		OnlyViewed:      false,
+		OnlyUnViewed:    false,
+		Limit:           request.GetLimit(),
+		Page:            request.GetPage(),
+	}
+
+	feedbacks, totalPages, err := s.services.Feedback().FindAll(criteria)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +57,8 @@ func (s *Server) FindAllFeedbacks(_ context.Context, _ *emptypb.Empty) (*pb.Find
 	}
 
 	return &pb.FindAllFeedbacksResponse{
-		Feedbacks: result,
+		Feedbacks:  result,
+		TotalPages: totalPages,
 	}, nil
 }
 

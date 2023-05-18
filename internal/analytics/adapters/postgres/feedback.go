@@ -54,7 +54,7 @@ func (r *FeedbackRepository) Create(feedback model.Feedback) error {
 	return err
 }
 
-func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
+func (r *FeedbackRepository) FindAll(criteria model.FeedbackCriteria) ([]model.Feedback, error) {
 	queryCtx := context.Background()
 
 	query := fmt.Sprintf(`
@@ -74,6 +74,17 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 		FROM %v`,
 		feedbackTable,
 	)
+
+	if criteria.Limit > 0 {
+		if criteria.Page == 0 {
+			criteria.Page = 1
+		}
+
+		offset := (criteria.Page - 1) * criteria.Limit
+		limit := criteria.Limit
+
+		query += fmt.Sprintf(" LIMIT %v OFFSET %v", limit, offset)
+	}
 
 	rows, err := r.storage.conn.Query(queryCtx, query)
 	if err != nil {
@@ -113,6 +124,21 @@ func (r *FeedbackRepository) FindAll() ([]model.Feedback, error) {
 	}
 
 	return feedbacks, nil
+}
+
+func (r *FeedbackRepository) Count(_ model.FeedbackCriteria) (int64, error) {
+	queryCtx := context.Background()
+
+	query := fmt.Sprintf(`SELECT count(*) FROM %v`, feedbackTable)
+
+	var feedbacksNum int64
+	if err := r.storage.conn.QueryRow(
+		queryCtx, query,
+	).Scan(&feedbacksNum); err != nil {
+		return 0, err
+	}
+
+	return feedbacksNum, nil
 }
 
 func (r *FeedbackRepository) One(id uint64) (*model.Feedback, error) {

@@ -26,18 +26,39 @@ func (r *Router) initFeedbackRoutes() {
 	}
 }
 
+type getFeedbacksRequest struct {
+	Limit int64 `query:"limit"`
+	Page  int64 `query:"page"`
+}
+
 type getFeedbacksResponse struct {
-	Feedbacks []model.Feedback `json:"feedbacks"`
+	Feedbacks  []model.Feedback `json:"feedbacks"`
+	TotalPages int64            `json:"totalPages,omitempty"`
 }
 
 func (r *Router) getFeedbacks(c echo.Context) error {
-	feedbacks, err := r.services.Feedback().FindAll()
+	var reqData getFeedbacksRequest
+	if err := c.Bind(&reqData); err != nil {
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+
+	criteria := model.FeedbackCriteria{
+		MarkOrdering:    model.OrderingTypeDisabled,
+		VersionOrdering: model.OrderingTypeDisabled,
+		OnlyViewed:      false,
+		OnlyUnViewed:    false,
+		Limit:           reqData.Limit,
+		Page:            reqData.Page,
+	}
+
+	feedbacks, totalPages, err := r.services.Feedback().FindAll(criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
 	return c.JSON(http.StatusOK, &getFeedbacksResponse{
-		Feedbacks: feedbacks,
+		Feedbacks:  feedbacks,
+		TotalPages: totalPages,
 	})
 }
 

@@ -42,8 +42,8 @@ func (s *FeedbackService) Send(mark int16, text, version string, user model.User
 	return s.publisher.Publish(rmqMessageRaw)
 }
 
-func (s *FeedbackService) FindAll() ([]model.Feedback, error) {
-	return s.analyticsClient.FindAllFeedbacks(context.TODO())
+func (s *FeedbackService) FindAll(criteria model.FeedbackCriteria) ([]model.Feedback, int64, error) {
+	return s.analyticsClient.FindAllFeedbacks(context.TODO(), criteria)
 }
 
 func (s *FeedbackService) ToggleFeedbackViewed(id uint64) error {

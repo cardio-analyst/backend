@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -28,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AnalyticsServiceClient interface {
-	FindAllFeedbacks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*FindAllFeedbacksResponse, error)
+	FindAllFeedbacks(ctx context.Context, in *FindAllFeedbacksRequest, opts ...grpc.CallOption) (*FindAllFeedbacksResponse, error)
 	ToggleFeedbackViewed(ctx context.Context, in *ToggleFeedbackViewedRequest, opts ...grpc.CallOption) (*ToggleFeedbackViewedResponse, error)
 }
 
@@ -40,7 +39,7 @@ func NewAnalyticsServiceClient(cc grpc.ClientConnInterface) AnalyticsServiceClie
 	return &analyticsServiceClient{cc}
 }
 
-func (c *analyticsServiceClient) FindAllFeedbacks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*FindAllFeedbacksResponse, error) {
+func (c *analyticsServiceClient) FindAllFeedbacks(ctx context.Context, in *FindAllFeedbacksRequest, opts ...grpc.CallOption) (*FindAllFeedbacksResponse, error) {
 	out := new(FindAllFeedbacksResponse)
 	err := c.cc.Invoke(ctx, AnalyticsService_FindAllFeedbacks_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -62,7 +61,7 @@ func (c *analyticsServiceClient) ToggleFeedbackViewed(ctx context.Context, in *T
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility
 type AnalyticsServiceServer interface {
-	FindAllFeedbacks(context.Context, *emptypb.Empty) (*FindAllFeedbacksResponse, error)
+	FindAllFeedbacks(context.Context, *FindAllFeedbacksRequest) (*FindAllFeedbacksResponse, error)
 	ToggleFeedbackViewed(context.Context, *ToggleFeedbackViewedRequest) (*ToggleFeedbackViewedResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
@@ -71,7 +70,7 @@ type AnalyticsServiceServer interface {
 type UnimplementedAnalyticsServiceServer struct {
 }
 
-func (UnimplementedAnalyticsServiceServer) FindAllFeedbacks(context.Context, *emptypb.Empty) (*FindAllFeedbacksResponse, error) {
+func (UnimplementedAnalyticsServiceServer) FindAllFeedbacks(context.Context, *FindAllFeedbacksRequest) (*FindAllFeedbacksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindAllFeedbacks not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) ToggleFeedbackViewed(context.Context, *ToggleFeedbackViewedRequest) (*ToggleFeedbackViewedResponse, error) {
@@ -91,7 +90,7 @@ func RegisterAnalyticsServiceServer(s grpc.ServiceRegistrar, srv AnalyticsServic
 }
 
 func _AnalyticsService_FindAllFeedbacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(FindAllFeedbacksRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func _AnalyticsService_FindAllFeedbacks_Handler(srv interface{}, ctx context.Con
 		FullMethod: AnalyticsService_FindAllFeedbacks_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalyticsServiceServer).FindAllFeedbacks(ctx, req.(*emptypb.Empty))
+		return srv.(AnalyticsServiceServer).FindAllFeedbacks(ctx, req.(*FindAllFeedbacksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
