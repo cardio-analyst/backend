@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -92,23 +93,9 @@ func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.U
 		return nil, err
 	}
 
-	var resultUsers []model.User
-	if err = cursor.All(ctx, &resultUsers); err != nil {
-		return nil, err
-	}
-
-	// FIXME: move this to userFilterFromCriteria as filters by birthdate
 	var users []model.User
-	if len(resultUsers) > 0 {
-		for _, resultUser := range resultUsers {
-			if !criteria.BirthDateFrom.IsZero() && resultUser.BirthDate.Before(criteria.BirthDateFrom.Time) {
-				continue
-			}
-			if !criteria.BirthDateTo.IsZero() && resultUser.BirthDate.After(criteria.BirthDateTo.Time) {
-				continue
-			}
-			users = append(users, resultUser)
-		}
+	if err = cursor.All(ctx, &users); err != nil {
+		return nil, err
 	}
 
 	return users, nil
@@ -132,6 +119,16 @@ func userFilterFromCriteria(criteria model.UserCriteria) bson.M {
 	if criteria.Region != "" {
 		filter = append(filter, bson.M{"region": criteria.Region})
 	}
+	if !criteria.BirthDateFrom.IsZero() {
+		filter = append(filter, bson.M{"birth_date": bson.M{
+			"$gte": primitive.NewDateTimeFromTime(criteria.BirthDateFrom.Time),
+		}})
+	}
+	if !criteria.BirthDateTo.IsZero() {
+		filter = append(filter, bson.M{"birth_date": bson.M{
+			"$lte": primitive.NewDateTimeFromTime(criteria.BirthDateTo.Time),
+		}})
+	}
 
 	switch len(filter) {
 	case 0:
@@ -148,6 +145,8 @@ func userFilterFromCriteria(criteria model.UserCriteria) bson.M {
 	}
 }
 
-func (r *UserRepository) Count(ctx context.Context) (int64, error) {
-	return r.storage.users.CountDocuments(ctx, bson.D{})
+func (r *UserRepository) Count(ctx context.Context, criteria model.UserCriteria) (int64, error) {
+	filter := userFilterFromCriteria(criteria)
+
+	return r.storage.users.CountDocuments(ctx, filter)
 }

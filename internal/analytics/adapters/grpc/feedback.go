@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -13,12 +14,31 @@ import (
 
 func (s *Server) FindAllFeedbacks(_ context.Context, request *pb.FindAllFeedbacksRequest) (*pb.FindAllFeedbacksResponse, error) {
 	criteria := model.FeedbackCriteria{
-		MarkOrdering:    model.OrderingTypeDisabled,
-		VersionOrdering: model.OrderingTypeDisabled,
-		OnlyViewed:      false,
-		OnlyUnViewed:    false,
-		Limit:           request.GetLimit(),
-		Page:            request.GetPage(),
+		Viewed: request.Viewed,
+		Limit:  request.GetLimit(),
+		Page:   request.GetPage(),
+	}
+
+	switch request.GetMarkOrdering() {
+	case pb.OrderingType_DISABLED:
+		criteria.MarkOrdering = model.OrderingTypeDisabled
+	case pb.OrderingType_ASCENDING:
+		criteria.MarkOrdering = model.OrderingTypeASC
+	case pb.OrderingType_DESCENDING:
+		criteria.MarkOrdering = model.OrderingTypeDESC
+	default:
+		return nil, fmt.Errorf("unknown mark ordering type: %v", request.GetMarkOrdering())
+	}
+
+	switch request.GetVersionOrdering() {
+	case pb.OrderingType_DISABLED:
+		criteria.VersionOrdering = model.OrderingTypeDisabled
+	case pb.OrderingType_ASCENDING:
+		criteria.VersionOrdering = model.OrderingTypeASC
+	case pb.OrderingType_DESCENDING:
+		criteria.VersionOrdering = model.OrderingTypeDESC
+	default:
+		return nil, fmt.Errorf("unknown version ordering type: %v", request.GetVersionOrdering())
 	}
 
 	feedbacks, totalPages, err := s.services.Feedback().FindAll(criteria)

@@ -22,5 +22,5 @@ type UserRepository interface {
 	// If users with the corresponding criteria are not found, the method returns nil.
 	FindAllByCriteria(ctx context.Context, criteria model.UserCriteria) (users []model.User, err error)
 	// Count counts all users in the database.
-	Count(ctx context.Context) (usersNum int64, err error)
+	Count(ctx context.Context, criteria model.UserCriteria) (usersNum int64, err error)
 }

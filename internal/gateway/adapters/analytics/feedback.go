@@ -10,8 +10,31 @@ import (
 
 func (c *Client) FindAllFeedbacks(ctx context.Context, criteria model.FeedbackCriteria) ([]model.Feedback, int64, error) {
 	request := &pb.FindAllFeedbacksRequest{
-		Limit: criteria.Limit,
-		Page:  criteria.Page,
+		Limit:  criteria.Limit,
+		Page:   criteria.Page,
+		Viewed: criteria.Viewed,
+	}
+
+	switch criteria.MarkOrdering {
+	case model.OrderingTypeDisabled:
+		request.MarkOrdering = pb.OrderingType_DISABLED
+	case model.OrderingTypeASC:
+		request.MarkOrdering = pb.OrderingType_ASCENDING
+	case model.OrderingTypeDESC:
+		request.MarkOrdering = pb.OrderingType_DESCENDING
+	default:
+		return nil, 0, fmt.Errorf("unknown mark ordering: %v", criteria.MarkOrdering)
+	}
+
+	switch criteria.VersionOrdering {
+	case model.OrderingTypeDisabled:
+		request.VersionOrdering = pb.OrderingType_DISABLED
+	case model.OrderingTypeASC:
+		request.VersionOrdering = pb.OrderingType_ASCENDING
+	case model.OrderingTypeDESC:
+		request.VersionOrdering = pb.OrderingType_DESCENDING
+	default:
+		return nil, 0, fmt.Errorf("unknown version ordering: %v", criteria.VersionOrdering)
 	}
 
 	response, err := c.client.FindAllFeedbacks(ctx, request)

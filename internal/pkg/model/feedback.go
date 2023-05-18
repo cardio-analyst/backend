@@ -30,8 +30,7 @@ const (
 type FeedbackCriteria struct {
 	MarkOrdering    OrderingType
 	VersionOrdering OrderingType
-	OnlyViewed      bool
-	OnlyUnViewed    bool
+	Viewed          *bool
 	Limit           int64
 	Page            int64
 }

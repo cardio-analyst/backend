@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -16,6 +17,12 @@ const feedbackIDPathKey = "feedbackID"
 
 const errorFeedbackNotFound = "FeedbackNotFound"
 
+const (
+	orderingDisabled = ""
+	orderingASC      = "ASC"
+	orderingDESC     = "DESC"
+)
+
 func (r *Router) initFeedbackRoutes() {
 	feedback := r.api.Group(fmt.Sprintf("/:%v/feedback", userRolePathKey), r.identifyUser, r.parseUserRole)
 	{
@@ -27,8 +34,11 @@ func (r *Router) initFeedbackRoutes() {
 }
 
 type getFeedbacksRequest struct {
-	Limit int64 `query:"limit"`
-	Page  int64 `query:"page"`
+	Limit           int64  `query:"limit"`
+	Page            int64  `query:"page"`
+	Viewed          *bool  `query:"viewed"`
+	MarkOrdering    string `query:"markOrdering"`
+	VersionOrdering string `query:"versionOrdering"`
 }
 
 type getFeedbacksResponse struct {
@@ -43,12 +53,33 @@ func (r *Router) getFeedbacks(c echo.Context) error {
 	}
 
 	criteria := model.FeedbackCriteria{
-		MarkOrdering:    model.OrderingTypeDisabled,
-		VersionOrdering: model.OrderingTypeDisabled,
-		OnlyViewed:      false,
-		OnlyUnViewed:    false,
-		Limit:           reqData.Limit,
-		Page:            reqData.Page,
+		Limit:  reqData.Limit,
+		Page:   reqData.Page,
+		Viewed: reqData.Viewed,
+	}
+
+	switch reqData.MarkOrdering {
+	case orderingDisabled:
+		criteria.MarkOrdering = model.OrderingTypeDisabled
+	case orderingASC:
+		criteria.MarkOrdering = model.OrderingTypeASC
+	case orderingDESC:
+		criteria.MarkOrdering = model.OrderingTypeDESC
+	default:
+		err := fmt.Errorf("undefined mark ordering type: %q", reqData.MarkOrdering)
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
+	}
+
+	switch reqData.VersionOrdering {
+	case orderingDisabled:
+		criteria.VersionOrdering = model.OrderingTypeDisabled
+	case orderingASC:
+		criteria.VersionOrdering = model.OrderingTypeASC
+	case orderingDESC:
+		criteria.VersionOrdering = model.OrderingTypeDESC
+	default:
+		err := fmt.Errorf("undefined version ordering type: %q", reqData.VersionOrdering)
+		return c.JSON(http.StatusBadRequest, newError(c, err, errorParseRequestData))
 	}
 
 	feedbacks, totalPages, err := r.services.Feedback().FindAll(criteria)
@@ -71,7 +102,7 @@ type sendFeedbackRequest struct {
 func (r sendFeedbackRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Mark, validation.Min(0), validation.Max(5)),
-		validation.Field(&r.Version, validation.Required),
+		validation.Field(&r.Version, validation.Match(regexp.MustCompile("^([0-9]+.){2}[0-9]+$"))),
 	)
 }
 

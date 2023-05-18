@@ -78,7 +78,7 @@ func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) 
 		return nil, 0, err
 	}
 
-	usersNum, err := s.users.Count(ctx)
+	usersNum, err := s.users.Count(ctx, criteria)
 	if err != nil {
 		return nil, 0, err
 	}

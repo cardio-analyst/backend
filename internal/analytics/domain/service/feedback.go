@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
-
 	log "github.com/sirupsen/logrus"
+	"math"
 
 	"github.com/cardio-analyst/backend/internal/analytics/ports/client"
 	"github.com/cardio-analyst/backend/internal/analytics/ports/storage"

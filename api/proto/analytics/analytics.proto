@@ -15,6 +15,15 @@ service AnalyticsService {
 message FindAllFeedbacksRequest {
   int64 limit = 1;
   int64 page = 2;
+  OrderingType versionOrdering = 3;
+  OrderingType markOrdering = 4;
+  optional bool viewed = 5;
+}
+
+enum OrderingType {
+  DISABLED = 0;
+  ASCENDING = 1;
+  DESCENDING = 2;
 }
 
 message Feedback {

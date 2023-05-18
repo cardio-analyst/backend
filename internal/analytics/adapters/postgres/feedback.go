@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v4"
 
@@ -75,6 +76,16 @@ func (r *FeedbackRepository) FindAll(criteria model.FeedbackCriteria) ([]model.F
 		feedbackTable,
 	)
 
+	whereQuery, whereArgs := feedbackFilterFromCriteria(criteria)
+	if whereQuery != "" {
+		query += whereQuery
+	}
+
+	orderByQuery := feedbackOrderingFromCriteria(criteria)
+	if orderByQuery != "" {
+		query += orderByQuery
+	}
+
 	if criteria.Limit > 0 {
 		if criteria.Page == 0 {
 			criteria.Page = 1
@@ -86,7 +97,7 @@ func (r *FeedbackRepository) FindAll(criteria model.FeedbackCriteria) ([]model.F
 		query += fmt.Sprintf(" LIMIT %v OFFSET %v", limit, offset)
 	}
 
-	rows, err := r.storage.conn.Query(queryCtx, query)
+	rows, err := r.storage.conn.Query(queryCtx, query, whereArgs...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -126,14 +137,19 @@ func (r *FeedbackRepository) FindAll(criteria model.FeedbackCriteria) ([]model.F
 	return feedbacks, nil
 }
 
-func (r *FeedbackRepository) Count(_ model.FeedbackCriteria) (int64, error) {
+func (r *FeedbackRepository) Count(criteria model.FeedbackCriteria) (int64, error) {
 	queryCtx := context.Background()
 
 	query := fmt.Sprintf(`SELECT count(*) FROM %v`, feedbackTable)
 
+	whereQuery, whereArgs := feedbackFilterFromCriteria(criteria)
+	if whereQuery != "" {
+		query += whereQuery
+	}
+
 	var feedbacksNum int64
 	if err := r.storage.conn.QueryRow(
-		queryCtx, query,
+		queryCtx, query, whereArgs...,
 	).Scan(&feedbacksNum); err != nil {
 		return 0, err
 	}
@@ -198,4 +214,44 @@ func (r *FeedbackRepository) UpdateViewed(id uint64, viewed bool) error {
 
 	_, err := r.storage.conn.Exec(queryCtx, query, id, viewed)
 	return err
+}
+
+func feedbackFilterFromCriteria(criteria model.FeedbackCriteria) (string, []any) {
+	whereValues := make([]string, 0)
+	args := make([]any, 0)
+	currArgID := 1
+
+	if criteria.Viewed != nil {
+		whereValues = append(whereValues, fmt.Sprintf("viewed=$%d", currArgID))
+		args = append(args, *criteria.Viewed)
+		currArgID++
+	}
+
+	if len(args) > 0 {
+		return fmt.Sprintf(" WHERE %v", strings.Join(whereValues, " AND ")), args
+	}
+	return "", nil
+}
+
+func feedbackOrderingFromCriteria(criteria model.FeedbackCriteria) string {
+	orderingParts := make([]string, 0)
+
+	switch criteria.MarkOrdering {
+	case model.OrderingTypeASC:
+		orderingParts = append(orderingParts, `mark ASC`)
+	case model.OrderingTypeDESC:
+		orderingParts = append(orderingParts, `mark DESC`)
+	}
+
+	switch criteria.VersionOrdering {
+	case model.OrderingTypeASC:
+		orderingParts = append(orderingParts, `version ASC`)
+	case model.OrderingTypeDESC:
+		orderingParts = append(orderingParts, `version DESC`)
+	}
+
+	if len(orderingParts) > 0 {
+		return fmt.Sprintf(" ORDER BY %v", strings.Join(orderingParts, ", "))
+	}
+	return ""
 }
