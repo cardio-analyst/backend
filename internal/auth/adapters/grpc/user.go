@@ -177,7 +177,7 @@ func (s *Server) GetUsers(ctx context.Context, request *pb.GetUsersRequest) (*pb
 		Page:              request.GetPage(),
 	}
 
-	users, hasNextPage, err := s.services.User().GetList(ctx, criteria)
+	users, totalPages, err := s.services.User().GetList(ctx, criteria)
 	if err != nil {
 		log.Errorf("receiving users with criteria %+v: %v", criteria, err)
 		return nil, err
@@ -189,8 +189,8 @@ func (s *Server) GetUsers(ctx context.Context, request *pb.GetUsersRequest) (*pb
 	}
 
 	return &pb.GetUsersResponse{
-		Users:       responseUsers,
-		HasNextPage: hasNextPage,
+		Users:      responseUsers,
+		TotalPages: totalPages,
 	}, nil
 }
 

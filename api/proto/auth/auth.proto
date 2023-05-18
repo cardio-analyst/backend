@@ -114,7 +114,7 @@ message GetUsersRequest {
 
 message GetUsersResponse {
   repeated User users = 1;
-  bool has_next_page = 2;
+  int64 total_pages = 2;
 }
 
 message GetTokensRequest {

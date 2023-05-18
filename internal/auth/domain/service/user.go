@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"math"
 
 	"github.com/alexedwards/argon2id"
 
@@ -71,21 +72,25 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 	return user, nil
 }
 
-func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
+func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, int64, error) {
 	users, err := s.users.FindAllByCriteria(ctx, criteria)
 	if err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 
-	var hasNextPage bool
+	usersNum, err := s.users.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var totalPages int64
 	if criteria.Limit > 0 {
-		if len(users) == int(criteria.Limit+1) {
-			users = users[:criteria.Limit]
-			hasNextPage = true
-		}
+		limitFloat := float64(criteria.Limit)
+		usersNumFloat := float64(usersNum)
+		totalPages = int64(math.Ceil(usersNumFloat / limitFloat))
 	}
 
-	return users, hasNextPage, nil
+	return users, totalPages, nil
 }
 
 func generateHash(password string) (string, error) {

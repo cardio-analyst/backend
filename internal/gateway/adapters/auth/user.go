@@ -120,7 +120,7 @@ func (c *Client) GetUser(ctx context.Context, criteria model.UserCriteria) (mode
 	return pbUser(user)
 }
 
-func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
+func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]model.User, int64, error) {
 	request := &pb.GetUsersRequest{
 		Limit:         criteria.Limit,
 		Page:          criteria.Page,
@@ -131,7 +131,7 @@ func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]m
 
 	response, err := c.client.GetUsers(ctx, request)
 	if err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 
 	users := make([]model.User, 0, len(response.GetUsers()))
@@ -139,13 +139,13 @@ func (c *Client) GetUsers(ctx context.Context, criteria model.UserCriteria) ([]m
 		var user model.User
 		user, err = pbUser(userPB)
 		if err != nil {
-			return nil, false, err
+			return nil, 0, err
 		}
 
 		users = append(users, user)
 	}
 
-	return users, response.GetHasNextPage(), nil
+	return users, response.GetTotalPages(), nil
 }
 
 func (c *Client) IdentifyUser(ctx context.Context, accessToken string) (uint64, model.UserRole, error) {

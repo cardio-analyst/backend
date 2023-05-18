@@ -38,8 +38,8 @@ type getUsersResponseUser struct {
 }
 
 type getUsersResponse struct {
-	Users       []getUsersResponseUser `json:"users"`
-	HasNextPage bool                   `json:"hasNextPage,omitempty"`
+	Users      []getUsersResponseUser `json:"users"`
+	TotalPages int64                  `json:"totalPages,omitempty"`
 }
 
 func (r *Router) getUsers(c echo.Context) error {
@@ -72,7 +72,7 @@ func (r *Router) getUsers(c echo.Context) error {
 		criteria.BirthDateTo = model.Date{Time: birthDateToTime}
 	}
 
-	users, hasNextPage, err := r.services.User().GetList(c.Request().Context(), criteria)
+	users, totalPages, err := r.services.User().GetList(c.Request().Context(), criteria)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
@@ -93,7 +93,7 @@ func (r *Router) getUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, &getUsersResponse{
-		Users:       responseUsers,
-		HasNextPage: hasNextPage,
+		Users:      responseUsers,
+		TotalPages: totalPages,
 	})
 }

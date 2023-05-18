@@ -9,7 +9,7 @@ import (
 type Auth interface {
 	SaveUser(ctx context.Context, user model.User) (err error)
 	GetUser(ctx context.Context, criteria model.UserCriteria) (user model.User, err error)
-	GetUsers(ctx context.Context, criteria model.UserCriteria) (users []model.User, hasNextPage bool, err error)
+	GetUsers(ctx context.Context, criteria model.UserCriteria) (users []model.User, totalPages int64, err error)
 	IdentifyUser(ctx context.Context, token string) (userID uint64, userRole model.UserRole, err error)
 
 	GetTokens(ctx context.Context, credentials model.Credentials, userIP string, userRole model.UserRole) (tokens model.Tokens, err error)

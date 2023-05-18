@@ -34,10 +34,10 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 	return user, nil
 }
 
-func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, bool, error) {
-	users, hasNextPage, err := s.authClient.GetUsers(ctx, criteria)
+func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, int64, error) {
+	users, totalPages, err := s.authClient.GetUsers(ctx, criteria)
 	if err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 
 	for _, user := range users {
@@ -45,7 +45,7 @@ func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) 
 		user.Password = ""
 	}
 
-	return users, hasNextPage, nil
+	return users, totalPages, nil
 }
 
 func (s *UserService) Update(ctx context.Context, user model.User) error {

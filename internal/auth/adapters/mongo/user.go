@@ -79,7 +79,7 @@ func (r *UserRepository) FindAllByCriteria(ctx context.Context, criteria model.U
 		}
 
 		skip := (criteria.Page - 1) * criteria.Limit
-		limit := criteria.Limit + 1
+		limit := criteria.Limit
 
 		findOpts = &options.FindOptions{
 			Skip:  &skip,
@@ -146,4 +146,8 @@ func userFilterFromCriteria(criteria model.UserCriteria) bson.M {
 
 		return bson.M{operator: filter}
 	}
+}
+
+func (r *UserRepository) Count(ctx context.Context) (int64, error) {
+	return r.storage.users.CountDocuments(ctx, bson.D{})
 }
