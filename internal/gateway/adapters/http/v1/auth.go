@@ -81,6 +81,8 @@ func (r *Router) signUp(c echo.Context) error {
 		}
 	}
 
+	r.services.Statistics().NotifyRegistration(reqData)
+
 	return c.JSON(http.StatusOK, newResult(resultRegistered))
 }
 

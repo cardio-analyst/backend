@@ -1,9 +1,5 @@
 package client
 
-type EmailPublisher interface {
-	Publish(msg []byte) error
-}
-
-type FeedbackPublisher interface {
+type Publisher interface {
 	Publish(msg []byte) error
 }

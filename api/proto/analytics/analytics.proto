@@ -10,6 +10,8 @@ option go_package = "./;analytics";
 service AnalyticsService {
   rpc FindAllFeedbacks(FindAllFeedbacksRequest) returns (FindAllFeedbacksResponse);
   rpc ToggleFeedbackViewed(ToggleFeedbackViewedRequest) returns (ToggleFeedbackViewedResponse);
+
+  rpc UsersByRegions(google.protobuf.Empty) returns (UsersByRegionsResponse);
 }
 
 message FindAllFeedbacksRequest {
@@ -63,4 +65,8 @@ message ToggleFeedbackViewedResponse {
     google.protobuf.Empty success_response = 1;
     ErrorResponse error_response = 2;
   }
+}
+
+message UsersByRegionsResponse {
+  map<string, int64> usersByRegions = 1;
 }

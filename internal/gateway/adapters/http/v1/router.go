@@ -69,6 +69,9 @@ func (r *Router) initModeratorRoutes() {
 	{
 		// /users/*
 		r.initUsersRoutes(moderatorAPI)
+
+		// /statistics/*
+		r.initStatisticsRoutes(moderatorAPI)
 	}
 }
 

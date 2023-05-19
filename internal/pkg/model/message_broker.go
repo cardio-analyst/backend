@@ -1,5 +1,9 @@
 package model
 
+type MessageRegistration struct {
+	Region string `json:"user_region"`
+}
+
 type MessageReportEmail struct {
 	Subject   string   `json:"subject"`
 	Receivers []string `json:"receivers"`

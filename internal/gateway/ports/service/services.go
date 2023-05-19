@@ -14,4 +14,5 @@ type Services interface {
 	Email() EmailService
 	Feedback() FeedbackService
 	Report() ReportService
+	Statistics() StatisticsService
 }

@@ -51,17 +51,30 @@ func New(configPath string) *App {
 		log.Warnf("failed to close migrator: %v", err)
 	}
 
-	rabbitmqClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
+	feedbackClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
 		User:         cfg.RabbitMQ.User,
 		Password:     cfg.RabbitMQ.Password,
 		Host:         cfg.RabbitMQ.Host,
 		Port:         cfg.RabbitMQ.Port,
-		ExchangeName: cfg.RabbitMQ.Exchange,
-		RoutingKey:   cfg.RabbitMQ.RoutingKey,
-		QueueName:    cfg.RabbitMQ.Queue,
+		ExchangeName: cfg.RabbitMQ.FeedbackQueue.Exchange,
+		RoutingKey:   cfg.RabbitMQ.FeedbackQueue.RoutingKey,
+		QueueName:    cfg.RabbitMQ.FeedbackQueue.Queue,
 	})
-	if err = rabbitmqClient.Connect(); err != nil {
-		log.Fatalf("connecting to RabbitMQ: %v", err)
+	if err = feedbackClient.Connect(); err != nil {
+		log.Fatalf("connecting to feedback RabbitMQ client: %v", err)
+	}
+
+	registrationClient := rabbitmq.NewClient(rabbitmq.ClientOptions{
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.RegistrationQueue.Exchange,
+		RoutingKey:   cfg.RabbitMQ.RegistrationQueue.RoutingKey,
+		QueueName:    cfg.RabbitMQ.RegistrationQueue.Queue,
+	})
+	if err = registrationClient.Connect(); err != nil {
+		log.Fatalf("connecting to registration RabbitMQ client: %v", err)
 	}
 
 	storage, err := postgres.NewStorage(cfg.Postgres.URI)
@@ -69,7 +82,7 @@ func New(configPath string) *App {
 		log.Fatalf("failed to create postgres storage: %v", err)
 	}
 
-	services := domain.NewServices(storage, rabbitmqClient)
+	services := domain.NewServices(storage, feedbackClient, registrationClient)
 
 	grpcListener, err := net.Listen("tcp", cfg.Analytics.GRPCAddress)
 	if err != nil {
@@ -83,7 +96,7 @@ func New(configPath string) *App {
 	return &App{
 		server:   server,
 		services: services,
-		closers:  []io.Closer{server, rabbitmqClient, storage},
+		closers:  []io.Closer{server, feedbackClient, registrationClient, storage},
 	}
 }
 
@@ -92,6 +105,10 @@ func (a *App) Start() {
 
 	group.Go(func() error {
 		return a.services.Feedback().ListenToFeedbackMessages()
+	})
+
+	group.Go(func() error {
+		return a.services.Statistics().ListenToRegistrationMessages()
 	})
 
 	group.Go(func() error {

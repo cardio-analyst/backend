@@ -13,3 +13,9 @@ CREATE TABLE IF NOT EXISTS feedback
     viewed           BOOLEAN   DEFAULT FALSE NOT NULL,
     created_at       TIMESTAMP DEFAULT NOW() NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS region_users
+(
+    region        VARCHAR(255) UNIQUE NOT NULL,
+    users_counter INTEGER DEFAULT 1   NOT NULL
+);

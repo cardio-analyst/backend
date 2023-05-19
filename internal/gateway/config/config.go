@@ -36,8 +36,9 @@ type RabbitMQConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 
-	EmailsQueue   RabbitMQQueueConfig `yaml:"emails"`
-	FeedbackQueue RabbitMQQueueConfig `yaml:"feedback"`
+	EmailsQueue       RabbitMQQueueConfig `yaml:"emails"`
+	FeedbackQueue     RabbitMQQueueConfig `yaml:"feedback"`
+	RegistrationQueue RabbitMQQueueConfig `yaml:"registration"`
 }
 
 type RabbitMQQueueConfig struct {

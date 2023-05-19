@@ -14,21 +14,21 @@ import (
 )
 
 type FeedbackService struct {
-	repository storage.FeedbackRepository
-	consumer   client.FeedbackConsumer
+	repository       storage.FeedbackRepository
+	feedbackConsumer client.Consumer
 }
 
-func NewFeedbackService(repository storage.FeedbackRepository, consumer client.FeedbackConsumer) *FeedbackService {
+func NewFeedbackService(repository storage.FeedbackRepository, consumer client.Consumer) *FeedbackService {
 	return &FeedbackService{
-		repository: repository,
-		consumer:   consumer,
+		repository:       repository,
+		feedbackConsumer: consumer,
 	}
 }
 
 func (s *FeedbackService) ListenToFeedbackMessages() error {
 	handler := s.feedbackMessagesHandler()
 
-	if err := s.consumer.Consume(handler); err != nil {
+	if err := s.feedbackConsumer.Consume(handler); err != nil {
 		return fmt.Errorf("consuming feedback messages: %w", err)
 	}
 

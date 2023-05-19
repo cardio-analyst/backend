@@ -67,6 +67,19 @@ func New(configPath string) *App {
 		log.Fatalf("feedback publisher: connecting to RabbitMQ: %v", err)
 	}
 
+	registrationPublisher := rabbitmq.NewClient(rabbitmq.ClientOptions{
+		User:         cfg.RabbitMQ.User,
+		Password:     cfg.RabbitMQ.Password,
+		Host:         cfg.RabbitMQ.Host,
+		Port:         cfg.RabbitMQ.Port,
+		ExchangeName: cfg.RabbitMQ.RegistrationQueue.Exchange,
+		RoutingKey:   cfg.RabbitMQ.RegistrationQueue.RoutingKey,
+		QueueName:    cfg.RabbitMQ.RegistrationQueue.Queue,
+	})
+	if err = registrationPublisher.Connect(); err != nil {
+		log.Fatalf("registration publisher: connecting to RabbitMQ: %v", err)
+	}
+
 	var postgresMigrator *migrator.PostgresMigrator
 	postgresMigrator, err = migrator.NewPostgresMigrator(cfg.Postgres.URI)
 	if err != nil {
@@ -100,12 +113,13 @@ func New(configPath string) *App {
 	analyticsClient := analytics.NewClient(analyticsGRPCClient)
 
 	services := service.NewServices(service.ServicesOptions{
-		Config:            cfg,
-		Storage:           storage,
-		EmailPublisher:    emailPublisher,
-		FeedbackPublisher: feedbackPublisher,
-		AuthClient:        authClient,
-		AnalyticsClient:   analyticsClient,
+		Config:                cfg,
+		Storage:               storage,
+		EmailPublisher:        emailPublisher,
+		FeedbackPublisher:     feedbackPublisher,
+		RegistrationPublisher: registrationPublisher,
+		AuthClient:            authClient,
+		AnalyticsClient:       analyticsClient,
 	})
 
 	srv := http.NewServer(services)
@@ -113,7 +127,7 @@ func New(configPath string) *App {
 	return &App{
 		config:  cfg,
 		server:  srv,
-		closers: []io.Closer{srv, emailPublisher, feedbackPublisher, authGRPCConn, analyticsGRPCConn, storage},
+		closers: []io.Closer{srv, emailPublisher, feedbackPublisher, registrationPublisher, authGRPCConn, analyticsGRPCConn, storage},
 	}
 }
 

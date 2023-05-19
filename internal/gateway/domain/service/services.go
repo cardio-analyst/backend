@@ -15,8 +15,9 @@ type Services struct {
 	cfg     config.Config
 	storage storage.Storage
 
-	emailPublisher    client.EmailPublisher
-	feedbackPublisher client.FeedbackPublisher
+	emailPublisher        client.Publisher
+	feedbackPublisher     client.Publisher
+	registrationPublisher client.Publisher
 
 	authClient      client.Auth
 	analyticsClient client.Analytics
@@ -32,26 +33,29 @@ type Services struct {
 	recommendationsService service.RecommendationsService
 	emailService           service.EmailService
 	feedbackService        service.FeedbackService
+	statisticsService      service.StatisticsService
 	reportService          service.ReportService
 }
 
 type ServicesOptions struct {
-	Config            config.Config
-	Storage           storage.Storage
-	EmailPublisher    client.EmailPublisher
-	FeedbackPublisher client.FeedbackPublisher
-	AuthClient        client.Auth
-	AnalyticsClient   client.Analytics
+	Config                config.Config
+	Storage               storage.Storage
+	EmailPublisher        client.Publisher
+	FeedbackPublisher     client.Publisher
+	RegistrationPublisher client.Publisher
+	AuthClient            client.Auth
+	AnalyticsClient       client.Analytics
 }
 
 func NewServices(opts ServicesOptions) *Services {
 	return &Services{
-		cfg:               opts.Config,
-		storage:           opts.Storage,
-		emailPublisher:    opts.EmailPublisher,
-		feedbackPublisher: opts.FeedbackPublisher,
-		authClient:        opts.AuthClient,
-		analyticsClient:   opts.AnalyticsClient,
+		cfg:                   opts.Config,
+		storage:               opts.Storage,
+		emailPublisher:        opts.EmailPublisher,
+		feedbackPublisher:     opts.FeedbackPublisher,
+		registrationPublisher: opts.RegistrationPublisher,
+		authClient:            opts.AuthClient,
+		analyticsClient:       opts.AnalyticsClient,
 	}
 }
 
@@ -170,6 +174,16 @@ func (s *Services) Feedback() service.FeedbackService {
 	s.feedbackService = NewFeedbackService(s.feedbackPublisher, s.analyticsClient)
 
 	return s.feedbackService
+}
+
+func (s *Services) Statistics() service.StatisticsService {
+	if s.statisticsService != nil {
+		return s.statisticsService
+	}
+
+	s.statisticsService = NewStatisticsService(s.analyticsClient, s.registrationPublisher)
+
+	return s.statisticsService
 }
 
 func (s *Services) Report() service.ReportService {

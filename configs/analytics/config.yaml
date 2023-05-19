@@ -10,6 +10,11 @@ rabbitmq:
   password: "rmpassword"
   host: "rabbitmq"
   port: 5672
-  exchange: "cardio-analyst"
-  routing_key: "feedback"
-  queue: "feedback"
+  feedback:
+    exchange: "cardio-analyst"
+    routing_key: "feedback"
+    queue: "feedback"
+  registration:
+    exchange: "cardio-analyst"
+    routing_key: "registration"
+    queue: "registration"

@@ -11,7 +11,8 @@ import (
 type Storage struct {
 	conn *pgxpool.Pool
 
-	feedbackRepository storage.FeedbackRepository
+	feedbackRepository    storage.FeedbackRepository
+	regionUsersRepository storage.RegionUsersRepository
 }
 
 func NewStorage(dsn string) (*Storage, error) {
@@ -31,6 +32,16 @@ func (s *Storage) Feedback() storage.FeedbackRepository {
 	s.feedbackRepository = NewFeedbackRepository(s)
 
 	return s.feedbackRepository
+}
+
+func (s *Storage) RegionUsers() storage.RegionUsersRepository {
+	if s.regionUsersRepository != nil {
+		return s.regionUsersRepository
+	}
+
+	s.regionUsersRepository = NewRegionUsersRepository(s)
+
+	return s.regionUsersRepository
 }
 
 func (s *Storage) Close() error {

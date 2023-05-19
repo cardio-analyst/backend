@@ -7,16 +7,20 @@ import (
 )
 
 type Services struct {
-	storage          storage.Storage
-	feedbackConsumer client.FeedbackConsumer
+	storage storage.Storage
 
-	feedbackService service.FeedbackService
+	feedbackConsumer     client.Consumer
+	registrationConsumer client.Consumer
+
+	feedbackService   service.FeedbackService
+	statisticsService service.StatisticsService
 }
 
-func NewServices(storage storage.Storage, feedbackConsumer client.FeedbackConsumer) *Services {
+func NewServices(storage storage.Storage, feedbackConsumer, registrationConsumer client.Consumer) *Services {
 	return &Services{
-		storage:          storage,
-		feedbackConsumer: feedbackConsumer,
+		storage:              storage,
+		feedbackConsumer:     feedbackConsumer,
+		registrationConsumer: registrationConsumer,
 	}
 }
 
@@ -28,4 +32,14 @@ func (s *Services) Feedback() service.FeedbackService {
 	s.feedbackService = NewFeedbackService(s.storage.Feedback(), s.feedbackConsumer)
 
 	return s.feedbackService
+}
+
+func (s *Services) Statistics() service.StatisticsService {
+	if s.statisticsService != nil {
+		return s.statisticsService
+	}
+
+	s.statisticsService = NewStatisticsService(s.storage.RegionUsers(), s.registrationConsumer)
+
+	return s.statisticsService
 }

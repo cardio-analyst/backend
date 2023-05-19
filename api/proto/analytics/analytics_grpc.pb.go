@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -21,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	AnalyticsService_FindAllFeedbacks_FullMethodName     = "/analytics.AnalyticsService/FindAllFeedbacks"
 	AnalyticsService_ToggleFeedbackViewed_FullMethodName = "/analytics.AnalyticsService/ToggleFeedbackViewed"
+	AnalyticsService_UsersByRegions_FullMethodName       = "/analytics.AnalyticsService/UsersByRegions"
 )
 
 // AnalyticsServiceClient is the client API for AnalyticsService service.
@@ -29,6 +31,7 @@ const (
 type AnalyticsServiceClient interface {
 	FindAllFeedbacks(ctx context.Context, in *FindAllFeedbacksRequest, opts ...grpc.CallOption) (*FindAllFeedbacksResponse, error)
 	ToggleFeedbackViewed(ctx context.Context, in *ToggleFeedbackViewedRequest, opts ...grpc.CallOption) (*ToggleFeedbackViewedResponse, error)
+	UsersByRegions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UsersByRegionsResponse, error)
 }
 
 type analyticsServiceClient struct {
@@ -57,12 +60,22 @@ func (c *analyticsServiceClient) ToggleFeedbackViewed(ctx context.Context, in *T
 	return out, nil
 }
 
+func (c *analyticsServiceClient) UsersByRegions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UsersByRegionsResponse, error) {
+	out := new(UsersByRegionsResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_UsersByRegions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalyticsServiceServer is the server API for AnalyticsService service.
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility
 type AnalyticsServiceServer interface {
 	FindAllFeedbacks(context.Context, *FindAllFeedbacksRequest) (*FindAllFeedbacksResponse, error)
 	ToggleFeedbackViewed(context.Context, *ToggleFeedbackViewedRequest) (*ToggleFeedbackViewedResponse, error)
+	UsersByRegions(context.Context, *emptypb.Empty) (*UsersByRegionsResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
 
@@ -75,6 +88,9 @@ func (UnimplementedAnalyticsServiceServer) FindAllFeedbacks(context.Context, *Fi
 }
 func (UnimplementedAnalyticsServiceServer) ToggleFeedbackViewed(context.Context, *ToggleFeedbackViewedRequest) (*ToggleFeedbackViewedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ToggleFeedbackViewed not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) UsersByRegions(context.Context, *emptypb.Empty) (*UsersByRegionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UsersByRegions not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) mustEmbedUnimplementedAnalyticsServiceServer() {}
 
@@ -125,6 +141,24 @@ func _AnalyticsService_ToggleFeedbackViewed_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnalyticsService_UsersByRegions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).UsersByRegions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_UsersByRegions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).UsersByRegions(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AnalyticsService_ServiceDesc is the grpc.ServiceDesc for AnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +173,10 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ToggleFeedbackViewed",
 			Handler:    _AnalyticsService_ToggleFeedbackViewed_Handler,
+		},
+		{
+			MethodName: "UsersByRegions",
+			Handler:    _AnalyticsService_UsersByRegions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

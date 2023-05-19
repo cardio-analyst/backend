@@ -29,12 +29,12 @@ const (
 var _ service.EmailService = (*EmailService)(nil)
 
 type EmailService struct {
-	publisher client.EmailPublisher
+	emailsPublisher client.Publisher
 }
 
-func NewEmailService(publisher client.EmailPublisher) *EmailService {
+func NewEmailService(emailsPublisher client.Publisher) *EmailService {
 	return &EmailService{
-		publisher: publisher,
+		emailsPublisher: emailsPublisher,
 	}
 }
 
@@ -71,5 +71,5 @@ func (s *EmailService) SendReport(receivers []string, reportFilePath string, use
 		return fmt.Errorf("serializing RMQ message: %v", err)
 	}
 
-	return s.publisher.Publish(rmqMessageRaw)
+	return s.emailsPublisher.Publish(rmqMessageRaw)
 }

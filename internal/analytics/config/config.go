@@ -29,10 +29,16 @@ type PostgresConfig struct {
 }
 
 type RabbitMQConfig struct {
-	User       string `yaml:"user"`
-	Password   string `yaml:"password"`
-	Host       string `yaml:"host"`
-	Port       int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+
+	FeedbackQueue     RabbitMQQueueConfig `yaml:"feedback"`
+	RegistrationQueue RabbitMQQueueConfig `yaml:"registration"`
+}
+
+type RabbitMQQueueConfig struct {
 	Exchange   string `yaml:"exchange"`
 	RoutingKey string `yaml:"routing_key"`
 	Queue      string `yaml:"queue"`
