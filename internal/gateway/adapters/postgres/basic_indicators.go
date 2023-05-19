@@ -202,3 +202,66 @@ func (r *BasicIndicatorsRepository) FindAll(userID uint64) ([]*model.BasicIndica
 
 	return analyses, nil
 }
+
+func (r *BasicIndicatorsRepository) All() ([]model.BasicIndicators, error) {
+	queryCtx := context.Background()
+
+	query := fmt.Sprintf(`
+		SELECT 
+			id,
+			user_id,
+			weight,
+			height,
+			body_mass_index,
+			waist_size,
+			gender,
+			sbp_level,
+			smoking,
+			total_cholesterol_level,
+			cv_events_risk_value,
+			ideal_cardiovascular_ages_range,
+			created_at
+		FROM %v`,
+		basicIndicatorsTable,
+	)
+
+	rows, err := r.storage.conn.Query(queryCtx, query)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var analyses []model.BasicIndicators
+	for rows.Next() {
+		var basicIndicators model.BasicIndicators
+
+		if err = rows.Scan(
+			&basicIndicators.ID,
+			&basicIndicators.UserID,
+			&basicIndicators.Weight,
+			&basicIndicators.Height,
+			&basicIndicators.BodyMassIndex,
+			&basicIndicators.WaistSize,
+			&basicIndicators.Gender,
+			&basicIndicators.SBPLevel,
+			&basicIndicators.Smoking,
+			&basicIndicators.TotalCholesterolLevel,
+			&basicIndicators.CVEventsRiskValue,
+			&basicIndicators.IdealCardiovascularAgesRange,
+			&basicIndicators.CreatedAt.Time,
+		); err != nil {
+			return nil, err
+		}
+
+		analyses = append(analyses, basicIndicators)
+	}
+
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return analyses, nil
+}

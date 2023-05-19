@@ -120,3 +120,58 @@ func (r *DiseasesRepository) Get(userID uint64) (*model.Diseases, error) {
 
 	return &diseasesData, nil
 }
+
+func (r *DiseasesRepository) All() ([]model.Diseases, error) {
+	query := fmt.Sprintf(
+		`
+		SELECT user_id,
+		       cvd_predisposed,
+		       takes_statins,
+		       has_chronic_kidney_disease,
+		       has_arterial_hypertension,
+		       has_ischemic_heart_disease,
+		       has_type_two_diabetes,
+		       had_infarction_or_stroke,
+		       has_atherosclerosis,
+		       has_other_cvd
+		FROM %v`,
+		diseasesTable,
+	)
+	queryCtx := context.Background()
+
+	rows, err := r.storage.conn.Query(queryCtx, query)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var diseasesData []model.Diseases
+	for rows.Next() {
+		var item model.Diseases
+		if err = rows.Scan(
+			&item.UserID,
+			&item.CVDPredisposed,
+			&item.TakesStatins,
+			&item.HasChronicKidneyDisease,
+			&item.HasArterialHypertension,
+			&item.HasIschemicHeartDisease,
+			&item.HasTypeTwoDiabetes,
+			&item.HadInfarctionOrStroke,
+			&item.HasAtherosclerosis,
+			&item.HasOtherCVD,
+		); err != nil {
+			return nil, err
+		}
+
+		diseasesData = append(diseasesData, item)
+	}
+
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return diseasesData, nil
+}

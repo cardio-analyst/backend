@@ -181,7 +181,13 @@ func (s *Services) Statistics() service.StatisticsService {
 		return s.statisticsService
 	}
 
-	s.statisticsService = NewStatisticsService(s.analyticsClient, s.registrationPublisher)
+	s.statisticsService = NewStatisticsService(
+		s.registrationPublisher,
+		s.analyticsClient,
+		s.authClient,
+		s.storage.Diseases(),
+		s.storage.BasicIndicators(),
+	)
 
 	return s.statisticsService
 }

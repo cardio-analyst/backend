@@ -17,4 +17,6 @@ type BasicIndicatorsRepository interface {
 	// FindAll searches for user analyses in the database according to the user id. If user analyses are not found,
 	// the method returns nil.
 	FindAll(userID uint64) (basicIndicatorsDataList []*domain.BasicIndicators, err error)
+
+	All() ([]domain.BasicIndicators, error)
 }
