@@ -23,6 +23,8 @@ const (
 	orderingDESC     = "DESC"
 )
 
+const feedbackCreatedAtLayout = "2006.01.02 15:04:05"
+
 func (r *Router) initFeedbackRoutes() {
 	feedback := r.api.Group(fmt.Sprintf("/:%v/feedback", userRolePathKey), r.identifyUser, r.parseUserRole)
 	{
@@ -41,9 +43,24 @@ type getFeedbacksRequest struct {
 	VersionOrdering string `query:"versionOrdering"`
 }
 
+type getFeedbacksResponseItem struct {
+	ID             uint64 `json:"id"`
+	UserID         uint64 `json:"userId"`
+	UserFirstName  string `json:"userFirstName"`
+	UserLastName   string `json:"userLastName"`
+	UserMiddleName string `json:"userMiddleName,omitempty"`
+	UserLogin      string `json:"userLogin"`
+	UserEmail      string `json:"userEmail"`
+	Mark           int16  `json:"mark"`
+	Message        string `json:"message,omitempty"`
+	Version        string `json:"version"`
+	Viewed         bool   `json:"viewed"`
+	CreatedAt      string `json:"createdAt"`
+}
+
 type getFeedbacksResponse struct {
-	Feedbacks  []model.Feedback `json:"feedbacks"`
-	TotalPages int64            `json:"totalPages,omitempty"`
+	Feedbacks  []getFeedbacksResponseItem `json:"feedbacks"`
+	TotalPages int64                      `json:"totalPages,omitempty"`
 }
 
 func (r *Router) getFeedbacks(c echo.Context) error {
@@ -87,8 +104,26 @@ func (r *Router) getFeedbacks(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, newError(c, err, errorInternal))
 	}
 
+	responseItems := make([]getFeedbacksResponseItem, 0, len(feedbacks))
+	for _, feedback := range feedbacks {
+		responseItems = append(responseItems, getFeedbacksResponseItem{
+			ID:             feedback.ID,
+			UserID:         feedback.UserID,
+			UserFirstName:  feedback.UserFirstName,
+			UserLastName:   feedback.UserLastName,
+			UserMiddleName: feedback.UserMiddleName,
+			UserLogin:      feedback.UserLogin,
+			UserEmail:      feedback.UserEmail,
+			Mark:           feedback.Mark,
+			Message:        feedback.Message,
+			Version:        feedback.Version,
+			Viewed:         feedback.Viewed,
+			CreatedAt:      feedback.CreatedAt.Time.Format(feedbackCreatedAtLayout),
+		})
+	}
+
 	return c.JSON(http.StatusOK, &getFeedbacksResponse{
-		Feedbacks:  feedbacks,
+		Feedbacks:  responseItems,
 		TotalPages: totalPages,
 	})
 }
