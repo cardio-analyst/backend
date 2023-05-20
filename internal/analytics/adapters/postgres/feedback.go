@@ -224,7 +224,6 @@ func feedbackFilterFromCriteria(criteria model.FeedbackCriteria) (string, []any)
 	if criteria.Viewed != nil {
 		whereValues = append(whereValues, fmt.Sprintf("viewed=$%d", currArgID))
 		args = append(args, *criteria.Viewed)
-		currArgID++
 	}
 
 	if len(args) > 0 {

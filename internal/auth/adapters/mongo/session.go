@@ -24,7 +24,12 @@ func NewSessionRepository(storage *Storage) *SessionRepository {
 
 func (r *SessionRepository) Save(ctx context.Context, session domain.Session) error {
 	filter := bson.M{"id": session.UserID}
-	update := bson.D{{"$set", session}}
+	update := bson.D{
+		{
+			Key:   "$set",
+			Value: session,
+		},
+	}
 	opts := options.Update().SetUpsert(true)
 
 	result, err := r.storage.sessions.UpdateOne(ctx, filter, update, opts)
@@ -42,7 +47,12 @@ func (r *SessionRepository) Save(ctx context.Context, session domain.Session) er
 }
 
 func (r *SessionRepository) GetOne(ctx context.Context, userID uint64) (domain.Session, error) {
-	filter := bson.D{{"user_id", userID}}
+	filter := bson.D{
+		{
+			Key:   "user_id",
+			Value: userID,
+		},
+	}
 
 	var session domain.Session
 	if err := r.storage.sessions.FindOne(ctx, filter).Decode(&session); err != nil {
@@ -56,7 +66,12 @@ func (r *SessionRepository) GetOne(ctx context.Context, userID uint64) (domain.S
 }
 
 func (r *SessionRepository) FindOne(ctx context.Context, userID uint64) (*domain.Session, error) {
-	filter := bson.D{{"user_id", userID}}
+	filter := bson.D{
+		{
+			Key:   "user_id",
+			Value: userID,
+		},
+	}
 
 	var session domain.Session
 	if err := r.storage.sessions.FindOne(ctx, filter).Decode(&session); err != nil {

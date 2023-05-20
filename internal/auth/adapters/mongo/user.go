@@ -39,7 +39,12 @@ func (r *UserRepository) Save(ctx context.Context, user model.User) error {
 	}
 
 	filter := bson.M{"id": user.ID}
-	update := bson.D{{"$set", user}}
+	update := bson.D{
+		{
+			Key:   "$set",
+			Value: user,
+		},
+	}
 	opts := options.Update().SetUpsert(true)
 
 	result, err := r.storage.users.UpdateOne(ctx, filter, update, opts)

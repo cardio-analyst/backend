@@ -16,7 +16,10 @@ type Counter struct {
 
 func initCounter(ctx context.Context, counters *mongo.Collection, counterName string) error {
 	filter := bson.D{
-		{"_id", bson.M{"$eq": counterName}},
+		{
+			Key:   "_id",
+			Value: bson.M{"$eq": counterName},
+		},
 	}
 
 	var c Counter
@@ -36,10 +39,21 @@ func initCounter(ctx context.Context, counters *mongo.Collection, counterName st
 
 func (s *Storage) getNextValue(ctx context.Context, counterName string) (uint64, error) {
 	filter := bson.D{
-		{"_id", bson.M{"$eq": counterName}},
+		{
+			Key:   "_id",
+			Value: bson.M{"$eq": counterName},
+		},
 	}
 	update := bson.D{
-		{"$inc", bson.D{{"value", 1}}},
+		{
+			Key: "$inc",
+			Value: bson.D{
+				{
+					Key:   "value",
+					Value: 1,
+				},
+			},
+		},
 	}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 

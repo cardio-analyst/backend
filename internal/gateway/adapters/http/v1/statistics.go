@@ -1,10 +1,11 @@
 package v1
 
 import (
-	"github.com/cardio-analyst/backend/internal/pkg/model"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/cardio-analyst/backend/internal/pkg/model"
 )
 
 func (r *Router) initStatisticsRoutes(moderatorAPI *echo.Group) {
