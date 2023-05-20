@@ -73,15 +73,28 @@ func (s *UserService) GetOne(ctx context.Context, criteria model.UserCriteria) (
 }
 
 func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) ([]model.User, int64, error) {
-	users, err := s.users.FindAllByCriteria(ctx, criteria)
+	usersFiltered, err := s.users.FindAllByCriteria(ctx, criteria)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	usersNum, err := s.users.Count(ctx, criteria)
+	allCriteria := model.UserCriteria{
+		CriteriaSeparator: criteria.CriteriaSeparator,
+		Login:             criteria.Login,
+		Email:             criteria.Email,
+		PasswordHash:      criteria.PasswordHash,
+		Region:            criteria.Region,
+		BirthDateFrom:     criteria.BirthDateFrom,
+		BirthDateTo:       criteria.BirthDateTo,
+		ID:                criteria.ID,
+	}
+
+	usersAll, err := s.users.FindAllByCriteria(ctx, allCriteria)
 	if err != nil {
 		return nil, 0, err
 	}
+
+	usersNum := len(usersAll)
 
 	var totalPages int64
 	if criteria.Limit > 0 {
@@ -90,7 +103,7 @@ func (s *UserService) GetList(ctx context.Context, criteria model.UserCriteria) 
 		totalPages = int64(math.Ceil(usersNumFloat / limitFloat))
 	}
 
-	return users, totalPages, nil
+	return usersFiltered, totalPages, nil
 }
 
 func generateHash(password string) (string, error) {
